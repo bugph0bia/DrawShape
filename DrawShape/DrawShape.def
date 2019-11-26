@@ -1,0 +1,7 @@
+﻿; DrawShape.def : モジュール パラメーターを宣言します。
+
+EXPORTS
+	DllCanUnloadNow     PRIVATE
+	DllGetClassObject   PRIVATE
+	DllRegisterServer   PRIVATE
+	DllUnregisterServer PRIVATE
