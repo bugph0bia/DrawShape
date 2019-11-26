@@ -1,0 +1,49 @@
+﻿// DrawShape.idl : ActiveX コントロール プロジェクトのタイプ ライブラリ ソースです。
+
+// このファイルは、[!output PROJECT_NAME].ocx のリソース
+// になるタイプ ライブラリ (DrawShape.tlb) を生成するために MIDL コンパイラ ツールによって処理されます。これは次のリソースになります:
+// DrawShape.ocx。
+
+#include <olectl.h>
+#include <idispids.h>
+
+[ uuid(549e9a52-d80b-4f80-881a-68bfb24305a7), version(1.0),
+  control ]
+library DrawShapeLib
+{
+	importlib(STDOLE_TLB);
+
+	//  CDrawShapeCtrl のプライマリ ディスパッチ インターフェイス
+	[ 
+		uuid(9987a44e-72fb-4e9a-a47f-936fcfe8db17)
+	]
+	dispinterface _DDrawShape
+	{
+		properties:
+		methods:
+	};
+
+	//  CDrawShapeCtrl のイベント ディスパッチ インターフェイス
+
+	[ 
+		uuid(21a2e7b0-8b57-408c-bd42-9a7496d43d82)
+	]
+	dispinterface _DDrawShapeEvents
+	{
+		properties:
+			//  イベント インターフェイスにプロパティがありません。
+
+		methods:
+	};
+
+	//  CDrawShapeCtrl のクラス情報
+	[
+		uuid(92b77edb-2984-4ca7-b136-e337a67cc9bb)
+	]
+	coclass DrawShape
+	{
+		[default] dispinterface _DDrawShape;
+		[default, source] dispinterface _DDrawShapeEvents;
+	};
+
+};
