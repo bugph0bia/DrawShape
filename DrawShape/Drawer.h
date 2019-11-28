@@ -87,12 +87,12 @@ class Canvas
 private:
 	// 定数
 	// 拡大縮小率の初期値
-	static constexpr double DEFAULT_RATIO = 0.0;
+	static constexpr double DEFAULT_RATIO = 1.0;
 	// オフセットの初期値
 	static constexpr Coord<double> DEFAULT_OFFSET = { 0.0, 0.0 };
 
 	// 描画対象のデバイスコンテキスト
-	CDC& m_dc;
+	CDC* m_pDC;
 
 	// カレントペンオブジェクト
 	CPen m_pen;
@@ -106,28 +106,28 @@ private:
 
 public:
 	// コンストラクタ
-	Canvas(CDC& dc);
+	Canvas(CDC* pDC);
 
-	// 拡大縮小率取得
+	// 拡大縮小率
+	void SetRatio(double val) { m_ratio = val;  }
 	double GetRatio() const { return m_ratio; }
-	// オフセットX取得
-	double GetOffsetX() const { return m_offset.x; }
-	// オフセットY取得
-	double GetOffsetY() const { return m_offset.y; }
+	// オフセット
+	void SetOffset(Coord<double> val) { m_offset = val; }
+	Coord<double> GetOffset() const { return m_offset; }
 
-	// 座標系変換：コントロール座標系→内部キャンバス座標系
-	void CanvasToControl(Coord<long> ctrlCoord, Coord<double>& canvasCoord) const;
 	// 座標系変換：内部キャンバス座標系→コントロール座標系
-	void ControlToCanvas(Coord<double>& canvasCoord, Coord<long> ctrlCoord) const;
+	Coord<long> CanvasToControl(const Coord<double> &canvasCoord) const;
+	// 座標系変換：コントロール座標系→内部キャンバス座標系
+	Coord<double> ControlToCanvas(const Coord<long> &ctrlCoord) const;
 
 	// 背景を塗りつぶす
-	void FillBackground(COLORREF color);
+	void FillBackground(COLORREF color, const CRect& rect);
 	// グリッド描画
-	void DrawGrid(COLORREF color, double size);
+	void DrawGrid(COLORREF color, double size, const CRect& rect);
 	// 原点描画
 	void DrawOrigin(COLORREF color, double size);
 	// 軸描画
-	void DrawAxis(COLORREF color, double scale);
+	void DrawAxis(COLORREF color, double scale, const CRect& rect);
 	// 点描画
 	void DrawPoint();
 	// 矢印描画
@@ -136,9 +136,12 @@ public:
 	void DrawBezierArc();
 
 	// 描画内容をファイル保存
-	bool SaveBitmap(const std::string filePath) const;
+	bool SaveBitmap(const std::string& filePath) const;
 	// 描画内容をクリップボードへコピー
 	bool CopyBitmap() const;
+
+	// デバイスコンテキストを取得
+	CDC* GetDC() const { return m_pDC; };
 };
 
 
@@ -212,9 +215,8 @@ public:
 	// 全形状の最小包含箱を算出
 	BoundingBox<double> CalcBoundingBox() const;
 
-	// 描画フラグ設定
+	// 描画フラグ
 	void SetIsDraw(bool val) { m_isDraw = val; }
-	// 描画フラグ取得
 	bool GetIsDraw() const { return m_isDraw; }
 
 	// 描画
@@ -227,7 +229,7 @@ class Manager
 {
 private:
 	// 上位コントロール
-	COleControl& m_ctrl;
+	COleControl* m_pCtrl;
 	// 描画キャンバス
 	Canvas m_canvas;
 
@@ -237,7 +239,7 @@ private:
 	std::vector<std::unique_ptr<Layer>> m_layers;
 
 	// 背景色
-	COLORREF m_backgroundColor;
+	COLORREF m_backColor;
 	// グリッド色
 	COLORREF m_gridColor;
 	// グリッドサイズ
@@ -269,23 +271,66 @@ private:
 
 public:
 	// コンストラクタ
-	Manager(COleControl& ctrl, CDC& dc);
+	Manager(COleControl* pCtrl, CDC* pDC);
 
 	// コピーコンストラクタ
 	Manager(const Manager&) = delete;
 	// 代入演算子
 	Manager& operator=(const Manager&) = delete;
 
+	// 背景色
+	void SetBackColor(COLORREF val) { m_backColor = val; };
+	COLORREF GetBackColor() { return m_backColor; };
+	// グリッド色
+	void SetGridColor(COLORREF val) { m_gridColor = val; };
+	COLORREF GetGridColor() { return m_gridColor; };
+	// グリッドサイズ
+	void SetGridSize(double val) { m_gridSize = val; };
+	double GetGridSize() { return m_gridSize; };
+	// 原点色
+	void SetOriginColor(COLORREF val) { m_originColor = val; };
+	COLORREF GetOriginColor() { return m_originColor; };
+	// 原点サイズ
+	void SetOriginSize(double val) { m_originSize = val; };
+	double GetOriginSize() { return m_originSize; };
+	// 軸色
+	void SetAxisColor(COLORREF val) { m_axisColor = val; };
+	COLORREF GetAxisColor() { return m_axisColor; };
+	// 軸スケール
+	void SetAxisScale(double val) { m_axisScale = val; };
+	double GetAxisScale() { return m_axisScale; };
+	// グリッド描画可否
+	void SetIsDrawGrid(bool val) { m_isDrawGrid = val; };
+	bool GetIsDrawGrid() { return m_isDrawGrid; };
+	// 原点描画可否
+	void SetIsDrawOrigin(bool val) { m_isDrawOrigin = val; };
+	bool GetIsDrawOrigin() { return m_isDrawOrigin; };
+	// 軸描画可否
+	void SetIsDrawAxis(bool val) { m_isDrawAxis = val; };
+	bool GetIsDrawAxis() { return m_isDrawAxis; };
+	// 矢印描画可否
+	void SetIsDrawArrow(bool val) { m_isDrawArrow = val; };
+	bool GetIsDrawArrow() { return m_isDrawArrow; };
+	// 円中心点描画可否
+	void SetIsDrawCenter(bool val) { m_isDrawCenter = val; };
+	bool GetIsDrawCenter() { return m_isDrawCenter; };
+
+	// カレントレイヤー番号
+	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; };
+	int GetCurrentLayerNo() { return m_currentLayerNo; };
+
 	// 初期化
 	void Clear();
 
 	// 描画
 	void Draw();
+	// 描画(デザインモード用)
+	void DrawDesignMode(const CRect& rect);
 
 	// 拡大縮小
 	void Zoom(double ratio);
 	// パン
-	void Pan(Coord<double> offset);
+	void Pan(const Coord<double> &offset);
 	// フィット
 	void Fit();
 

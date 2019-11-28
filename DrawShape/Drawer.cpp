@@ -5,8 +5,8 @@ namespace Drawer
 {
 
 // コンストラクタ
-Canvas::Canvas(CDC& dc) :
-	m_dc(dc),
+Canvas::Canvas(CDC* pDC) :
+	m_pDC(pDC),
 	m_ratio(DEFAULT_RATIO),
 	m_offset(DEFAULT_OFFSET)
 {
@@ -17,26 +17,34 @@ Canvas::Canvas(CDC& dc) :
 	m_brush.CreateBrushIndirect(&logBrush);
 }
 
-// 座標系変換：コントロール座標系→内部キャンバス座標系
-void Canvas::CanvasToControl(Coord<long> ctrlCoord, Coord<double>& canvasCoord) const
+// 座標系変換：内部キャンバス座標系→コントロール座標系
+Coord<long> Canvas::CanvasToControl(const Coord<double> &canvasCoord) const
 {
-	// TODO:
+	Coord<long> ctrlCoord;
+	// コントロール座標値を計算
+	ctrlCoord.x = (long)(canvasCoord.x * m_ratio + m_offset.x);
+	ctrlCoord.y = (long)(-canvasCoord.y * m_ratio + m_offset.y);	// Y軸反転
+	return ctrlCoord;
 }
 
-// 座標系変換：内部キャンバス座標系→コントロール座標系
-void Canvas::ControlToCanvas(Coord<double>& canvasCoord, Coord<long> ctrlCoord) const
+// 座標系変換：コントロール座標系→内部キャンバス座標系
+Coord<double> Canvas::ControlToCanvas(const Coord<long> &ctrlCoord) const
 {
-	// TODO:
+	// 内部キャンバス座標値を計算
+	Coord<double> canvasCoord;
+	canvasCoord.x = (double)(ctrlCoord.x - m_offset.x) / m_ratio;
+	canvasCoord.y = -(double)(ctrlCoord.y - m_offset.y) / m_ratio;	// Y軸反転
+	return canvasCoord;
 }
 
 // 背景を塗りつぶす
-void Canvas::FillBackground(COLORREF color)
+void Canvas::FillBackground(COLORREF color, const CRect& rect)
 {
-	// TODO:
+	m_pDC->FillSolidRect(rect, color);
 }
 
 // グリッド描画
-void Canvas::DrawGrid(COLORREF color, double size)
+void Canvas::DrawGrid(COLORREF color, double size, const CRect& rect)
 {
 	// TODO:
 }
@@ -48,7 +56,7 @@ void Canvas::DrawOrigin(COLORREF color, double size)
 }
 
 // 軸描画
-void Canvas::DrawAxis(COLORREF color, double scale)
+void Canvas::DrawAxis(COLORREF color, double scale, const CRect& rect)
 {
 	// TODO:
 }
@@ -73,7 +81,7 @@ void Canvas::DrawBezierArc()
 
 
 // 描画内容をファイル保存
-bool Canvas::SaveBitmap(const std::string filePath) const
+bool Canvas::SaveBitmap(const std::string& filePath) const
 {
 	// TODO:
 	return true;
@@ -123,11 +131,11 @@ void Layer::Draw()
 
 
 // コンストラクタ
-Manager::Manager(COleControl& ctrl, CDC& dc) :
-	m_ctrl(ctrl),
-	m_canvas(dc),
+Manager::Manager(COleControl* pCtrl, CDC* pDC) :
+	m_pCtrl(pCtrl),
+	m_canvas(pDC),
 	m_baseLayer(*this),
-	m_backgroundColor(0),
+	m_backColor(0),
 	m_gridColor(0),
 	m_gridSize(0.0),
 	m_originColor(0),
@@ -167,6 +175,39 @@ void Manager::Draw()
 	// TODO:
 }
 
+// 描画(デザインモード用)
+// ※この関数を使用する場合は以下を推奨
+//   ・本クラスのオブジェクトは一時的な変数とし、コンストラクタを Manager(nullptr, デザインモード用DC); で呼び出しておく
+//   ・少なくとも以下のプロパティを設定する
+//       SetBackColor
+//       SetGridColor
+//       SetGridSize
+//       SetOriginColor
+//       SetOriginSize
+//       SetAxisColor
+//       SetAxisScale
+//       SetIsDrawGrid
+//       SetIsDrawOrigin
+//       SetIsDrawAxis
+//   ・引数 rect にデザインモード時のコントロールの矩形を渡す
+void Manager::DrawDesignMode(const CRect& rect)
+{
+	// 拡大縮小率はコンストラクト時の初期値とするため変更しない
+	// オフセットはコントロールの矩形の中央とする
+	Coord<double> offset { (double)rect.CenterPoint().x, (double)rect.CenterPoint().y };
+	m_canvas.SetOffset(offset);
+
+	// 背景色で塗りつぶす
+	m_canvas.FillBackground(m_backColor, rect);
+
+	// グリッド描画
+	if (m_isDrawGrid) m_canvas.DrawGrid(m_gridColor, m_gridSize, rect);
+	// 原点描画
+	if (m_isDrawOrigin) m_canvas.DrawOrigin(m_originColor, m_originSize);
+	// 軸描画
+	if (m_isDrawAxis) m_canvas.DrawAxis(m_axisColor, m_axisScale, rect);
+}
+
 // 拡大縮小
 void Manager::Zoom(double ratio)
 {
@@ -174,7 +215,7 @@ void Manager::Zoom(double ratio)
 }
 
 // パン
-void Manager::Pan(Coord<double> offset)
+void Manager::Pan(const Coord<double> &offset)
 {
 	// TODO:
 }
@@ -182,14 +223,6 @@ void Manager::Pan(Coord<double> offset)
 void Manager::Fit()
 {
 	// TODO:
-}
-
-// 上位コントロールの矩形を取得（クライアント座標）
-CRect Manager::GetControlRect() const
-{
-	CRect r;
-	m_ctrl.GetClientRect(&r);
-	return r;
 }
 
 // 全形状の最小包含箱を算出
@@ -201,6 +234,14 @@ BoundingBox<double> Manager::CalcBoundingBox() const
 		bb += pLayer->CalcBoundingBox();
 	}
 	return bb;
+}
+
+// 上位コントロールの矩形を取得（クライアント座標）
+CRect Manager::GetControlRect() const
+{
+	CRect r;
+	m_pCtrl->GetClientRect(&r);
+	return r;
 }
 
 
