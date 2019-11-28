@@ -3,7 +3,12 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <memory>
 #include <limits>
+
+// std::numeric_limits<T>::max, min を使用するため
+#undef max
+#undef min
 
 namespace Drawer
 {
@@ -52,6 +57,7 @@ public:
 		this->min.y = std::min(this->min.y, rhs.min.y);
 		this->max.x = std::max(this->max.x, rhs.max.x);
 		this->max.y = std::max(this->max.y, rhs.max.y);
+		return *this;
 	}
 	// +=演算子：最小包含箱と座標値を合成
 	BoundingBox& operator+=(const Coord<T>& rhs)
@@ -61,6 +67,7 @@ public:
 		this->min.y = std::min(this->min.y, rhs.y);
 		this->max.x = std::max(this->max.x, rhs.x);
 		this->max.y = std::max(this->max.y, rhs.y);
+		return *this;
 	}
 };
 
@@ -74,93 +81,18 @@ template<typename T>
 BoundingBox<T> operator+(const Coord<T>& lhs, const BoundingBox<T>& rhs) { return BoundingBox<T>(rhs) += lhs; }
 
 
-// 描画管理クラス
-class Manager
-{
-private:
-	// 上位コントロール
-	COleControl& m_ctrl;
-	// 描画キャンバス
-	Canvas m_canvas;
-
-	// ベースレイヤー
-	Layer m_baseLayer;
-	// 描画レイヤーコレクション
-	std::vector<Layer> m_layers;
-
-	// 背景色
-	COLORREF m_backgroundColor;
-	// グリッド色
-	COLORREF m_gridColor;
-	// グリッドサイズ
-	double m_gridSize;
-	// 原点色
-	COLORREF m_originColor;
-	// 原点サイズ
-	double m_originSize;
-	// 軸色
-	COLORREF m_axisColor;
-	// 軸スケール
-	double m_axisScale;
-	// グリッド描画可否
-	bool m_isDrawGrid;
-	// 原点描画可否
-	bool m_isDrawOrigin;
-	// 軸描画可否
-	bool m_isDrawAxis;
-	// 矢印描画可否
-	bool m_isDrawArrow;
-	// 円中心点描画可否
-	bool m_isDrawCenter;
-
-	// カレントレイヤー番号
-	int m_currentLayerNo;
-
-	// 全形状の最小包含箱を算出
-	BoundingBox<double> CalcBoundingBox() const;
-
-public:
-	// コンストラクタ
-	Manager(COleControl& ctrl, CDC& dc);
-	
-	// コピーコンストラクタ
-	Manager(const Manager&) = delete;
-	// 代入演算子
-	Manager& operator=(const Manager&) = delete;
-
-	// 初期化
-	void Clear();
-
-	// 描画
-	void Draw();
-
-	// 拡大縮小
-	void Zoom(double ratio);
-	// パン
-	void Pan(Coord<double> offset);
-	// フィット
-	void Fit();
-
-	// レイヤー枚数を取得
-	size_t GetLayerCount() const { return m_layers.size(); }
-
-	// 上位コントロールの矩形を取得（クライアント座標）
-	CRect GetControlRect() const;
-};
-
-
 // 描画キャンバスクラス
 class Canvas
 {
 private:
 	// 定数
 	// 拡大縮小率の初期値
-	inline static const double DEFAULT_RATIO = 0.0;
+	static constexpr double DEFAULT_RATIO = 0.0;
 	// オフセットの初期値
-	inline static const Coord<double> DEFAULT_OFFSET = {0.0, 0.0};
+	static constexpr Coord<double> DEFAULT_OFFSET = { 0.0, 0.0 };
 
 	// 描画対象のデバイスコンテキスト
-	CDC &m_dc;
+	CDC& m_dc;
 
 	// カレントペンオブジェクト
 	CPen m_pen;
@@ -210,6 +142,54 @@ public:
 };
 
 
+// ノードクラス
+class Node
+{
+	// 座標データ配列型
+	template<typename T, size_t N>
+	using coords_t = std::array<Coord<T>, N>;
+
+private:
+	// 描画管理オブジェクト
+	Manager& m_mng;
+
+public:
+	// コンストラクタ
+	Node(Manager& mng) : m_mng(mng) {};
+	// デストラクタ
+	virtual ~Node() {};
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const = 0;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const = 0;
+	// 描画
+	virtual void Draw() = 0;
+
+};
+
+
+//// 線分ノードクラス
+//class LineNode : public Node
+//{
+//private:
+//	// 座標データ配列
+//	coords_t<double, 2> m_datas;
+//
+//public:
+//	// コンストラクタ
+//	LineNode(Manager& mng);
+//
+//	// 形状の最小包含箱を算出
+//	BoundingBox<double> CalcBoundingBox() const override;
+//	// 形状が描画エリアに含まれるかチェック
+//	bool IsIncludeDrawArea() const override;
+//
+//	// 描画
+//	void Draw() override;
+//};
+
+
 // レイヤークラス
 class Layer
 {
@@ -217,7 +197,7 @@ private:
 	// 描画管理オブジェクト
 	Manager& m_mng;
 	// ノードコレクション
-	std::vector<Node> m_nodes;
+	std::vector<std::unique_ptr<Node>> m_nodes;
 
 	// 描画フラグ
 	bool m_isDraw;
@@ -242,51 +222,78 @@ public:
 };
 
 
-// ノードクラス
-class Node
+// 描画管理クラス
+class Manager
 {
-	// 座標データ配列型
-	template<typename T, size_t N>
-	using coords_t = std::array<Coord<T>, N>;
-
 private:
-	// 描画管理オブジェクト
-	Manager& m_mng;
+	// 上位コントロール
+	COleControl& m_ctrl;
+	// 描画キャンバス
+	Canvas m_canvas;
+
+	// ベースレイヤー
+	Layer m_baseLayer;
+	// 描画レイヤーコレクション
+	std::vector<std::unique_ptr<Layer>> m_layers;
+
+	// 背景色
+	COLORREF m_backgroundColor;
+	// グリッド色
+	COLORREF m_gridColor;
+	// グリッドサイズ
+	double m_gridSize;
+	// 原点色
+	COLORREF m_originColor;
+	// 原点サイズ
+	double m_originSize;
+	// 軸色
+	COLORREF m_axisColor;
+	// 軸スケール
+	double m_axisScale;
+	// グリッド描画可否
+	bool m_isDrawGrid;
+	// 原点描画可否
+	bool m_isDrawOrigin;
+	// 軸描画可否
+	bool m_isDrawAxis;
+	// 矢印描画可否
+	bool m_isDrawArrow;
+	// 円中心点描画可否
+	bool m_isDrawCenter;
+
+	// カレントレイヤー番号
+	int m_currentLayerNo;
+
+	// 全形状の最小包含箱を算出
+	BoundingBox<double> CalcBoundingBox() const;
 
 public:
 	// コンストラクタ
-	Node(Manager& mng) : m_mng(mng) {};
-	// デストラクタ
-	virtual ~Node() {};
+	Manager(COleControl& ctrl, CDC& dc);
 
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const {}
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const {}
+	// コピーコンストラクタ
+	Manager(const Manager&) = delete;
+	// 代入演算子
+	Manager& operator=(const Manager&) = delete;
+
+	// 初期化
+	void Clear();
+
 	// 描画
-	virtual void Draw() {}
+	void Draw();
 
+	// 拡大縮小
+	void Zoom(double ratio);
+	// パン
+	void Pan(Coord<double> offset);
+	// フィット
+	void Fit();
+
+	// レイヤー枚数を取得
+	size_t GetLayerCount() const { return m_layers.size(); }
+
+	// 上位コントロールの矩形を取得（クライアント座標）
+	CRect GetControlRect() const;
 };
-
-
-//// 線分ノードクラス
-//class LineNode : public Node
-//{
-//private:
-//	// 座標データ配列
-//	coords_t<double, 2> m_datas;
-//
-//public:
-//	// コンストラクタ
-//	LineNode(Manager& mng);
-//
-//	// 形状の最小包含箱を算出
-//	BoundingBox<double> CalcBoundingBox() const override;
-//	// 形状が描画エリアに含まれるかチェック
-//	bool IsIncludeDrawArea() const override;
-//
-//	// 描画
-//	void Draw() override;
-//};
 
 }	// namespace DrawShapeLib
