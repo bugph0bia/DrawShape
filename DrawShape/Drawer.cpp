@@ -5,88 +5,6 @@ namespace Drawer
 {
 
 // コンストラクタ
-Manager::Manager(COleControl& ctrl, CDC& dc) :
-	m_ctrl(ctrl),
-	m_canvas(dc),
-	m_baseLayer(*this),
-	m_backgroundColor(0),
-	m_gridColor(0),
-	m_gridSize(0.0),
-	m_originColor(0),
-	m_originSize(0),
-	m_axisColor(0),
-	m_axisScale(0),
-	m_isDrawGrid(false),
-	m_isDrawOrigin(false),
-	m_isDrawAxis(false),
-	m_isDrawArrow(false),
-	m_isDrawCenter(false),
-	m_currentLayerNo(false)
-{
-	// 初期化
-	Clear();
-}
-
-// 初期化
-void Manager::Clear()
-{
-	// ベースレイヤーを初期化
-	m_baseLayer.Clear();
-	// TODO: グリッドを登録
-	// TODO: 原点を登録
-	// TODO: 軸を登録
-
-	// レイヤーコレクションをクリア
-	m_layers.clear();
-	// カレントレイヤーを追加
-	m_layers.push_back(Layer(*this));
-	m_currentLayerNo = 0;
-}
-
-// 描画
-void Manager::Draw()
-{
-	// TODO:
-}
-
-// 拡大縮小
-void Manager::Zoom(double ratio)
-{
-	// TODO:
-}
-
-// パン
-void Manager::Pan(Coord<double> offset)
-{
-	// TODO:
-}
-// フィット
-void Manager::Fit()
-{
-	// TODO:
-}
-
-// 上位コントロールの矩形を取得（クライアント座標）
-CRect Manager::GetControlRect() const
-{
-	CRect r;
-	m_ctrl.GetClientRect(&r);
-	return r;
-}
-
-// 全形状の最小包含箱を算出
-BoundingBox<double> Manager::CalcBoundingBox() const
-{
-	BoundingBox<double> bb;
-	// 全レイヤーの最小包含箱を合成
-	for (auto layer : m_layers) {
-		bb += layer.CalcBoundingBox();
-	}
-	return bb;
-}
-
-
-// コンストラクタ
 Canvas::Canvas(CDC& dc) :
 	m_dc(dc),
 	m_ratio(DEFAULT_RATIO),
@@ -95,7 +13,7 @@ Canvas::Canvas(CDC& dc) :
 	// デフォルトペン = ソリッド, 太さ1, 白色
 	m_pen.CreatePen(PS_SOLID, 1, RGB(0xFF, 0xFF, 0xFF));
 	// デフォルトブラシ = ソリッド, 白色
-	LOGBRUSH logBrush { BS_SOLID, RGB(0xFF, 0xFF, 0xFF), 0};
+	LOGBRUSH logBrush{ BS_SOLID, RGB(0xFF, 0xFF, 0xFF), 0 };
 	m_brush.CreateBrushIndirect(&logBrush);
 }
 
@@ -158,12 +76,14 @@ void Canvas::DrawBezierArc()
 bool Canvas::SaveBitmap(const std::string filePath) const
 {
 	// TODO:
+	return true;
 }
 
 // 描画内容をクリップボードへコピー
 bool Canvas::CopyBitmap() const
 {
 	// TODO:
+	return true;
 }
 
 
@@ -189,8 +109,8 @@ BoundingBox<double> Layer::CalcBoundingBox() const
 {
 	BoundingBox<double> bb;
 	// 全ノードの最小包含箱を合成
-	for (auto layer : m_nodes) {
-		bb += layer.CalcBoundingBox();
+	for (auto& pNode : m_nodes) {
+		bb += pNode->CalcBoundingBox();
 	}
 	return bb;
 }
@@ -201,6 +121,87 @@ void Layer::Draw()
 	// TODO:
 }
 
+
+// コンストラクタ
+Manager::Manager(COleControl& ctrl, CDC& dc) :
+	m_ctrl(ctrl),
+	m_canvas(dc),
+	m_baseLayer(*this),
+	m_backgroundColor(0),
+	m_gridColor(0),
+	m_gridSize(0.0),
+	m_originColor(0),
+	m_originSize(0),
+	m_axisColor(0),
+	m_axisScale(0),
+	m_isDrawGrid(false),
+	m_isDrawOrigin(false),
+	m_isDrawAxis(false),
+	m_isDrawArrow(false),
+	m_isDrawCenter(false),
+	m_currentLayerNo(false)
+{
+	// 初期化
+	Clear();
+}
+
+// 初期化
+void Manager::Clear()
+{
+	// ベースレイヤーを初期化
+	m_baseLayer.Clear();
+	// TODO: グリッドを登録
+	// TODO: 原点を登録
+	// TODO: 軸を登録
+
+	// レイヤーコレクションをクリア
+	m_layers.clear();
+	// カレントレイヤーを追加
+	m_layers.push_back(std::make_unique<Layer>(*this));
+	m_currentLayerNo = 0;
+}
+
+// 描画
+void Manager::Draw()
+{
+	// TODO:
+}
+
+// 拡大縮小
+void Manager::Zoom(double ratio)
+{
+	// TODO:
+}
+
+// パン
+void Manager::Pan(Coord<double> offset)
+{
+	// TODO:
+}
+// フィット
+void Manager::Fit()
+{
+	// TODO:
+}
+
+// 上位コントロールの矩形を取得（クライアント座標）
+CRect Manager::GetControlRect() const
+{
+	CRect r;
+	m_ctrl.GetClientRect(&r);
+	return r;
+}
+
+// 全形状の最小包含箱を算出
+BoundingBox<double> Manager::CalcBoundingBox() const
+{
+	BoundingBox<double> bb;
+	// 全レイヤーの最小包含箱を合成
+	for (auto& pLayer : m_layers) {
+		bb += pLayer->CalcBoundingBox();
+	}
+	return bb;
+}
 
 
 
