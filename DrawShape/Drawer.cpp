@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <atlimage.h>
 #include "Drawer.h"
 
 namespace Drawer
@@ -244,24 +245,218 @@ void Canvas::DrawArrowHead(const Coord<double>& start, const Coord<double>& end)
 }
 
 // ベジエ曲線による円弧描画
-void Canvas::DrawBezierArc()
+// 始点と終点が一致する円弧で呼び出した場合の動作は未定義（そのようなケースは事前に円と見なすべき）
+void Canvas::DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, bool rht)
 {
-	// TODO:
+	// 円弧方向が右回りなら左回り(right-hand thread : rht)にする
+	if (!rht) std::swap(start, end);
+
+	enum { START, END, CENTER };
+
+	// 円弧の始点/終点/中心点を配列にまとめる
+	std::array<Coord<double>, 3> arc {start, end, center};
+
+	// 中心点を原点(0, 0)の位置に移動した円弧を作成
+	std::array<Coord<double>, 3> oarc = arc;
+	oarc[START].x -= center.x;
+	oarc[START].y -= center.y;
+	oarc[END].x -= center.x;
+	oarc[END].y -= center.y;
+	oarc[CENTER].x -= center.x;
+	oarc[CENTER].y -= center.y;
+
+	// 円弧の半径を算出
+	double radius = sqrt(pow(oarc[START].x, 2) + pow(oarc[START].y, 2));
+
+	// 始点と終点の象限(第n象限のn)を調べる
+	std::array<int, 2> quadrant;
+	for (int se = START; se <= END; se++) {
+		// 第1象限
+		if (oarc[se].x > 0.0 && oarc[se].y >= 0.0) quadrant[se] = 1;
+		// 第2象限
+		else if (oarc[se].x <= 0.0 && oarc[se].y > 0.0) quadrant[se] = 2;
+		// 第3象限
+		else if (oarc[se].x < 0.0 && oarc[se].y <= 0.0) quadrant[se] = 3;
+		// 第4象限
+		else quadrant[se] = 4;
+	}
+
+	// 便宜上、第n象限と第(n+4)象限を同じ意味と考える
+	// （数学的には、象限の数nを `4を法とした合同な数` で置き換え可能と見なす）
+	//   例：第2象限と第6象限は同じ象限と考える
+	// その上で、終点の象限 >= 始点の象限 となるように調節することで、
+	// 象限の数値の差で円弧がいくつの象限に跨るかを表せるようにする
+
+	// 始点と終点が同一象限の場合
+	if (quadrant[START] == quadrant[END]) {
+
+		// 中心点→始点と中心点→終点のベクトル外積より、円弧が180度以上か判定する
+		double outer = oarc[START].x * oarc[END].x - oarc[START].y * oarc[END].y;
+		// 180度以上の円弧の場合
+		if (outer < 0.0) {
+			// 始点から終点は全ての象限を経由するため終点の象限を加算する
+			quadrant[END] += 4;
+		}
+	}
+	// 始点と終点が第4象限と第1象限を経由しており大小関係が入れ替わっている場合、
+	// 終点の象限を加算する
+	else if (quadrant[START] > quadrant[END]) {
+		quadrant[END] += 4;
+	}
+
+	// ベジエ曲線を描くための点の配列
+	std::vector<Coord<double>> bezierPoints;
+
+	// 最初の点を格納
+	bezierPoints.push_back(arc[START]);
+
+	// 円弧が跨る象限を順に辿り、象限ごとにベジエ曲線で描く
+	for (int quad = quadrant[START]; quad <= quadrant[END]; quad++) {
+		// 途中の要素なら、円弧の最大最小値をもとに要素の終点を決定
+
+		// その象限内のベジエ曲線の開始点
+		Coord<double> here = bezierPoints.back();
+
+		// その象限内のベジエ曲線の終端点
+		Coord<double> next;
+
+		// 最後の象限の場合、終端点 = 円弧の終点
+		if (quad == quadrant[END]) {
+			// 
+			next = arc[END];
+		}
+		// 途中の象限の場合、終端点 = 次の象限との間の軸上の点
+		else {
+			switch (quad % 4) {
+			// 第1象限
+			case 1:
+				next.x = arc[CENTER].x;
+				next.y = arc[CENTER].y + radius;
+				break;
+			// 第2象限
+			case 2:
+				next.x = arc[CENTER].x - radius;
+				next.y = arc[CENTER].y;
+				break;
+			// 第3象限
+			case 3:
+				next.x = arc[CENTER].x;
+				next.y = arc[CENTER].y - radius;
+				break;
+			// 第4象限
+			case 0:
+				next.x = arc[CENTER].x + radius;
+				next.y = arc[CENTER].y;
+				break;
+			}
+		}
+
+		// 中心点→ベジエ曲線の開始点の単位ベクトル
+		Coord<double> vecHere;
+		vecHere.x = (here.x - arc[CENTER].x) / radius;
+		vecHere.y = (here.y - arc[CENTER].y) / radius;
+		// 中心点→ベジエ曲線の終端点の単位ベクトル
+		Coord<double> vecNext;
+		vecNext.x = (next.x - arc[CENTER].x) / radius;
+		vecNext.y = (next.y - arc[CENTER].y) / radius;
+
+		// ベクトルの内積から象限内の円弧の角度を算出(90度以下)
+		double inner = vecHere.x * vecNext.x + vecHere.y * vecNext.y;
+		double angle = acos(inner);
+
+		// 制御点の長さの係数を算出
+		//   半径 * (4 / 3) * tan(角度 / 4)
+		double coef = radius * (4.0 / 3.0) * tan(angle / 4.0);
+
+		// 開始点の単位ベクトルを90°回転
+		std::swap(vecHere.x, vecHere.y);
+		vecHere.x *= -1;
+		// ベジエ曲線の開始点側の制御点を算出
+		Coord<double> ctrl1;
+		ctrl1.x = vecHere.x * coef + here.x;
+		ctrl1.y = vecHere.y * coef + here.y;
+
+		// 終端点の単位ベクトルを-90°回転
+		std::swap(vecNext.x, vecNext.y);
+		vecNext.y *= -1;
+		// ベジエ曲線の終端点側の制御点を算出
+		Coord<double> ctrl2;
+		ctrl2.x = vecNext.x * coef + next.x;
+		ctrl2.y = vecNext.y * coef + next.y;
+
+		// ベジエ曲線の点を追加
+		bezierPoints.push_back(ctrl1);
+		bezierPoints.push_back(ctrl2);
+		bezierPoints.push_back(next);
+	}
+
+	// ベジエ曲線の点をコントロール座標に変換
+	std::vector<POINT> drawPoints;
+	for (auto& pb : bezierPoints) {
+		auto pc = CanvasToControl(pb);
+		drawPoints.push_back(POINT{ pc.x, pc.y });
+	}
+
+	// 描画
+	GetDC()->PolyBezier(drawPoints.data(), drawPoints.size());
 }
 
-
-// 描画内容をファイル保存
-bool Canvas::SaveBitmap(const std::string& filePath) const
+// 描画内容をファイル保存(BMP/PNG/JPEG/GIF)
+bool Canvas::SaveImage(const std::tstring& filePath) const
 {
-	// TODO:
-	return true;
+	// DCから画像オブジェクトを取得してアタッチ
+	ATL::CImage image;
+	image.Attach(*(GetDC()->GetCurrentBitmap()));
+
+	// 保存する
+	// 第2引数省略で拡張子に従ったフォーマットとなる(BMP/PNG/JPEG/GIF)
+	HRESULT hr = image.Save(filePath.c_str());
+
+	// 画像オブジェクトをデタッチ
+	image.Detach();
+
+	return SUCCEEDED(hr);
 }
 
 // 描画内容をクリップボードへコピー
-bool Canvas::CopyBitmap() const
+bool Canvas::CopyImage(CWnd* pOwner) const
 {
-	// TODO:
-	return true;
+	// DCの画像オブジェクトを取得
+	CBitmap* pBitmapMain = GetDC()->GetCurrentBitmap();
+
+	// BITMAP情報を取得
+	BITMAP bitmapInfo;
+	if (!pBitmapMain->GetBitmap(&bitmapInfo)) return false;
+
+	// ビットマップのビットデータ取得
+	std::size_t bitmapBytes = bitmapInfo.bmWidthBytes * bitmapInfo.bmHeight;
+	std::vector<BYTE> bmpRaw(bitmapBytes);
+	if (!pBitmapMain->GetBitmapBits(bitmapBytes, bmpRaw.data())) return false;
+
+	// ビットマップを複製する
+	// ※メンバ変数のHBITMAPハンドルをそのままクリップボードに設定してしまうと、
+	// 　DCに対するの変更が即時反映されてしまうため
+	CBitmap bitmapSub;
+	bitmapSub.CreateBitmapIndirect(&bitmapInfo);
+	bitmapSub.SetBitmapBits(bitmapBytes, bmpRaw.data());
+
+	// クリップボードを開く
+	if (!pOwner->OpenClipboard()) return false;
+
+	bool ret = true;
+
+	// クリップボードをクリア
+	if (::EmptyClipboard()) {
+		// キャンバスをビットマップとして転送する
+		if (!::SetClipboardData(CF_BITMAP, static_cast<HBITMAP>(bitmapSub))) {
+			ret = false;
+		}
+	}
+
+	// クリップボードを閉じる
+	::CloseClipboard();
+
+	return ret;
 }
 
 
