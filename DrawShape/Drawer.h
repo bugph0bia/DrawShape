@@ -8,7 +8,15 @@
 #include <stdexcept>
 #include <cmath>
 
+// std::string/wstringのサンク対応
+#ifdef UNICODE
+#define tstring wstring
+#else
+#define tstring string
+#endif
+
 // std::numeric_limits<T>::max, min を使用するため
+// このヘッダファイルをインクルードした後はマクロ関数のmax,minは使用できないので注意
 #undef max
 #undef min
 
@@ -129,11 +137,6 @@ private:
 	// 描画対象のデバイスコンテキスト
 	CDC* m_pDC;
 
-	// カレントペンオブジェクト
-	CPen m_pen;
-	// カレントブラシオブジェクト
-	CBrush m_brush;
-
 	// 拡大縮小率
 	double m_ratio;
 	// オフセット
@@ -194,12 +197,12 @@ public:
 	// 矢印先端描画
 	void DrawArrowHead(const Coord<double>& start, const Coord<double>& end);
 	// ベジエ曲線による円弧描画
-	void DrawBezierArc();
+	void DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, bool rht);
 
-	// 描画内容をファイル保存
-	bool SaveBitmap(const std::string& filePath) const;
+	// 描画内容をファイル保存(BMP/PNG/JPEG/GIF)
+	bool SaveImage(const std::tstring& filePath) const;
 	// 描画内容をクリップボードへコピー
-	bool CopyBitmap() const;
+	bool CopyImage(CWnd* pOwner) const;
 
 	// デバイスコンテキストを取得
 	CDC* GetDC() const { return m_pDC; };
@@ -334,6 +337,11 @@ private:
 	COleControl* m_pCtrl;
 	// 描画キャンバス
 	Canvas m_canvas;
+
+	// カレントペンオブジェクト
+	CPen m_pen;
+	// カレントブラシオブジェクト
+	CBrush m_brush;
 
 	// ベースレイヤー
 	Layer m_baseLayer;
