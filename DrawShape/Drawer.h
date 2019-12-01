@@ -316,7 +316,6 @@ public:
 	}
 };
 
-
 // ノードクラス
 class Node
 {
@@ -329,6 +328,8 @@ private:
 	LOGBRUSH m_brush;
 
 public:
+	// コンストラクタ
+	Node(Manager* pManager);
 	// コンストラクタ
 	Node(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush) :
 		m_canvas(canvas),
@@ -346,6 +347,255 @@ public:
 	virtual bool IsIncludeDrawArea() const { return false; }
 	// 描画
 	virtual void Draw() {}
+};
+
+
+// ノード派生クラス：グリッド
+class NodeGrid : public Node
+{
+private:
+	// サイズ
+	double m_size;
+
+public:
+	// コンストラクタ
+	NodeGrid(Manager* pManager, double size) :
+		Node(pManager),
+		m_size(size)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：原点
+class NodeOrigin : public Node
+{
+private:
+	// 座標データ
+	Coord<double> m_point;
+	// サイズ
+	long m_size;
+
+public:
+	// コンストラクタ
+	NodeOrigin(Manager* pManager, const Coord<double>& point, long size) :
+		Node(pManager),
+		m_point(point),
+		m_size(size)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：軸
+class NodeAxis : public Node
+{
+private:
+	// 座標データ
+	Coord<double> m_point;
+	// サイズ
+	double m_scale;
+
+public:
+	// コンストラクタ
+	NodeAxis(Manager* pManager, const Coord<double>& point, double scale) :
+		Node(pManager),
+		m_point(point),
+		m_scale(scale)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：点
+class NodePoint : public Node
+{
+private:
+	// 座標データ
+	Coord<double> m_point;
+	// 点の種類
+	PointType m_pointType;
+
+public:
+	// コンストラクタ
+	NodePoint(Manager* pManager, const Coord<double>& point, PointType pointType) :
+		Node(pManager),
+		m_point(point),
+		m_pointType(pointType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：線
+class NodeLine : public Node
+{
+private:
+	// 座標データ
+	Coords<double, 2> m_points;
+	// 限界値の種類
+	LineLimitType m_lineLimitType;
+
+public:
+	// コンストラクタ
+	NodeLine(Manager* pManager, const Coords<double, 2>& points, LineLimitType lineLimitType) :
+		Node(pManager),
+		m_points(points),
+		m_lineLimitType(lineLimitType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：円弧
+class NodeArc : public Node
+{
+private:
+	// 座標データ
+	Coords<double, 3> m_points;
+	// 円弧の方向の種類
+	ArcDirectionType m_arcDirectionType;
+
+public:
+	// コンストラクタ
+	NodeArc(Manager* pManager, const Coords<double, 3>& points, ArcDirectionType arcDirectionType) :
+		Node(pManager),
+		m_points(points),
+		m_arcDirectionType(arcDirectionType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：円
+class NodeCircle : public Node
+{
+private:
+	// 座標データ
+	Coord<double> m_point;
+	// 半径
+	double m_radius;
+	// 塗りつぶしの種類
+	FillType m_fillType;
+
+public:
+	// コンストラクタ
+	NodeCircle(Manager* pManager, const Coord<double>& point, double radius, FillType fillType) :
+		Node(pManager),
+		m_point(point),
+		m_radius(radius),
+		m_fillType(fillType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：多角形
+class NodePolygon : public Node
+{
+private:
+	// 座標データ
+	std::vector<Coord<double>> m_points;
+	// 塗りつぶしの種類
+	FillType m_fillType;
+
+public:
+	// コンストラクタ
+	NodePolygon(Manager* pManager, const std::vector<Coord<double>>& points, FillType fillType) :
+		Node(pManager),
+		m_points(points),
+		m_fillType(fillType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：扇形
+class NodeSector : public Node
+{
+private:
+	// 座標データ
+	Coords<double, 3> m_points;
+	// 内側の半径
+	double m_innerRadius;
+	// 円弧の方向の種類
+	ArcDirectionType m_arcDirectionType;
+	// 塗りつぶしの種類
+	FillType m_fillType;
+
+public:
+	// コンストラクタ
+	NodeSector(Manager* pManager, const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType) :
+		Node(pManager),
+		m_points(points),
+		m_innerRadius(innerRadius),
+		m_arcDirectionType(arcDirectionType),
+		m_fillType(fillType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
 };
 
 
@@ -367,7 +617,7 @@ public:
 	void Clear();
 
 	// ノード追加
-	//void AddNode(std::unique_ptr<Node>&& pNode) { m_nodes.push_back(pNode); }
+	void AddNode(Node* pNode) { m_nodes.push_back(std::unique_ptr<Node>(pNode)); }
 
 	// 全形状の最小包含箱を算出
 	BoundingBox<double> CalcBoundingBox() const;
@@ -520,256 +770,52 @@ public:
 	bool Pan(const Coord<long>& move);
 	// フィット
 	void Fit(double shapeOccupancy);
-};
 
-
-// ノード派生クラス：グリッド
-class NodeGrid : public Node
-{
-private:
-	// サイズ
-	double m_size;
-
-public:
-	// コンストラクタ
-	NodeGrid(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, double size) :
-		Node(canvas, pen, brush),
-		m_size(size)
+	// グリッド追加
+	void AddGrid(double size)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodeGrid(this, size));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
-};
-
-
-// ノード派生クラス：原点
-class NodeOrigin : public Node
-{
-private:
-	// 座標データ
-	Coord<double> m_point;
-	// サイズ
-	long m_size;
-
-public:
-	// コンストラクタ
-	NodeOrigin(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coord<double>& point, long size) :
-		Node(canvas, pen, brush),
-		m_point(point),
-		m_size(size)
+	// 原点追加
+	void AddOrigin(const Coord<double>& point, long size)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodeOrigin(this, point, size));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
-};
-
-
-// ノード派生クラス：軸
-class NodeAxis : public Node
-{
-private:
-	// 座標データ
-	Coord<double> m_point;
-	// サイズ
-	double m_scale;
-
-public:
-	// コンストラクタ
-	NodeAxis(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coord<double>& point, double scale) :
-		Node(canvas, pen, brush),
-		m_point(point),
-		m_scale(scale)
+	// 軸追加
+	void AddAxis(const Coord<double>& point, double scale)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodeAxis(this, point, scale));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
-};
-
-
-// ノード派生クラス：点
-class NodePoint : public Node
-{
-private:
-	// 座標データ
-	Coord<double> m_point;
-	// 点の種類
-	PointType m_pointType;
-
-public:
-	// コンストラクタ
-	NodePoint(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coord<double>& point, PointType pointType) :
-		Node(canvas, pen, brush),
-		m_point(point),
-		m_pointType(pointType)
+	// 点追加
+	void AddPoint(const Coord<double>& point, PointType pointType)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodePoint(this, point, pointType));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
-};
-
-
-// ノード派生クラス：線
-class NodeLine : public Node
-{
-private:
-	// 座標データ
-	Coords<double, 2> m_points;
-	// 限界値の種類
-	LineLimitType m_lineLimitType;
-
-public:
-	// コンストラクタ
-	NodeLine(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coords<double, 2>& points, LineLimitType lineLimitType) :
-		Node(canvas, pen, brush),
-		m_points(points),
-		m_lineLimitType(lineLimitType)
+	// 線追加
+	void AddLine(const Coords<double, 2>& points, LineLimitType lineLimitType)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodeLine(this, points, lineLimitType));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
-};
-
-
-// ノード派生クラス：円弧
-class NodeArc : public Node
-{
-private:
-	// 座標データ
-	Coords<double, 3> m_points;
-	// 円弧の方向の種類
-	ArcDirectionType m_arcDirectionType;
-
-public:
-	// コンストラクタ
-	NodeArc(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coords<double, 3>& points, ArcDirectionType arcDirectionType) :
-		Node(canvas, pen, brush),
-		m_points(points),
-		m_arcDirectionType(arcDirectionType)
+	// 円弧追加
+	void AddArc(const Coords<double, 3>& points, ArcDirectionType arcDirectionType)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodeArc(this, points, arcDirectionType));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
-};
-
-
-// ノード派生クラス：円
-class NodeCircle : public Node
-{
-private:
-	// 座標データ
-	Coord<double> m_point;
-	// 半径
-	double m_radius;
-	// 塗りつぶしの種類
-	FillType m_fillType;
-
-public:
-	// コンストラクタ
-	NodeCircle(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coord<double>& point, double radius, FillType fillType) :
-		Node(canvas, pen, brush),
-		m_point(point),
-		m_radius(radius),
-		m_fillType(fillType)
+	// 円追加
+	void AddCircle(const Coord<double>& point, double radius, FillType fillType)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodeCircle(this, point, radius, fillType));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
-};
-
-
-// ノード派生クラス：多角形
-class NodePolygon : public Node
-{
-private:
-	// 座標データ
-	std::vector<Coord<double>> m_points;
-	// 塗りつぶしの種類
-	FillType m_fillType;
-
-public:
-	// コンストラクタ
-	NodePolygon(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const std::vector<Coord<double>>& points, FillType fillType) :
-		Node(canvas, pen, brush),
-		m_points(points),
-		m_fillType(fillType)
+	// 多角形追加
+	void AddPlygon(const std::vector<Coord<double>>& points, FillType fillType)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodePolygon(this, points, fillType));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
-};
-
-
-// ノード派生クラス：扇形
-class NodeSector : public Node
-{
-private:
-	// 座標データ
-	Coords<double, 3> m_points;
-	// 内側の半径
-	double m_innerRadius;
-	// 円弧の方向の種類
-	ArcDirectionType m_arcDirectionType;
-	// 塗りつぶしの種類
-	FillType m_fillType;
-
-public:
-	// コンストラクタ
-	NodeSector(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coords<double, 3>& points, double innerRadius,
-		ArcDirectionType arcDirectionType, FillType fillType) :
-		Node(canvas, pen, brush),
-		m_points(points),
-		m_innerRadius(innerRadius),
-		m_arcDirectionType(arcDirectionType),
-		m_fillType(fillType)
+	// 扇形追加
+	void AddSector(const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType)
 	{
+		m_layers[m_currentLayerNo]->AddNode(new NodeSector(this, points, innerRadius, arcDirectionType, fillType));
 	}
-
-	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
-	// 描画
-	virtual void Draw() override;
 };
 
 }	// namespace Drawer

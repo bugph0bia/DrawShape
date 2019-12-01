@@ -450,6 +450,14 @@ bool Canvas::CopyImage(CWnd* pOwner) const
 
 
 // コンストラクタ
+Node::Node(Manager* pManager) :
+	m_canvas(pManager->GetCanvas()),
+	m_pen(pManager->GetCurrentPen()),
+	m_brush(pManager->GetCurrentBrush())
+{
+}
+
+// コンストラクタ
 Layer::Layer() :
 	m_isDraw(false)
 {
@@ -460,9 +468,6 @@ void Layer::Clear()
 {
 	// ノードコレクションをクリア
 	m_nodes.clear();
-
-	// TODO: カレントのペン設定ノードを追加
-	// TODO: カレントのブラシ設定ノードを追加
 }
 
 // 全形状の最小包含箱を算出
@@ -517,17 +522,19 @@ Manager::Manager(CDC* pDC, const CRect& rect) :
 // 初期化
 void Manager::Clear()
 {
-	// ベースレイヤーを初期化
-	m_baseLayer.Clear();
-
 	// ペン初期化
 	m_currentPen = DEFAULT_PEN;
 	// ブラシ初期化
 	m_currentBrush = DEFAULT_BRUSH;
 
-	// TODO: グリッドを登録
-	// TODO: 軸を登録
-	// TODO: 原点を登録
+	// ベースレイヤーを初期化
+	m_baseLayer.Clear();
+	// グリッドを登録
+	m_baseLayer.AddNode(new NodeGrid(this, m_gridSize));
+	// 軸を登録
+	m_baseLayer.AddNode(new NodeOrigin(this, Coord<double>{ 0.0, 0.0 }, m_originSize));
+	// 原点を登録
+	m_baseLayer.AddNode(new NodeAxis(this, Coord<double>{ 0.0, 0.0 }, m_axisScale));
 
 	// レイヤーコレクションをクリア
 	m_layers.clear();
@@ -565,28 +572,24 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 		// 背景色で塗りつぶす
 		m_canvas.FillBackground(m_backColor);
 
+		LOGPEN logPen = DEFAULT_PEN;
+		LOGBRUSH logBrush = DEFAULT_BRUSH;
+
 		// グリッド描画
 		if (m_isDrawGrid) {
 			// ペンとブラシを変更（デフォルトから色のみ変更）
-			LOGPEN logPen = DEFAULT_PEN;
-			LOGBRUSH logBrush = DEFAULT_BRUSH;
 			logPen.lopnColor = m_gridColor;
 			logBrush.lbColor = m_gridColor;
-
 			PenBrushChanger pc(m_canvas.GetDC(), logPen);
 			PenBrushChanger bc(m_canvas.GetDC(), logBrush);
 
-			// グリッド描画
 			m_canvas.DrawGrid(m_gridSize);
 		}
 		// 軸描画
 		if (m_isDrawAxis) {
 			// ペンとブラシを変更（デフォルトから色のみ変更）
-			LOGPEN logPen = DEFAULT_PEN;
-			LOGBRUSH logBrush = DEFAULT_BRUSH;
 			logPen.lopnColor = m_axisColor;
 			logBrush.lbColor = m_axisColor;
-
 			PenBrushChanger pc(m_canvas.GetDC(), logPen);
 			PenBrushChanger bc(m_canvas.GetDC(), logBrush);
 
@@ -595,11 +598,8 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 		// 原点描画
 		if (m_isDrawOrigin) {
 			// ペンとブラシを変更（デフォルトから色のみ変更）
-			LOGPEN logPen = DEFAULT_PEN;
-			LOGBRUSH logBrush = DEFAULT_BRUSH;
 			logPen.lopnColor = m_originColor;
 			logBrush.lbColor = m_originColor;
-
 			PenBrushChanger pc(m_canvas.GetDC(), logPen);
 			PenBrushChanger bc(m_canvas.GetDC(), logBrush);
 
