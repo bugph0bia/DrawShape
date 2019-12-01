@@ -72,6 +72,12 @@ public:
 	// y座標
 	T y;
 
+	// 2点間の距離
+	double Length(const Coord& rhs) const
+	{
+		return sqrt(pow((rhs.x - this->x), 2) + pow((rhs.y - this->y), 2));
+	}
+
 	// TODO: []演算子使う？使わなければクラスではなく構造体でもよい
 
 	// []演算子（左辺値参照版）：x, yメンバを[0], [1]で参照可能にする
@@ -95,8 +101,50 @@ public:
 		else if(idx == 1) return y;
 		else throw std::out_of_range("Drawer::Coord::operator[] : index is out of range.");
 	}
+	// +=演算子
+	Coord& operator+=(const Coord& rhs)
+	{
+		this->x += rhs.x;
+		this->y += rhs.y;
+		return *this;
+	}
+	// -=演算子
+	Coord& operator-=(const Coord& rhs)
+	{
+		this->x -= rhs.x;
+		this->y -= rhs.y;
+		return *this;
+	}
+	// *=演算子
+	Coord& operator*=(double rhs)
+	{
+		this->x *= rhs;
+		this->y *= rhs;
+		return *this;
+	}
+	// /=演算子
+	Coord& operator/=(double rhs)
+	{
+		this->x /= rhs;
+		this->y /= rhs;
+		return *this;
+	}
 };
 
+// +演算子
+template<typename T>
+Coord<T> operator+(const Coord<T>& lhs, const Coord<T>& rhs) { return Coord<T>(lhs) += rhs; }
+// -演算子
+template<typename T>
+Coord<T> operator-(const Coord<T>& lhs, const Coord<T>& rhs) { return Coord<T>(lhs) -= rhs; }
+// *演算子
+template<typename T>
+Coord<T> operator*(const Coord<T>& lhs, double rhs) { return Coord<T>(lhs) *= rhs; }
+template<typename T>
+Coord<T> operator*(double lhs, const Coord<T>& rhs) { return Coord<T>(rhs) *= lhs; }
+// /演算子
+template<typename T>
+Coord<T> operator/(const Coord<T>& lhs, double rhs) { return Coord<T>(lhs) /= rhs; }
 
 // 座標データコレクション
 template<typename T, size_t N>
@@ -150,10 +198,21 @@ public:
 	// 高さを取得
 	double GetHeight() const { return (max.y - min.y); }
 
+	// 相手の領域との交差領域を求める
+	BoundingBox Intersect(const BoundingBox& rhs)
+	{
+		BoundingBox bbox;
+		bbox.min.x = std::max(this->min.x, rhs.min.x);
+		bbox.min.y = std::max(this->min.y, rhs.min.y);
+		bbox.max.x = std::min(this->max.x, rhs.max.x);
+		bbox.max.y = std::min(this->max.y, rhs.max.y);
+		return bbox;
+	}
+
 	// 有効確認
 	bool Verify() const
 	{
-		if (GetWidth() >= 0.0 && GetHeight() > 0.0) return true;
+		if (GetWidth() >= 0.0 && GetHeight() >= 0.0) return true;
 		else return false;
 	}
 };
@@ -183,6 +242,31 @@ private:
 	// ※コントロール座標だが計算制度のためにdouble型とする
 	Coord<double> m_offset;
 
+	// 背景色
+	COLORREF m_backColor;
+	// グリッド色
+	COLORREF m_gridColor;
+	// グリッドサイズ
+	double m_gridSize;
+	// 原点色
+	COLORREF m_originColor;
+	// 原点サイズ
+	long m_originSize;
+	// 軸色
+	COLORREF m_axisColor;
+	// 軸スケール
+	double m_axisScale;
+	// グリッド描画可否
+	bool m_isDrawGrid;
+	// 原点描画可否
+	bool m_isDrawOrigin;
+	// 軸描画可否
+	bool m_isDrawAxis;
+	// 矢印描画可否
+	bool m_isDrawArrow;
+	// 円中心点描画可否
+	bool m_isDrawCenter;
+
 public:
 	// 定数
 	// 拡大縮小率の初期値
@@ -203,6 +287,8 @@ public:
 	static constexpr long AXIS_SCALE_LENGTH = 3;
 	// 原点の中央矩形の大きさ
 	static constexpr long ORIGIN_CENTER_SIZE = 2;
+	// 点の三角形描画時のサイズ
+	static constexpr long TRIANGLE_POINT_SIZE = 3;
 	// 点の強調時のサイズ
 	static constexpr long LARGE_POINT_SIZE = 3;
 	// 矢印の羽の軸からの角度(20°)
@@ -218,6 +304,43 @@ public:
 	void SetOffset(Coord<double> val) { m_offset = val; }
 	Coord<double> GetOffset() const { return m_offset; }
 
+	// 背景色
+	void SetBackColor(COLORREF val) { m_backColor = val; };
+	COLORREF GetBackColor() const { return m_backColor; };
+	// グリッド色
+	void SetGridColor(COLORREF val) { m_gridColor = val; };
+	COLORREF GetGridColor() const { return m_gridColor; };
+	// グリッドサイズ
+	void SetGridSize(double val) { m_gridSize = val; };
+	double GetGridSize() const { return m_gridSize; };
+	// 原点色
+	void SetOriginColor(COLORREF val) { m_originColor = val; };
+	COLORREF GetOriginColor() const { return m_originColor; };
+	// 原点サイズ
+	void SetOriginSize(long val) { m_originSize = val; };
+	long GetOriginSize() const { return m_originSize; };
+	// 軸色
+	void SetAxisColor(COLORREF val) { m_axisColor = val; };
+	COLORREF GetAxisColor() const { return m_axisColor; };
+	// 軸スケール
+	void SetAxisScale(double val) { m_axisScale = val; };
+	double GetAxisScale() const { return m_axisScale; };
+	// グリッド描画可否
+	void SetIsDrawGrid(bool val) { m_isDrawGrid = val; };
+	bool GetIsDrawGrid() const { return m_isDrawGrid; };
+	// 原点描画可否
+	void SetIsDrawOrigin(bool val) { m_isDrawOrigin = val; };
+	bool GetIsDrawOrigin() const { return m_isDrawOrigin; };
+	// 軸描画可否
+	void SetIsDrawAxis(bool val) { m_isDrawAxis = val; };
+	bool GetIsDrawAxis() const { return m_isDrawAxis; };
+	// 矢印描画可否
+	void SetIsDrawArrow(bool val) { m_isDrawArrow = val; };
+	bool GetIsDrawArrow() const { return m_isDrawArrow; };
+	// 円中心点描画可否
+	void SetIsDrawCenter(bool val) { m_isDrawCenter = val; };
+	bool GetIsDrawCenter() const { return m_isDrawCenter; };
+
 	// 描画領域の再設定
 	void Reset(CDC* pDC, const CRect& rect) { m_pDC = pDC; m_rect = rect; }
 	// デバイスコンテキストを取得
@@ -231,22 +354,26 @@ public:
 	Coord<double> ControlToCanvas(const Coord<long>& ctrlCoord) const;
 
 	// 描画領域全体の座標を取得
-	BoundingBox<double> GetCanvasBox() const;
+	BoundingBox<double> GetCanvasArea() const;
 
 	// 背景を塗りつぶす
-	void FillBackground(COLORREF color);
+	void FillBackground() const;
 	// グリッド描画
-	void DrawGrid(double size);
+	void DrawGrid() const;
 	// 原点描画
-	void DrawOrigin(Coord<double> base, long size);
+	void DrawOrigin(Coord<double> base) const;
 	// 軸描画
-	void DrawAxis(Coord<double> base, double scale);
-	// 点を強調描画
-	void DrawLargePoint(const Coord<double>& point);
+	void DrawAxis(Coord<double> base) const;
+	// ピクセル(点)を描画
+	void DrawPixel(const Coord<double>& point) const;
+	// 点を三角形で描画
+	void DrawTrianglePoint(const Coord<double>& point) const;
+	// 点を強調して描画
+	void DrawLargePoint(const Coord<double>& point) const;
 	// 矢印先端描画
-	void DrawArrowHead(const Coord<double>& start, const Coord<double>& end);
+	void DrawArrowHead(const Coord<double>& start, const Coord<double>& end) const;
 	// ベジエ曲線による円弧描画
-	void DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, ArcDirectionType direction);
+	void DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, ArcDirectionType direction) const;
 
 	// 描画内容をファイル保存(BMP/PNG/JPEG/GIF)
 	bool SaveImage(const std::tstring& filePath) const;
@@ -319,13 +446,16 @@ public:
 // ノードクラス
 class Node
 {
-private:
+protected:
 	// キャンバスオブジェクト
 	const Canvas& m_canvas;
 	// ペン
 	LOGPEN m_pen;
 	// ブラシ
 	LOGBRUSH m_brush;
+
+	// 形状が描画領域に含まれるかチェック
+	bool IsIncludeCanvas() const;
 
 public:
 	// コンストラクタ
@@ -343,8 +473,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const { return BoundingBox<double>(); }
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const { return false; }
 	// 描画
 	virtual void Draw() {}
 };
@@ -353,22 +481,15 @@ public:
 // ノード派生クラス：グリッド
 class NodeGrid : public Node
 {
-private:
-	// サイズ
-	double m_size;
-
 public:
 	// コンストラクタ
-	NodeGrid(Manager* pManager, double size) :
-		Node(pManager),
-		m_size(size)
+	NodeGrid(Manager* pManager) :
+		Node(pManager)
 	{
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -380,22 +501,17 @@ class NodeOrigin : public Node
 private:
 	// 座標データ
 	Coord<double> m_point;
-	// サイズ
-	long m_size;
 
 public:
 	// コンストラクタ
-	NodeOrigin(Manager* pManager, const Coord<double>& point, long size) :
+	NodeOrigin(Manager* pManager, const Coord<double>& point) :
 		Node(pManager),
-		m_point(point),
-		m_size(size)
+		m_point(point)
 	{
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -407,22 +523,17 @@ class NodeAxis : public Node
 private:
 	// 座標データ
 	Coord<double> m_point;
-	// サイズ
-	double m_scale;
 
 public:
 	// コンストラクタ
-	NodeAxis(Manager* pManager, const Coord<double>& point, double scale) :
+	NodeAxis(Manager* pManager, const Coord<double>& point) :
 		Node(pManager),
-		m_point(point),
-		m_scale(scale)
+		m_point(point)
 	{
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -448,8 +559,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -475,8 +584,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -502,8 +609,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -532,8 +637,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -559,8 +662,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -592,8 +693,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const override;
 	// 描画
 	virtual void Draw() override;
 };
@@ -648,31 +747,6 @@ private:
 	// カレントブラシ
 	LOGBRUSH m_currentBrush;
 
-	// 背景色
-	COLORREF m_backColor;
-	// グリッド色
-	COLORREF m_gridColor;
-	// グリッドサイズ
-	double m_gridSize;
-	// 原点色
-	COLORREF m_originColor;
-	// 原点サイズ
-	long m_originSize;
-	// 軸色
-	COLORREF m_axisColor;
-	// 軸スケール
-	double m_axisScale;
-	// グリッド描画可否
-	bool m_isDrawGrid;
-	// 原点描画可否
-	bool m_isDrawOrigin;
-	// 軸描画可否
-	bool m_isDrawAxis;
-	// 矢印描画可否
-	bool m_isDrawArrow;
-	// 円中心点描画可否
-	bool m_isDrawCenter;
-
 	// カレントレイヤー番号
 	int m_currentLayerNo;
 
@@ -711,41 +785,41 @@ public:
 	LOGBRUSH GetCurrentBrush() const { return m_currentBrush; };
 
 	// 背景色
-	void SetBackColor(COLORREF val) { m_backColor = val; };
-	COLORREF GetBackColor() const { return m_backColor; };
+	void SetBackColor(COLORREF val) { m_canvas.SetBackColor(val); };
+	COLORREF GetBackColor() const { return m_canvas.GetBackColor(); };
 	// グリッド色
-	void SetGridColor(COLORREF val) { m_gridColor = val; };
-	COLORREF GetGridColor() const { return m_gridColor; };
+	void SetGridColor(COLORREF val) { m_canvas.SetGridColor(val); };
+	COLORREF GetGridColor() const { return m_canvas.GetGridColor(); };
 	// グリッドサイズ
-	void SetGridSize(double val) { m_gridSize = val; };
-	double GetGridSize() const { return m_gridSize; };
+	void SetGridSize(double val) { m_canvas.SetGridSize(val); };
+	double GetGridSize() const { return m_canvas.GetGridSize(); };
 	// 原点色
-	void SetOriginColor(COLORREF val) { m_originColor = val; };
-	COLORREF GetOriginColor() const { return m_originColor; };
+	void SetOriginColor(COLORREF val) { m_canvas.SetOriginColor(val); };
+	COLORREF GetOriginColor() const { return m_canvas.GetOriginColor(); };
 	// 原点サイズ
-	void SetOriginSize(long val) { m_originSize = val; };
-	long GetOriginSize() const { return m_originSize; };
+	void SetOriginSize(long val) { m_canvas.SetOriginSize(val); };
+	long GetOriginSize() const { return m_canvas.GetOriginSize(); };
 	// 軸色
-	void SetAxisColor(COLORREF val) { m_axisColor = val; };
-	COLORREF GetAxisColor() const { return m_axisColor; };
+	void SetAxisColor(COLORREF val) { m_canvas.SetAxisColor(val); };
+	COLORREF GetAxisColor() const { return m_canvas.GetAxisColor(); };
 	// 軸スケール
-	void SetAxisScale(double val) { m_axisScale = val; };
-	double GetAxisScale() const { return m_axisScale; };
+	void SetAxisScale(double val) { m_canvas.SetAxisScale(val); };
+	double GetAxisScale() const { return m_canvas.GetAxisScale(); };
 	// グリッド描画可否
-	void SetIsDrawGrid(bool val) { m_isDrawGrid = val; };
-	bool GetIsDrawGrid() const { return m_isDrawGrid; };
+	void SetIsDrawGrid(bool val) { m_canvas.SetIsDrawGrid(val); };
+	bool GetIsDrawGrid() const { return m_canvas.GetIsDrawGrid(); };
 	// 原点描画可否
-	void SetIsDrawOrigin(bool val) { m_isDrawOrigin = val; };
-	bool GetIsDrawOrigin() const { return m_isDrawOrigin; };
+	void SetIsDrawOrigin(bool val) { m_canvas.SetIsDrawOrigin(val); };
+	bool GetIsDrawOrigin() const { return m_canvas.GetIsDrawOrigin(); };
 	// 軸描画可否
-	void SetIsDrawAxis(bool val) { m_isDrawAxis = val; };
-	bool GetIsDrawAxis() const { return m_isDrawAxis; };
+	void SetIsDrawAxis(bool val) { m_canvas.SetIsDrawAxis(val); };
+	bool GetIsDrawAxis() const { return m_canvas.GetIsDrawAxis(); };
 	// 矢印描画可否
-	void SetIsDrawArrow(bool val) { m_isDrawArrow = val; };
-	bool GetIsDrawArrow() const { return m_isDrawArrow; };
+	void SetIsDrawArrow(bool val) { m_canvas.SetIsDrawArrow(val); };
+	bool GetIsDrawArrow() const { return m_canvas.GetIsDrawArrow(); };
 	// 円中心点描画可否
-	void SetIsDrawCenter(bool val) { m_isDrawCenter = val; };
-	bool GetIsDrawCenter() const { return m_isDrawCenter; };
+	void SetIsDrawCenter(bool val) { m_canvas.SetIsDrawCenter(val); };
+	bool GetIsDrawCenter() const { return m_canvas.GetIsDrawCenter(); };
 
 	// カレントレイヤー番号
 	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; };
@@ -772,19 +846,19 @@ public:
 	void Fit(double shapeOccupancy);
 
 	// グリッド追加
-	void AddGrid(double size)
+	void AddGrid()
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeGrid(this, size));
+		m_layers[m_currentLayerNo]->AddNode(new NodeGrid(this));
 	}
 	// 原点追加
-	void AddOrigin(const Coord<double>& point, long size)
+	void AddOrigin(const Coord<double>& point)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeOrigin(this, point, size));
+		m_layers[m_currentLayerNo]->AddNode(new NodeOrigin(this, point));
 	}
 	// 軸追加
-	void AddAxis(const Coord<double>& point, double scale)
+	void AddAxis(const Coord<double>& point)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeAxis(this, point, scale));
+		m_layers[m_currentLayerNo]->AddNode(new NodeAxis(this, point));
 	}
 	// 点追加
 	void AddPoint(const Coord<double>& point, PointType pointType)
