@@ -20,14 +20,47 @@
 #undef max
 #undef min
 
+
 namespace Drawer
 {
-// クラス前方宣言
+
+//////////////// クラス前方宣言 ////////////////
+
 class Manager;
 class Canvas;
 class Layer;
 class Node;
 
+
+//////////////// 列挙型 ////////////////
+
+// 点の種類
+enum class PointType {
+	Pixel,		// ・
+	Large,		// ●
+	Triangle,	// △
+};
+
+// 線の限界値の種類
+enum class LineLimitType {
+	Finite,		// 有限線分
+	Infinite,	// 無限直線
+};
+
+// 円弧の方向の種類
+enum class ArcDirectionType {
+	Left,	// 左
+	Right,	// 右
+};
+
+// 塗りつぶしの種類
+enum class FillType {
+	NoFill,	// 塗りつぶさない
+	Fill,	// 塗りつぶす
+};
+
+
+//////////////// クラス、構造体、型 ////////////////
 
 // 座標データ構造体
 template<typename T>
@@ -136,6 +169,8 @@ class Canvas
 private:
 	// 描画対象のデバイスコンテキスト
 	CDC* m_pDC;
+	// 描画対象のコントロールの矩形
+	CRect m_rect;
 
 	// 拡大縮小率
 	double m_ratio;
@@ -169,7 +204,7 @@ public:
 	static constexpr double ARROW_WING_ANGLE = 20.0 * PI / 180.0;
 
 	// コンストラクタ
-	Canvas(CDC* pDC);
+	Canvas(CDC* pDC, const CRect& rect);
 
 	// 拡大縮小率
 	void SetRatio(double val) { m_ratio = val;  }
@@ -178,34 +213,40 @@ public:
 	void SetOffset(Coord<double> val) { m_offset = val; }
 	Coord<double> GetOffset() const { return m_offset; }
 
+	// 描画領域の再設定
+	void Reset(CDC* pDC, const CRect& rect) { m_pDC = pDC; m_rect = rect; }
+	// デバイスコンテキストを取得
+	CDC* GetDC() const { return m_pDC; };
+	// 描画領域を取得
+	const CRect* GetRect() const { return &m_rect; };
+
 	// 座標系変換：内部キャンバス座標系→コントロール座標系
 	Coord<long> CanvasToControl(const Coord<double> &canvasCoord) const;
 	// 座標系変換：コントロール座標系→内部キャンバス座標系
 	Coord<double> ControlToCanvas(const Coord<long>& ctrlCoord) const;
-	BoundingBox<double> ControlToCanvas(const CRect& rect) const;
+
+	// 描画領域全体の座標を取得
+	BoundingBox<double> GetCanvasBox() const;
 
 	// 背景を塗りつぶす
-	void FillBackground(COLORREF color, const CRect& rect);
+	void FillBackground(COLORREF color);
 	// グリッド描画
-	void DrawGrid(COLORREF color, double size, const CRect& rect);
+	void DrawGrid(COLORREF color, double size);
 	// 原点描画
 	void DrawOrigin(COLORREF color, long size);
 	// 軸描画
-	void DrawAxis(COLORREF color, double scale, const CRect& rect);
+	void DrawAxis(COLORREF color, double scale);
 	// 点を強調描画
 	void DrawLargePoint(const Coord<double>& point);
 	// 矢印先端描画
 	void DrawArrowHead(const Coord<double>& start, const Coord<double>& end);
 	// ベジエ曲線による円弧描画
-	void DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, bool rht);
+	void DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, ArcDirectionType direction);
 
 	// 描画内容をファイル保存(BMP/PNG/JPEG/GIF)
 	bool SaveImage(const std::tstring& filePath) const;
 	// 描画内容をクリップボードへコピー
 	bool CopyImage(CWnd* pOwner) const;
-
-	// デバイスコンテキストを取得
-	CDC* GetDC() const { return m_pDC; };
 };
 
 
@@ -333,8 +374,6 @@ public:
 class Manager
 {
 private:
-	// 上位コントロール
-	COleControl* m_pCtrl;
 	// 描画キャンバス
 	Canvas m_canvas;
 
@@ -389,7 +428,7 @@ public:
 	static constexpr double OFFSET_MAX = 999999.0;
 
 	// コンストラクタ
-	Manager(COleControl* pCtrl, CDC* pDC);
+	Manager(CDC* pDC, const CRect& rect);
 
 	// コピーコンストラクタ
 	Manager(const Manager&) = delete;
@@ -437,18 +476,18 @@ public:
 	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; };
 	int GetCurrentLayerNo() { return m_currentLayerNo; };
 
+	// 描画領域の情報を再設定
+	// OnSize()等のイベントで呼び出す必要あり
+	void ResetCanvas(CDC* pDC, const CRect& rect) { m_canvas.Reset(pDC, rect); }
+
 	// 初期化
 	void Clear();
 
 	// 描画
-	void Draw();
-	// 描画(デザインモード用)
-	void DrawDesignMode(const CRect& rect);
+	void Draw(bool isDesignMode=false);
 
 	// 拡大縮小
 	bool Zoom(double coef, const Coord<long>& base);
-	// 拡大縮小（カーソル位置基準）
-	bool Zoom(double coef);
 	// パン
 	bool Pan(const Coord<long>& move);
 	// フィット
@@ -456,10 +495,19 @@ public:
 
 	// レイヤー枚数を取得
 	size_t GetLayerCount() const { return m_layers.size(); }
-
-	// 上位コントロールの矩形を取得（クライアント座標）
-	CRect GetControlRect() const;
 };
+
+
+// TODO:
+// 背景クリア
+// ペンブラシ
+// 点、三角、黒丸
+// 線分、無限直線
+// 円弧 左右
+// 円 塗る塗らない
+// 多角形 塗る塗らない
+// 円弧矩形 左右 塗る塗らない
+// 追加原点
 
 
 //// 線分ノードクラス
