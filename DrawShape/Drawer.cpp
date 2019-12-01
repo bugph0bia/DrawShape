@@ -6,8 +6,9 @@ namespace Drawer
 {
 
 // コンストラクタ
-Canvas::Canvas(CDC* pDC) :
+Canvas::Canvas(CDC* pDC, const CRect& rect) :
 	m_pDC(pDC),
+	m_rect(rect),
 	m_ratio(DEFAULT_RATIO),
 	m_offset(DEFAULT_OFFSET)
 {
@@ -33,25 +34,24 @@ Coord<double> Canvas::ControlToCanvas(const Coord<long> &ctrlCoord) const
 	return canvasCoord;
 }
 
-// 座標系変換：コントロール座標系→内部キャンバス座標系
-// コントロール全体をキャンバス座標に変換
-BoundingBox<double> Canvas::ControlToCanvas(const CRect& rect) const
+// 描画領域全体の座標を取得
+BoundingBox<double> Canvas::GetCanvasBox() const
 {
 	// 内部キャンバス座標値を計算
 	BoundingBox<double> canvas;
-	canvas.min = ControlToCanvas(Coord<long>{ 0, rect.Height() });
-	canvas.max = ControlToCanvas(Coord<long>{ rect.Width(), 0 });
+	canvas.min = ControlToCanvas(Coord<long>{ 0, m_rect.Height() });
+	canvas.max = ControlToCanvas(Coord<long>{ m_rect.Width(), 0 });
 	return canvas;
 }
 
 // 背景を塗りつぶす
-void Canvas::FillBackground(COLORREF color, const CRect& rect)
+void Canvas::FillBackground(COLORREF color)
 {
-	m_pDC->FillSolidRect(rect, color);
+	m_pDC->FillSolidRect(m_rect, color);
 }
 
 // グリッド描画
-void Canvas::DrawGrid(COLORREF color, double size, const CRect& rect)
+void Canvas::DrawGrid(COLORREF color, double size)
 {
 	// グリッドが細かすぎたら描画を行わない
 	if ((size * m_ratio) < DRAW_GRID_SIZE_MIN) return;
@@ -60,7 +60,7 @@ void Canvas::DrawGrid(COLORREF color, double size, const CRect& rect)
 	PenBrushChanger pc(GetDC(), LOGPEN{ PS_SOLID, POINT{1, 0}, color });
 
 	// キャンバス全体の座標を取得
-	BoundingBox<double>	canvas = ControlToCanvas(rect);
+	BoundingBox<double>	canvas = GetCanvasBox();
 
 	// キャンバスに含まれるグリッドのインデックス
 	long xstart = static_cast<long>(canvas.min.x / size);
@@ -120,13 +120,13 @@ void Canvas::DrawOrigin(COLORREF color, long size)
 }
 
 // 軸描画
-void Canvas::DrawAxis(COLORREF color, double scale, const CRect& rect)
+void Canvas::DrawAxis(COLORREF color, double scale)
 {
 	// ペンを変更
 	PenBrushChanger pc(GetDC(), LOGPEN{ PS_SOLID, POINT{1, 0}, color });
 
 	// キャンバス全体の座標を取得
-	BoundingBox<double>	canvas = ControlToCanvas(rect);
+	BoundingBox<double>	canvas = GetCanvasBox();
 
 	// 原点のコントロール座標を算出
 	Coord<long> origin = CanvasToControl(Coord<double>{ 0.0, 0.0 });
@@ -136,7 +136,7 @@ void Canvas::DrawAxis(COLORREF color, double scale, const CRect& rect)
 
 		// X軸を描画
 		GetDC()->MoveTo(0, origin.y);
-		GetDC()->LineTo(rect.Width(), origin.y);
+		GetDC()->LineTo(m_rect.Width(), origin.y);
 	}
 
 	// Y軸が表示される場合
@@ -144,7 +144,7 @@ void Canvas::DrawAxis(COLORREF color, double scale, const CRect& rect)
 
 		// 軸描画
 		GetDC()->MoveTo(origin.x, 0);
-		GetDC()->LineTo(origin.x, rect.Height());
+		GetDC()->LineTo(origin.x, m_rect.Height());
 	}
 
 	// 目盛が細かすぎたら描画を行わない
@@ -242,10 +242,10 @@ void Canvas::DrawArrowHead(const Coord<double>& start, const Coord<double>& end)
 
 // ベジエ曲線による円弧描画
 // 始点と終点が一致する円弧で呼び出した場合の動作は未定義（そのようなケースは事前に円と見なすべき）
-void Canvas::DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, bool rht)
+void Canvas::DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, ArcDirectionType direction)
 {
-	// 円弧方向が右回りなら左回り(right-hand thread : rht)にする
-	if (!rht) std::swap(start, end);
+	// 円弧方向が右回りなら左回りに変換する
+	if (direction == ArcDirectionType::Right) std::swap(start, end);
 
 	enum { START, END, CENTER };
 
@@ -501,9 +501,8 @@ void Layer::Draw()
 
 
 // コンストラクタ
-Manager::Manager(COleControl* pCtrl, CDC* pDC) :
-	m_pCtrl(pCtrl),
-	m_canvas(pDC),
+Manager::Manager(CDC* pDC, const CRect& rect) :
+	m_canvas(pDC, rect),
 	m_baseLayer(*this),
 	m_backColor(0),
 	m_gridColor(0),
@@ -534,6 +533,7 @@ void Manager::Clear()
 	// ベースレイヤーを初期化
 	m_baseLayer.Clear();
 
+	// TODO: 背景クリアを登録
 	// TODO: グリッドを登録
 	// TODO: 軸を登録
 	// TODO: 原点を登録
@@ -546,55 +546,62 @@ void Manager::Clear()
 }
 
 // 描画
-void Manager::Draw()
+void Manager::Draw(bool isDesignMode/*=false*/)
 {
-	// 背景を塗りつぶす
-	m_canvas.FillBackground(m_backColor, GetControlRect());
+	// デザインモード用の描画
+	if (isDesignMode) {
+		// ※これを使用する場合は以下を推奨
+		//   ・本クラスのオブジェクトは一時的な変数とし、コンストラクタを Manager(デザインモード用のDC, Rect); で呼び出しておく
+		//   ・少なくとも以下のプロパティを設定する
+		//       SetBackColor
+		//       SetGridColor
+		//       SetGridSize
+		//       SetOriginColor
+		//       SetOriginSize
+		//       SetAxisColor
+		//       SetAxisScale
+		//       SetIsDrawGrid
+		//       SetIsDrawOrigin
+		//       SetIsDrawAxis
+		//   ・引数 rect にデザインモード時のコントロールの矩形を渡す
 
-	// ベースレイヤーを描画
-	m_baseLayer.Draw();
+		// 拡大縮小率はコンストラクト時の初期値とする
+		m_canvas.SetRatio(Canvas::DEFAULT_RATIO);
+		// オフセットはコントロールの矩形の中央とする
+		Coord<double> offset{ (double)m_canvas.GetRect()->CenterPoint().x, (double)m_canvas.GetRect()->CenterPoint().y };
+		m_canvas.SetOffset(offset);
 
-	// 全レイヤーを描画
-	for (auto& pLayer : m_layers) {
-		pLayer->Draw();
+		// 背景色で塗りつぶす
+		m_canvas.FillBackground(m_backColor);
+
+		// グリッド描画
+		if (m_isDrawGrid) m_canvas.DrawGrid(m_gridColor, m_gridSize);
+		// 軸描画
+		if (m_isDrawAxis) m_canvas.DrawAxis(m_axisColor, m_axisScale);
+		// 原点描画
+		if (m_isDrawOrigin) m_canvas.DrawOrigin(m_originColor, m_originSize);
+
 	}
+	// 通常の描画
+	else {
+		// 背景を塗りつぶす
+		m_canvas.FillBackground(m_backColor);
 
-	// 描画イベント発行
-	m_pCtrl->InvalidateRect(nullptr, FALSE);	// 領域無効化
-	m_pCtrl->UpdateWindow();					// 再描画命令
-}
+		// ベースレイヤーを描画
+		m_baseLayer.Draw();
 
-// 描画(デザインモード用)
-// ※この関数を使用する場合は以下を推奨
-//   ・本クラスのオブジェクトは一時的な変数とし、コンストラクタを Manager(nullptr, デザインモード用DC); で呼び出しておく
-//   ・少なくとも以下のプロパティを設定する
-//       SetBackColor
-//       SetGridColor
-//       SetGridSize
-//       SetOriginColor
-//       SetOriginSize
-//       SetAxisColor
-//       SetAxisScale
-//       SetIsDrawGrid
-//       SetIsDrawOrigin
-//       SetIsDrawAxis
-//   ・引数 rect にデザインモード時のコントロールの矩形を渡す
-void Manager::DrawDesignMode(const CRect& rect)
-{
-	// 拡大縮小率はコンストラクト時の初期値とするため変更しない
-	// オフセットはコントロールの矩形の中央とする
-	Coord<double> offset { (double)rect.CenterPoint().x, (double)rect.CenterPoint().y };
-	m_canvas.SetOffset(offset);
+		// 全レイヤーを描画
+		for (auto& pLayer : m_layers) {
+			pLayer->Draw();
+		}
 
-	// 背景色で塗りつぶす
-	m_canvas.FillBackground(m_backColor, rect);
-
-	// グリッド描画
-	if (m_isDrawGrid) m_canvas.DrawGrid(m_gridColor, m_gridSize, rect);
-	// 軸描画
-	if (m_isDrawAxis) m_canvas.DrawAxis(m_axisColor, m_axisScale, rect);
-	// 原点描画
-	if (m_isDrawOrigin) m_canvas.DrawOrigin(m_originColor, m_originSize);
+		/*
+		TODO: これはコントロール側に行わせる予定
+			// 描画イベント発行
+			m_pCtrl->InvalidateRect(nullptr, FALSE);	// 領域無効化
+			m_pCtrl->UpdateWindow();					// 再描画命令
+		*/
+	}
 }
 
 // 拡大縮小
@@ -621,6 +628,9 @@ bool Manager::Zoom(double coef, const Coord<long>& base)
 	return true;
 }
 
+/*
+TODO: これはコントロール側に行わせる予定
+
 // 拡大縮小（カーソル位置基準）
 bool Manager::Zoom(double coef)
 {
@@ -641,6 +651,7 @@ bool Manager::Zoom(double coef)
 	// 拡大縮小
 	return Zoom(coef, Coord<long>{ cursor.x, cursor.y });
 }
+*/
 
 // パン
 bool Manager::Pan(const Coord<long>& move)
@@ -668,10 +679,6 @@ bool Manager::Pan(const Coord<long>& move)
 // フィット
 void Manager::Fit(double shapeOccupancy)
 {
-	// コントロールの矩形を取得
-	CRect rect;
-	m_pCtrl->GetClientRect(&rect);
-
 	// 最小包含箱取得
 	BoundingBox<double> bbox = CalcBoundingBox();
 
@@ -685,8 +692,8 @@ void Manager::Fit(double shapeOccupancy)
 		// 初期値とする
 		ratio = Canvas::DEFAULT_RATIO;
 		offset = Coord<double>{
-			static_cast<double>(rect.CenterPoint().x),
-			static_cast<double>(rect.CenterPoint().y)
+			static_cast<double>(m_canvas.GetRect()->CenterPoint().x),
+			static_cast<double>(m_canvas.GetRect()->CenterPoint().y)
 		};
 	}
 	else {
@@ -698,26 +705,26 @@ void Manager::Fit(double shapeOccupancy)
 
 		// 描画領域の縦横比
 		double cnvsAspect = std::numeric_limits<double>::max();
-		if (rect.Width() != 0.0) {
-			cnvsAspect = static_cast<double>(rect.Height()) / rect.Width();
+		if (m_canvas.GetRect()->Width() != 0.0) {
+			cnvsAspect = static_cast<double>(m_canvas.GetRect()->Height()) / m_canvas.GetRect()->Width();
 		}
 
 		// 拡大縮小率を算出
 		// 描画領域に対して形状が縦長なら縦方向を基準とする
 		if (bbox.GetWidth() == 0.0 || shapeAspect > cnvsAspect) {
 			// (描画領域サイズ / 形状サイズ) * 形状の占有率
-			ratio = (rect.Height() / bbox.GetHeight()) * shapeOccupancy;
+			ratio = (m_canvas.GetRect()->Height() / bbox.GetHeight()) * shapeOccupancy;
 		}
 		// 描画領域に対して形状が横長なら横方向を基準とする
 		else {
 			// (描画領域サイズ / 形状サイズ) * 形状の占有率
-			ratio = (rect.Width() / bbox.GetWidth()) * shapeOccupancy;
+			ratio = (m_canvas.GetRect()->Width() / bbox.GetWidth()) * shapeOccupancy;
 		}
 
 		// オフセットを算出
-		offset.x = (rect.Width() - bbox.GetWidth()) * ratio / 2.0 - bbox.min.x * ratio;
-		double y = (rect.Height() - bbox.GetHeight()) * ratio / 2.0 - bbox.min.y * ratio;
-		offset.y = rect.Height() - y;	// Y軸反転
+		offset.x = (m_canvas.GetRect()->Width() - bbox.GetWidth()) * ratio / 2.0 - bbox.min.x * ratio;
+		double y = (m_canvas.GetRect()->Height() - bbox.GetHeight()) * ratio / 2.0 - bbox.min.y * ratio;
+		offset.y = m_canvas.GetRect()->Height() - y;	// Y軸反転
 	}
 
 	// 拡大縮小率とオフセットを更新
@@ -737,14 +744,6 @@ BoundingBox<double> Manager::CalcBoundingBox() const
 		bbox += pLayer->CalcBoundingBox();
 	}
 	return bbox;
-}
-
-// 上位コントロールの矩形を取得（クライアント座標）
-CRect Manager::GetControlRect() const
-{
-	CRect r;
-	m_pCtrl->GetClientRect(&r);
-	return r;
 }
 
 
