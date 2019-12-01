@@ -43,8 +43,8 @@ enum class PointType {
 
 // 線の限界値の種類
 enum class LineLimitType {
-	Finite,		// 有限線分
-	Infinite,	// 無限直線
+	Finite,		// 有限
+	Infinite,	// 無限
 };
 
 // 円弧の方向の種類
@@ -96,6 +96,11 @@ public:
 		else throw std::out_of_range("Drawer::Coord::operator[] : index is out of range.");
 	}
 };
+
+
+// 座標データコレクション
+template<typename T, size_t N>
+using Coords = std::array<Coord<T>, N>;
 
 
 // 最小包含箱クラス
@@ -231,11 +236,11 @@ public:
 	// 背景を塗りつぶす
 	void FillBackground(COLORREF color);
 	// グリッド描画
-	void DrawGrid(COLORREF color, double size);
+	void DrawGrid(double size);
 	// 原点描画
-	void DrawOrigin(COLORREF color, long size);
+	void DrawOrigin(Coord<double> base, long size);
 	// 軸描画
-	void DrawAxis(COLORREF color, double scale);
+	void DrawAxis(Coord<double> base, double scale);
 	// 点を強調描画
 	void DrawLargePoint(const Coord<double>& point);
 	// 矢印先端描画
@@ -315,27 +320,32 @@ public:
 // ノードクラス
 class Node
 {
-	// 座標データ配列型
-	template<typename T, size_t N>
-	using coords_t = std::array<Coord<T>, N>;
-
 private:
-	// 描画管理オブジェクト
-	Manager& m_mng;
+	// キャンバスオブジェクト
+	const Canvas& m_canvas;
+	// ペン
+	LOGPEN m_pen;
+	// ブラシ
+	LOGBRUSH m_brush;
 
 public:
 	// コンストラクタ
-	Node(Manager& mng) : m_mng(mng) {};
+	Node(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush) :
+		m_canvas(canvas),
+		m_pen(pen),
+		m_brush(brush)
+	{
+	}
+
 	// デストラクタ
-	virtual ~Node() {};
+	virtual ~Node() {}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const = 0;
+	virtual BoundingBox<double> CalcBoundingBox() const { return BoundingBox<double>(); }
 	// 形状が描画エリアに含まれるかチェック
-	virtual bool IsIncludeDrawArea() const = 0;
+	virtual bool IsIncludeDrawArea() const { return false; }
 	// 描画
-	virtual void Draw() = 0;
-
+	virtual void Draw() {}
 };
 
 
@@ -343,8 +353,6 @@ public:
 class Layer
 {
 private:
-	// 描画管理オブジェクト
-	Manager& m_mng;
 	// ノードコレクション
 	std::vector<std::unique_ptr<Node>> m_nodes;
 
@@ -353,10 +361,13 @@ private:
 
 public:
 	// コンストラクタ
-	Layer(Manager& mng);
+	Layer();
 
 	// 初期化
 	void Clear();
+
+	// ノード追加
+	//void AddNode(std::unique_ptr<Node>&& pNode) { m_nodes.push_back(pNode); }
 
 	// 全形状の最小包含箱を算出
 	BoundingBox<double> CalcBoundingBox() const;
@@ -377,15 +388,15 @@ private:
 	// 描画キャンバス
 	Canvas m_canvas;
 
-	// カレントペンオブジェクト
-	CPen m_pen;
-	// カレントブラシオブジェクト
-	CBrush m_brush;
-
 	// ベースレイヤー
 	Layer m_baseLayer;
 	// 描画レイヤーコレクション
 	std::vector<std::unique_ptr<Layer>> m_layers;
+
+	// カレントペン
+	LOGPEN m_currentPen;
+	// カレントブラシ
+	LOGBRUSH m_currentBrush;
 
 	// 背景色
 	COLORREF m_backColor;
@@ -420,6 +431,10 @@ private:
 
 public:
 	// 定数
+	// デフォルトペン = ソリッド, 太さ1, 白色
+	static constexpr LOGPEN DEFAULT_PEN = LOGPEN{ PS_SOLID, {1, 0}, RGB(0xFF, 0xFF, 0xFF) };
+	// デフォルトブラシ = ソリッド, 白色, ハッチ無し
+	static constexpr LOGBRUSH DEFAULT_BRUSH = LOGBRUSH{ BS_SOLID, RGB(0xFF, 0xFF, 0xFF), 0 };
 	// 最大拡大率
 	static constexpr double RATIO_MAX = 50000.0;
 	// 最小縮小率
@@ -435,46 +450,59 @@ public:
 	// 代入演算子
 	Manager& operator=(const Manager&) = delete;
 
+	// キャンバスオブジェクト
+	const Canvas& GetCanvas() const { return m_canvas; }
+
+	// カレントペン
+	void SetCurrentPen(const LOGPEN& val) { m_currentPen = val; };
+	LOGPEN GetCurrentPen() const { return m_currentPen; };
+	// カレントブラシ
+	void SetCurrentBrush(const LOGBRUSH& val) { m_currentBrush = val; };
+	LOGBRUSH GetCurrentBrush() const { return m_currentBrush; };
+
 	// 背景色
 	void SetBackColor(COLORREF val) { m_backColor = val; };
-	COLORREF GetBackColor() { return m_backColor; };
+	COLORREF GetBackColor() const { return m_backColor; };
 	// グリッド色
 	void SetGridColor(COLORREF val) { m_gridColor = val; };
-	COLORREF GetGridColor() { return m_gridColor; };
+	COLORREF GetGridColor() const { return m_gridColor; };
 	// グリッドサイズ
 	void SetGridSize(double val) { m_gridSize = val; };
-	double GetGridSize() { return m_gridSize; };
+	double GetGridSize() const { return m_gridSize; };
 	// 原点色
 	void SetOriginColor(COLORREF val) { m_originColor = val; };
-	COLORREF GetOriginColor() { return m_originColor; };
+	COLORREF GetOriginColor() const { return m_originColor; };
 	// 原点サイズ
 	void SetOriginSize(long val) { m_originSize = val; };
-	long GetOriginSize() { return m_originSize; };
+	long GetOriginSize() const { return m_originSize; };
 	// 軸色
 	void SetAxisColor(COLORREF val) { m_axisColor = val; };
-	COLORREF GetAxisColor() { return m_axisColor; };
+	COLORREF GetAxisColor() const { return m_axisColor; };
 	// 軸スケール
 	void SetAxisScale(double val) { m_axisScale = val; };
-	double GetAxisScale() { return m_axisScale; };
+	double GetAxisScale() const { return m_axisScale; };
 	// グリッド描画可否
 	void SetIsDrawGrid(bool val) { m_isDrawGrid = val; };
-	bool GetIsDrawGrid() { return m_isDrawGrid; };
+	bool GetIsDrawGrid() const { return m_isDrawGrid; };
 	// 原点描画可否
 	void SetIsDrawOrigin(bool val) { m_isDrawOrigin = val; };
-	bool GetIsDrawOrigin() { return m_isDrawOrigin; };
+	bool GetIsDrawOrigin() const { return m_isDrawOrigin; };
 	// 軸描画可否
 	void SetIsDrawAxis(bool val) { m_isDrawAxis = val; };
-	bool GetIsDrawAxis() { return m_isDrawAxis; };
+	bool GetIsDrawAxis() const { return m_isDrawAxis; };
 	// 矢印描画可否
 	void SetIsDrawArrow(bool val) { m_isDrawArrow = val; };
-	bool GetIsDrawArrow() { return m_isDrawArrow; };
+	bool GetIsDrawArrow() const { return m_isDrawArrow; };
 	// 円中心点描画可否
 	void SetIsDrawCenter(bool val) { m_isDrawCenter = val; };
-	bool GetIsDrawCenter() { return m_isDrawCenter; };
+	bool GetIsDrawCenter() const { return m_isDrawCenter; };
 
 	// カレントレイヤー番号
 	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; };
-	int GetCurrentLayerNo() { return m_currentLayerNo; };
+	int GetCurrentLayerNo() const { return m_currentLayerNo; };
+
+	// レイヤー枚数を取得
+	size_t GetLayerCount() const { return m_layers.size(); }
 
 	// 描画領域の情報を再設定
 	// OnSize()等のイベントで呼び出す必要あり
@@ -492,42 +520,256 @@ public:
 	bool Pan(const Coord<long>& move);
 	// フィット
 	void Fit(double shapeOccupancy);
-
-	// レイヤー枚数を取得
-	size_t GetLayerCount() const { return m_layers.size(); }
 };
 
 
-// TODO:
-// 背景クリア
-// ペンブラシ
-// 点、三角、黒丸
-// 線分、無限直線
-// 円弧 左右
-// 円 塗る塗らない
-// 多角形 塗る塗らない
-// 円弧矩形 左右 塗る塗らない
-// 追加原点
+// ノード派生クラス：グリッド
+class NodeGrid : public Node
+{
+private:
+	// サイズ
+	double m_size;
+
+public:
+	// コンストラクタ
+	NodeGrid(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, double size) :
+		Node(canvas, pen, brush),
+		m_size(size)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
 
 
-//// 線分ノードクラス
-//class LineNode : public Node
-//{
-//private:
-//	// 座標データ配列
-//	coords_t<double, 2> m_datas;
-//
-//public:
-//	// コンストラクタ
-//	LineNode(Manager& mng);
-//
-//	// 形状の最小包含箱を算出
-//	BoundingBox<double> CalcBoundingBox() const override;
-//	// 形状が描画エリアに含まれるかチェック
-//	bool IsIncludeDrawArea() const override;
-//
-//	// 描画
-//	void Draw() override;
-//};
+// ノード派生クラス：原点
+class NodeOrigin : public Node
+{
+private:
+	// 座標データ
+	Coord<double> m_point;
+	// サイズ
+	long m_size;
 
-}	// namespace DrawShapeLib
+public:
+	// コンストラクタ
+	NodeOrigin(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coord<double>& point, long size) :
+		Node(canvas, pen, brush),
+		m_point(point),
+		m_size(size)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：軸
+class NodeAxis : public Node
+{
+private:
+	// 座標データ
+	Coord<double> m_point;
+	// サイズ
+	double m_scale;
+
+public:
+	// コンストラクタ
+	NodeAxis(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coord<double>& point, double scale) :
+		Node(canvas, pen, brush),
+		m_point(point),
+		m_scale(scale)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：点
+class NodePoint : public Node
+{
+private:
+	// 座標データ
+	Coord<double> m_point;
+	// 点の種類
+	PointType m_pointType;
+
+public:
+	// コンストラクタ
+	NodePoint(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coord<double>& point, PointType pointType) :
+		Node(canvas, pen, brush),
+		m_point(point),
+		m_pointType(pointType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：線
+class NodeLine : public Node
+{
+private:
+	// 座標データ
+	Coords<double, 2> m_points;
+	// 限界値の種類
+	LineLimitType m_lineLimitType;
+
+public:
+	// コンストラクタ
+	NodeLine(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coords<double, 2>& points, LineLimitType lineLimitType) :
+		Node(canvas, pen, brush),
+		m_points(points),
+		m_lineLimitType(lineLimitType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：円弧
+class NodeArc : public Node
+{
+private:
+	// 座標データ
+	Coords<double, 3> m_points;
+	// 円弧の方向の種類
+	ArcDirectionType m_arcDirectionType;
+
+public:
+	// コンストラクタ
+	NodeArc(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coords<double, 3>& points, ArcDirectionType arcDirectionType) :
+		Node(canvas, pen, brush),
+		m_points(points),
+		m_arcDirectionType(arcDirectionType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：円
+class NodeCircle : public Node
+{
+private:
+	// 座標データ
+	Coord<double> m_point;
+	// 半径
+	double m_radius;
+	// 塗りつぶしの種類
+	FillType m_fillType;
+
+public:
+	// コンストラクタ
+	NodeCircle(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coord<double>& point, double radius, FillType fillType) :
+		Node(canvas, pen, brush),
+		m_point(point),
+		m_radius(radius),
+		m_fillType(fillType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：多角形
+class NodePolygon : public Node
+{
+private:
+	// 座標データ
+	std::vector<Coord<double>> m_points;
+	// 塗りつぶしの種類
+	FillType m_fillType;
+
+public:
+	// コンストラクタ
+	NodePolygon(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const std::vector<Coord<double>>& points, FillType fillType) :
+		Node(canvas, pen, brush),
+		m_points(points),
+		m_fillType(fillType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+
+// ノード派生クラス：扇形
+class NodeSector : public Node
+{
+private:
+	// 座標データ
+	Coords<double, 3> m_points;
+	// 内側の半径
+	double m_innerRadius;
+	// 円弧の方向の種類
+	ArcDirectionType m_arcDirectionType;
+	// 塗りつぶしの種類
+	FillType m_fillType;
+
+public:
+	// コンストラクタ
+	NodeSector(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush, const Coords<double, 3>& points, double innerRadius,
+		ArcDirectionType arcDirectionType, FillType fillType) :
+		Node(canvas, pen, brush),
+		m_points(points),
+		m_innerRadius(innerRadius),
+		m_arcDirectionType(arcDirectionType),
+		m_fillType(fillType)
+	{
+	}
+
+	// 形状の最小包含箱を算出
+	virtual BoundingBox<double> CalcBoundingBox() const override;
+	// 形状が描画エリアに含まれるかチェック
+	virtual bool IsIncludeDrawArea() const override;
+	// 描画
+	virtual void Draw() override;
+};
+
+}	// namespace Drawer
