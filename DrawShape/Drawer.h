@@ -32,6 +32,17 @@ class Layer;
 class Node;
 
 
+//////////////// 定数 ////////////////
+// 距離の許容誤差
+static constexpr double LENGTH_TOLERANCE = 0.00001;
+// 角度の許容誤差(rad)
+static constexpr double ANGLE_TOLERANCE = 0.00001;
+// 円周率
+static constexpr double	PI = 3.141592653589793;
+// 線分、円弧の座標コレクションのインデックス値
+enum { START, END, CENTER };
+
+
 //////////////// 列挙型 ////////////////
 
 // 点の種類
@@ -72,35 +83,53 @@ public:
 	// y座標
 	T y;
 
+	// コンストラクタ
+	Coord() : x(0), y(0) {}
+	// コンストラクタ
+	Coord(T x, T y) : x(x), y(y) {}
+
 	// 2点間の距離
 	double Length(const Coord& rhs) const
 	{
 		return sqrt(pow((rhs.x - this->x), 2) + pow((rhs.y - this->y), 2));
 	}
 
-	// TODO: []演算子使う？使わなければクラスではなく構造体でもよい
+	// 自身を中心点として点を回転
+	Coord Rotate(const Coord& point, double angle)
+	{
+		// 自身から点へのベクトル
+		Coord vec = point - *this;
+		// ベクトルを回転
+		Coord newPoint;
+		newPoint.x = vec.x * cos(angle) - vec.y + sin(angle);
+		newPoint.y = vec.x * sin(angle) + vec.y + cos(angle);
+		// ベクトルと基準点から回転後の座標を算出
+		newPoint += *this;
+		return newPoint;
+	}
 
-	// []演算子（左辺値参照版）：x, yメンバを[0], [1]で参照可能にする
-	T& operator[](std::size_t idx) &
-	{
-		if(idx == 0) return x;
-		else if(idx == 1) return y;
-		else throw std::out_of_range("Drawer::Coord::operator[] : index is out of range.");
-	}
-	// []演算子（const左辺値参照版）：x, yメンバを[0], [1]で参照可能にする
-	const T& operator[](std::size_t idx) const &
-	{
-		if(idx == 0) return x;
-		else if(idx == 1) return y;
-		else throw std::out_of_range("Drawer::Coord::operator[] : index is out of range.");
-	}
-	// []演算子（const右辺値参照版）：x, yメンバを[0], [1]で参照可能にする
-	T operator[](std::size_t idx) const &&
-	{
-		if(idx == 0) return x;
-		else if(idx == 1) return y;
-		else throw std::out_of_range("Drawer::Coord::operator[] : index is out of range.");
-	}
+	//// []演算子（左辺値参照版）：x, yメンバを[0], [1]で参照可能にする
+	//T& operator[](std::size_t idx) &
+	//{
+	//	if(idx == 0) return x;
+	//	else if(idx == 1) return y;
+	//	else throw std::out_of_range("Drawer::Coord::operator[] : index is out of range.");
+	//}
+	//// []演算子（const左辺値参照版）：x, yメンバを[0], [1]で参照可能にする
+	//const T& operator[](std::size_t idx) const &
+	//{
+	//	if(idx == 0) return x;
+	//	else if(idx == 1) return y;
+	//	else throw std::out_of_range("Drawer::Coord::operator[] : index is out of range.");
+	//}
+	//// []演算子（const右辺値参照版）：x, yメンバを[0], [1]で参照可能にする
+	//T operator[](std::size_t idx) const &&
+	//{
+	//	if(idx == 0) return x;
+	//	else if(idx == 1) return y;
+	//	else throw std::out_of_range("Drawer::Coord::operator[] : index is out of range.");
+	//}
+
 	// +=演算子
 	Coord& operator+=(const Coord& rhs)
 	{
@@ -171,25 +200,59 @@ public:
 		max.x = std::numeric_limits<T>::min();
 		max.y = std::numeric_limits<T>::min();
 	}
+	// コンストラクタ
+	BoundingBox(Coord<T> min, Coord<T> max) : min(min), max(max) {}
+	// コンストラクタ
+	BoundingBox(Coord<T> point) : min(point), max(point) {}
 
-	// +=演算子：最小包含箱同士を合成
+	// 最小包含箱同士の和集合
+	void Union(const BoundingBox& rhs)
+	{
+		// 相手が有効オブジェクト
+		if (rhs.Verify()) {
+			// 自身も有効オブジェクト
+			if (this->Verify()) {
+				// より範囲の大きい矩形になるように合成する
+				this->min.x = std::min(this->min.x, rhs.min.x);
+				this->min.y = std::min(this->min.y, rhs.min.y);
+				this->max.x = std::max(this->max.x, rhs.max.x);
+				this->max.y = std::max(this->max.y, rhs.max.y);
+			}
+			// 自身が無効オブジェクト
+			else {
+				// 相手をそのまま採用
+				*this = rhs;
+			}
+		}
+	}
+
+	// 最小包含箱同士の積集合
+	void Intersect(const BoundingBox& rhs)
+	{
+		// 自身と相手の両方が有効オブジェクト
+		if (rhs.Verify() && this->Verify()) {
+			// より範囲の小さい矩形になるように合成する
+			this->min.x = std::max(this->min.x, rhs.min.x);
+			this->min.y = std::max(this->min.y, rhs.min.y);
+			this->max.x = std::min(this->max.x, rhs.max.x);
+			this->max.y = std::min(this->max.y, rhs.max.y);
+		}
+		// 一方でも有効オブジェクトでなければ無効
+		else {
+			*this = BoundingBox();
+		}
+	}
+
+	// +=演算子：最小包含箱同士の和集合
 	BoundingBox& operator+=(const BoundingBox& rhs)
 	{
-		// より範囲の大きい矩形になるように合成する
-		this->min.x = std::min(this->min.x, rhs.min.x);
-		this->min.y = std::min(this->min.y, rhs.min.y);
-		this->max.x = std::max(this->max.x, rhs.max.x);
-		this->max.y = std::max(this->max.y, rhs.max.y);
+		this->Union(rhs);
 		return *this;
 	}
-	// +=演算子：最小包含箱と座標値を合成
+	// +=演算子：最小包含箱と座標値の和集合
 	BoundingBox& operator+=(const Coord<T>& rhs)
 	{
-		// より範囲の大きい矩形になるように合成する
-		this->min.x = std::min(this->min.x, rhs.x);
-		this->min.y = std::min(this->min.y, rhs.y);
-		this->max.x = std::max(this->max.x, rhs.x);
-		this->max.y = std::max(this->max.y, rhs.y);
+		this->Union(BoundingBox(rhs, rhs));
 		return *this;
 	}
 
@@ -198,15 +261,11 @@ public:
 	// 高さを取得
 	double GetHeight() const { return (max.y - min.y); }
 
-	// 相手の領域との交差領域を求める
-	BoundingBox Intersect(const BoundingBox& rhs)
+	// +=演算子：最小包含箱同士の積集合
+	BoundingBox& operator*=(const BoundingBox& rhs)
 	{
-		BoundingBox bbox;
-		bbox.min.x = std::max(this->min.x, rhs.min.x);
-		bbox.min.y = std::max(this->min.y, rhs.min.y);
-		bbox.max.x = std::min(this->max.x, rhs.max.x);
-		bbox.max.y = std::min(this->max.y, rhs.max.y);
-		return bbox;
+		this->Intersect(rhs);
+		return *this;
 	}
 
 	// 有効確認
@@ -217,14 +276,17 @@ public:
 	}
 };
 
-// +演算子：最小包含箱同士を合成
+// +演算子：最小包含箱同士の和集合
 template<typename T>
 BoundingBox<T> operator+(const BoundingBox<T>& lhs, const BoundingBox<T>& rhs) { return BoundingBox<T>(lhs) += rhs; }
-// +演算子：最小包含箱と座標値を合成
+// +演算子：最小包含箱と座標値の和集合
 template<typename T>
 BoundingBox<T> operator+(const BoundingBox<T>& lhs, const Coord<T>& rhs) { return BoundingBox<T>(lhs) += rhs; }
 template<typename T>
 BoundingBox<T> operator+(const Coord<T>& lhs, const BoundingBox<T>& rhs) { return BoundingBox<T>(rhs) += lhs; }
+// *演算子：最小包含箱同士の積集合
+template<typename T>
+BoundingBox<T> operator*(const BoundingBox<T>& lhs, const BoundingBox<T>& rhs) { return BoundingBox<T>(lhs) *= rhs; }
 
 
 // 描画キャンバスクラス
@@ -272,13 +334,7 @@ public:
 	// 拡大縮小率の初期値
 	static constexpr double DEFAULT_RATIO = 1.0;
 	// オフセットの初期値
-	static constexpr Coord<double> DEFAULT_OFFSET = { 0.0, 0.0 };
-	// 円周率
-	static constexpr double	PI = 3.141592653589793;
-	// 距離の許容誤差
-	static constexpr double LENGTH_TOLERANCE = 0.00001;
-	// 角度の許容誤差(rad)
-	static constexpr double ANGLE_TOLERANCE = 0.00001;
+	static inline const Coord<double> DEFAULT_OFFSET = Coord<double>();
 	// 最小グリッド描画サイズ(コントロール座標)
 	static constexpr long DRAW_GRID_SIZE_MIN = 5;
 	// 最小軸目盛描画サイズ(コントロール座標)
@@ -349,9 +405,32 @@ public:
 	const CRect* GetRect() const { return &m_rect; };
 
 	// 座標系変換：内部キャンバス座標系→コントロール座標系
-	Coord<long> CanvasToControl(const Coord<double> &canvasCoord) const;
+	Coord<long> CanvasToControl(const Coord<double>& canvasCoord) const;
 	// 座標系変換：コントロール座標系→内部キャンバス座標系
 	Coord<double> ControlToCanvas(const Coord<long>& ctrlCoord) const;
+
+	// コレクションの座標系変換：内部キャンバス座標系→コントロール座標系
+	//   ※テンプレート関数なのでヘッダ内で定義する必要あり
+	template<std::size_t N>
+	Coords<long, N> CanvasToControl(const Coords<double, N>& canvasCoords) const
+	{
+		Coords<long, N> ctrlCoords;
+		for (int i = 0; i < N; i++) {
+			ctrlCoords[i] = CanvasToControl(canvasCoords[i]);
+		}
+		return ctrlCoords;
+	}
+	// コレクションの座標系変換：コントロール座標系→内部キャンバス座標系
+	//   ※テンプレート関数なのでヘッダ内で定義する必要あり
+	template<std::size_t N>
+	Coords<double, N> ControlToCanvas(const Coords<long, N>& ctrlCoords) const
+	{
+		Coords<double, N> canvasCoords;
+		for (int i = 0; i < N; i++) {
+			canvasCoords[i] = ControlToCanvas(ctrlCoords[i]);
+		}
+		return canvasCoords;
+	}
 
 	// 描画領域全体の座標を取得
 	BoundingBox<double> GetCanvasArea() const;
@@ -371,9 +450,9 @@ public:
 	// 点を強調して描画
 	void DrawLargePoint(const Coord<double>& point) const;
 	// 矢印先端描画
-	void DrawArrowHead(const Coord<double>& start, const Coord<double>& end) const;
+	void DrawArrowHead(const Coords<double, 2>& baseSegment) const;
 	// ベジエ曲線による円弧描画
-	void DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, ArcDirectionType direction) const;
+	void DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const;
 
 	// 描画内容をファイル保存(BMP/PNG/JPEG/GIF)
 	bool SaveImage(const std::tstring& filePath) const;
@@ -455,7 +534,16 @@ protected:
 	LOGBRUSH m_brush;
 
 	// 形状が描画領域に含まれるかチェック
-	bool IsIncludeCanvas() const;
+	//   ※形状ごとに必要に応じてオーバーライドする
+	virtual bool IsIncludeCanvas() const
+	{
+		// 描画エリア
+		BoundingBox<double> bboxCanvas = m_canvas.GetCanvasArea();
+		// 形状の最小包含箱
+		BoundingBox<double> bboxShape = CalcBoundingBox();
+		// 規定の判定方法は、2つの領域が共通領域を持つかどうか
+		return (bboxCanvas * bboxShape).Verify();
+	}
 
 public:
 	// コンストラクタ
@@ -472,8 +560,10 @@ public:
 	virtual ~Node() {}
 
 	// 形状の最小包含箱を算出
+	//   ※形状ごとにオーバーライドする
 	virtual BoundingBox<double> CalcBoundingBox() const { return BoundingBox<double>(); }
 	// 描画
+	//   ※形状ごとにオーバーライドする
 	virtual void Draw() {}
 };
 
@@ -481,6 +571,10 @@ public:
 // ノード派生クラス：グリッド
 class NodeGrid : public Node
 {
+protected:
+	// 形状が描画領域に含まれるかチェック
+	virtual bool IsIncludeCanvas() const override;
+
 public:
 	// コンストラクタ
 	NodeGrid(Manager* pManager) :
@@ -568,18 +662,53 @@ public:
 class NodeLine : public Node
 {
 private:
-	// 座標データ
+	// 線分の座標データ
 	Coords<double, 2> m_points;
 	// 限界値の種類
 	LineLimitType m_lineLimitType;
+
+	// 無限直線情報
+	struct InfiniteInfo{
+		bool isVertical;		// 鉛直フラグ
+		double coefficientX;	// xの係数 (非鉛直の場合に使用する)
+		double interceptY;		// y切片 (非鉛直の場合に使用する)
+		double interceptX;		// x切片 (鉛直の場合に使用する)
+	} m_infiniteInfo;
+
+	// 線分を取得
+	Coords<double, 2> Segment() const;
 
 public:
 	// コンストラクタ
 	NodeLine(Manager* pManager, const Coords<double, 2>& points, LineLimitType lineLimitType) :
 		Node(pManager),
-		m_points(points),
-		m_lineLimitType(lineLimitType)
+		m_lineLimitType(lineLimitType),
+		m_infiniteInfo({false, 0.0, 0.0, 0.0})
 	{
+		// 有限の線分
+		if (m_lineLimitType == LineLimitType::Finite) {
+			// 座標値データをコピー
+			m_points = points;
+		}
+		// 無限直線
+		else {
+			// xyそれぞれの長さを算出
+			Coord<double> length = points[1] - points[0];
+			
+			// x方向が(ほぼ)0であれば鉛直線とする
+			if (fabs(length.x) < LENGTH_TOLERANCE)
+			{
+				// 無限直線を x切片 で保持する
+				m_infiniteInfo.isVertical = true;
+				m_infiniteInfo.interceptX = points[0].x;
+			}
+			else {
+				// 無限直線を x係数 と y切片 で保持する
+				m_infiniteInfo.isVertical = false;
+				m_infiniteInfo.coefficientX = (points[1].y - points[0].y) / (points[1].x - points[0].x);
+				m_infiniteInfo.interceptY = m_infiniteInfo.coefficientX * -points[0].x + points[0].y;
+			}
+		}
 	}
 
 	// 形状の最小包含箱を算出
