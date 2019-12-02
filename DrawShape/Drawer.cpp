@@ -51,8 +51,8 @@ BoundingBox<double> Canvas::GetCanvasArea() const
 {
 	// 内部キャンバス座標値を計算
 	BoundingBox<double> canvas;
-	canvas.min = ControlToCanvas(Coord<long>{ 0, m_rect.Height() });
-	canvas.max = ControlToCanvas(Coord<long>{ m_rect.Width(), 0 });
+	canvas.min = ControlToCanvas(Coord<long>(0, m_rect.Height()));
+	canvas.max = ControlToCanvas(Coord<long>(m_rect.Width(), 0));
 	return canvas;
 }
 
@@ -83,7 +83,7 @@ void Canvas::DrawGrid() const
 	for (long y = ystart; y <= yend; y++) {
 		for (long x = xstart; x <= xend; x++) {
 			// 点を描画
-			DrawPixel(Coord<double>{ x * m_gridSize, y * m_gridSize });
+			DrawPixel(Coord<double>(x * m_gridSize, y * m_gridSize));
 		}
 	}
 }
@@ -112,8 +112,10 @@ void Canvas::DrawOrigin(Coord<double> base) const
 	GetDC()->LineTo(origin.x + m_originSize, origin.y);
 	// 矢印先端を描画
 	DrawArrowHead(
-		base,
-		ControlToCanvas(Coord<long>{ origin.x + m_originSize, origin.y })
+		Coords<double, 2>{
+			base,
+			ControlToCanvas(Coord<long>(origin.x + m_originSize, origin.y))
+		}
 	);
 
 	// Y軸方向の矢印
@@ -121,8 +123,10 @@ void Canvas::DrawOrigin(Coord<double> base) const
 	GetDC()->LineTo(origin.x, origin.y - m_originSize);
 	// 矢印先端を描画
 	DrawArrowHead(
-		base,
-		ControlToCanvas(Coord<long>{ origin.x, origin.y - m_originSize })
+		Coords<double, 2>{
+			base,
+			ControlToCanvas(Coord<long>(origin.x, origin.y - m_originSize))
+		}
 	);
 }
 
@@ -166,7 +170,7 @@ void Canvas::DrawAxis(Coord<double> base) const
 		// 目盛描画
 		for (long x = xstart; x <= xend; x++) {
 			// コントロール座標に変換
-			Coord<long> point = CanvasToControl(Coord<double>{ x * m_axisScale, base.y });
+			Coord<long> point = CanvasToControl(Coord<double>(x * m_axisScale, base.y));
 			// 描画
 			GetDC()->MoveTo(point.x, point.y - AXIS_SCALE_LENGTH);
 			GetDC()->LineTo(point.x, point.y + AXIS_SCALE_LENGTH + 1);
@@ -182,7 +186,7 @@ void Canvas::DrawAxis(Coord<double> base) const
 		// 目盛描画
 		for (long y = ystart; y <= yend; y++) {
 			// コントロール座標に変換
-			Coord<long> point = CanvasToControl(Coord<double> { base.x, y * m_axisScale });
+			Coord<long> point = CanvasToControl(Coord<double>(base.x, y * m_axisScale));
 			// 描画
 			GetDC()->MoveTo(point.x - AXIS_SCALE_LENGTH, point.y);
 			GetDC()->LineTo(point.x + AXIS_SCALE_LENGTH + 1, point.y);
@@ -194,7 +198,7 @@ void Canvas::DrawAxis(Coord<double> base) const
 void Canvas::DrawPixel(const Coord<double>& point) const
 {
 	// コントロール座標を算出
-	Coord<long> point_ctrl = CanvasToControl(point);
+	Coord<long> ctrlPoint = CanvasToControl(point);
 
 	// カレントペンの色を取得
 	LOGPEN pen;
@@ -202,7 +206,7 @@ void Canvas::DrawPixel(const Coord<double>& point) const
 	COLORREF color = pen.lopnColor;
 
 	// ピクセル描画
-	GetDC()->SetPixel(point_ctrl.x, point_ctrl.y, color);
+	GetDC()->SetPixel(ctrlPoint.x, ctrlPoint.y, color);
 }
 
 // 点を三角形で描画
@@ -217,13 +221,13 @@ void Canvas::DrawTrianglePoint(const Coord<double>& point) const
 	PenBrushChanger pc(GetDC(), logPen);
 
 	// 点のコントロール座標を算出
-	Coord<long> point_ctrl = CanvasToControl(point);
+	Coord<long> ctrlPoint = CanvasToControl(point);
 
 	// 描画（上→右下→左下）
-	GetDC()->MoveTo(point_ctrl.x, point_ctrl.y - (TRIANGLE_POINT_SIZE + 1));
-	GetDC()->LineTo(point_ctrl.x - (TRIANGLE_POINT_SIZE + 1), point_ctrl.y + TRIANGLE_POINT_SIZE);
-	GetDC()->LineTo(point_ctrl.x + (TRIANGLE_POINT_SIZE + 1), point_ctrl.y + TRIANGLE_POINT_SIZE);
-	GetDC()->LineTo(point_ctrl.x, point_ctrl.y - (TRIANGLE_POINT_SIZE + 1));
+	GetDC()->MoveTo(ctrlPoint.x, ctrlPoint.y - (TRIANGLE_POINT_SIZE + 1));
+	GetDC()->LineTo(ctrlPoint.x - (TRIANGLE_POINT_SIZE + 1), ctrlPoint.y + TRIANGLE_POINT_SIZE);
+	GetDC()->LineTo(ctrlPoint.x + (TRIANGLE_POINT_SIZE + 1), ctrlPoint.y + TRIANGLE_POINT_SIZE);
+	GetDC()->LineTo(ctrlPoint.x, ctrlPoint.y - (TRIANGLE_POINT_SIZE + 1));
 }
 
 // 点を強調して描画
@@ -245,19 +249,19 @@ void Canvas::DrawLargePoint(const Coord<double>& point) const
 	PenBrushChanger bc(GetDC(), logBrush);
 
 	// 点のコントロール座標を算出
-	Coord<long> point_ctrl = CanvasToControl(point);
+	Coord<long> ctrlPoint = CanvasToControl(point);
 
 	// 描画
 	GetDC()->Ellipse(
-		point_ctrl.x - TRIANGLE_POINT_SIZE,
-		point_ctrl.y - TRIANGLE_POINT_SIZE,
-		point_ctrl.x + TRIANGLE_POINT_SIZE,
-		point_ctrl.y + TRIANGLE_POINT_SIZE
+		ctrlPoint.x - TRIANGLE_POINT_SIZE,
+		ctrlPoint.y - TRIANGLE_POINT_SIZE,
+		ctrlPoint.x + TRIANGLE_POINT_SIZE,
+		ctrlPoint.y + TRIANGLE_POINT_SIZE
 	);
 }
 
 // 矢印先端描画
-void Canvas::DrawArrowHead(const Coord<double>& start, const Coord<double>& end) const
+void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment) const
 {
 	// 現在のペンを実線に変更
 	LOGPEN logPen;
@@ -268,22 +272,22 @@ void Canvas::DrawArrowHead(const Coord<double>& start, const Coord<double>& end)
 	PenBrushChanger pc(GetDC(), logPen);
 
 	// 先端のコントロール座標を算出
-	Coord<long> tip = CanvasToControl(end);
+	Coord<long> tip = CanvasToControl(baseSegment[END]);
 
 	// 線分の長さ
-	double length = start.Length(end);
+	double length = baseSegment[START].Length(baseSegment[END]);
 	// 線分の単位ベクトルを算出
 	Coord<double> unit;
-	unit = (end - start) / length;
+	unit = (baseSegment[END] - baseSegment[START]) / length;
 
 	// 左側→右側の羽
 	for (double angle = PI - ARROW_WING_ANGLE; angle <= PI + ARROW_WING_ANGLE; angle += ARROW_WING_ANGLE * 2) {
 		// 羽の先端の座標
 		Coord<long> wing = CanvasToControl(
-			Coord<double>{
+			Coord<double>(
 				unit.x * cos(angle) - unit.y * sin(angle),
 				unit.x * sin(angle) + unit.y * cos(angle)
-			}
+			)
 		);
 		// 描画
 		GetDC()->MoveTo(tip.x, tip.y);
@@ -293,24 +297,19 @@ void Canvas::DrawArrowHead(const Coord<double>& start, const Coord<double>& end)
 
 // ベジエ曲線による円弧描画
 // 始点と終点が一致する円弧で呼び出した場合の動作は未定義（そのようなケースは事前に円と見なすべき）
-void Canvas::DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double> center, ArcDirectionType direction) const
+void Canvas::DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const
 {
 	// 円弧方向が右回りなら左回りに変換する
-	if (direction == ArcDirectionType::Right) std::swap(start, end);
-
-	enum { START, END, CENTER };
-
-	// 円弧の始点/終点/中心点を配列にまとめる
-	Coords<double, 3> arc {start, end, center};
+	if (direction == ArcDirectionType::Right) std::swap(arc[START], arc[END]);
 
 	// 中心点を原点(0, 0)の位置に移動した円弧を作成
 	Coords<double, 3> oarc = arc;
-	oarc[START] -= center;
-	oarc[END] -= center;
-	oarc[CENTER] -= center;
+	oarc[START] -= arc[CENTER];
+	oarc[END] -= arc[CENTER];
+	oarc[CENTER] -= arc[CENTER];
 
 	// 円弧の半径を算出
-	double radius = sqrt(pow(oarc[START].x, 2) + pow(oarc[START].y, 2));
+	double radius = oarc[START].Length(oarc[CENTER]);
 
 	// 始点と終点の象限(第n象限のn)を調べる
 	std::array<int, 2> quadrant;
@@ -362,7 +361,7 @@ void Canvas::DrawBezierArc(Coord<double> start, Coord<double> end, Coord<double>
 		Coord<double> here = bezierPoints.back();
 
 		// その象限内のベジエ曲線の終端点
-		Coord<double> next {0.0, 0.0};
+		Coord<double> next;
 
 		// 最後の象限の場合、終端点 = 円弧の終点
 		if (quad == quadrant[END]) {
@@ -501,6 +500,7 @@ bool Canvas::CopyImage(CWnd* pOwner) const
 
 
 // コンストラクタ
+//   ※Managerクラスのメンバを使用するためヘッダファイルに定義不可
 Node::Node(Manager* pManager) :
 	m_canvas(pManager->GetCanvas()),
 	m_pen(pManager->GetCurrentPen()),
@@ -508,39 +508,19 @@ Node::Node(Manager* pManager) :
 {
 }
 
-// 形状が描画エリアに含まれるかチェック
-bool Node::IsIncludeCanvas() const
-{
-	// 描画エリア
-	BoundingBox<double> bboxCanvas = m_canvas.GetCanvasArea();
-	// 形状の最小包含箱
-	BoundingBox<double> bboxShape = CalcBoundingBox();
-
-	// 2つの領域が共通領域を持つかどうかで判定
-	return bboxCanvas.Intersect(bboxShape).Verify();
-}
-
-
-// 全形状の最小包含箱を算出
-BoundingBox<double> Manager::CalcBoundingBox() const
-{
-	// ベースレイヤーの内容は含めない
-
-	BoundingBox<double> bbox;
-	// 全レイヤーの最小包含箱を合成
-	for (auto& pLayer : m_layers) {
-		bbox += pLayer->CalcBoundingBox();
-	}
-	return bbox;
-}
-
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeGrid::CalcBoundingBox() const
 {
-	// グリッドの最小包含箱は無し
-	BoundingBox<double> bbox;
-	return bbox;
+	// グリッドの場合は最小包含箱は無い
+	return BoundingBox<double>();
+}
+
+// 形状が描画領域に含まれるかチェック
+bool NodeGrid::IsIncludeCanvas() const
+{
+	// グリッドは常に含まれる状態
+	return true;
 }
 
 // 描画
@@ -586,6 +566,7 @@ BoundingBox<double> NodeAxis::CalcBoundingBox() const
 	bbox.max = m_point;
 	return bbox;
 }
+
 // 描画
 void NodeAxis::Draw()
 {
@@ -604,6 +585,7 @@ BoundingBox<double> NodePoint::CalcBoundingBox() const
 	bbox.max = m_point;
 	return bbox;
 }
+
 // 描画
 void NodePoint::Draw()
 {
@@ -628,37 +610,113 @@ void NodePoint::Draw()
 }
 
 
+// 線分を取得
+Coords<double, 2> NodeLine::Segment() const
+{
+	Coords<double, 2> points;
+	// 有限の線分
+	if (m_lineLimitType == LineLimitType::Finite) {
+		points = m_points;
+	}
+	// 無限直線
+	else {
+		// 描画領域を取得
+		BoundingBox<double> canvas = m_canvas.GetCanvasArea();
+
+		// 鉛直線
+		if (m_infiniteInfo.isVertical) {
+			// x切片と描画領域の上下Y座標の範囲で線分を作成
+			points[0].x = m_infiniteInfo.interceptX;
+			points[0].y = canvas.min.y;
+			points[1].x = m_infiniteInfo.interceptX;
+			points[1].y = canvas.max.y;
+		}
+		// 非鉛直線
+		else {
+			// 描画領域の左右X座標の範囲で線分を作成 (y = c * x + i)
+			points[0].x = canvas.min.x;
+			points[0].y = m_infiniteInfo.coefficientX * canvas.min.x + m_infiniteInfo.interceptY;
+			points[1].x = canvas.max.x;
+			points[1].y = m_infiniteInfo.coefficientX * canvas.max.x + m_infiniteInfo.interceptY;
+		}
+	}
+	return points;
+}
+
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeLine::CalcBoundingBox() const
 {
+	// 描画用の線分を取得
+	Coords<double, 2> points = Segment();
+	// 形状を構成する座標から最小包含箱を算出
 	BoundingBox<double> bbox;
-	// TODO:
+	for (auto& p : points) {
+		bbox += p;
+	}
 	return bbox;
 }
+
 // 描画
 void NodeLine::Draw()
 {
 	// 描画領域に含まれなければ描画しない
 	if (!IsIncludeCanvas()) return;
-	// TODO:
+
+	// 描画用の線分を取得
+	Coords<double, 2> points = Segment();
+	// コントロール座標に変換
+	auto ctrlPoints = m_canvas.CanvasToControl(points);
+	// 描画
+	m_canvas.GetDC()->MoveTo(ctrlPoints[0].x, ctrlPoints[0].y);
+	m_canvas.GetDC()->LineTo(ctrlPoints[1].x, ctrlPoints[1].y);
 }
 
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeArc::CalcBoundingBox() const
 {
+	// 形状を構成する座標から最小包含箱を算出
 	BoundingBox<double> bbox;
-	// TODO:
+	for (auto& p : m_points) {
+		bbox += p;
+	}
 	return bbox;
 }
+
 // 描画
 void NodeArc::Draw()
 {
 	// 描画領域に含まれなければ描画しない
 	if (!IsIncludeCanvas()) return;
-	// TODO:
-}
 
+	// ベジエ曲線で円弧を描画
+	m_canvas.DrawBezierArc(m_points, m_arcDirectionType);
+
+	// 円弧の先端の矢印描画
+	if (m_canvas.GetIsDrawArrow()) {
+		// 矢印を描くための軸
+		Coords<double, 2> arrowAxis;
+
+		// 回転角度を決定
+		//   円弧方向が左：+90度
+		//   円弧方向が右：-90度
+		double angle = m_arcDirectionType == ArcDirectionType::Left ? PI : -PI;
+
+		// 終点を基準に、中心点を上で決めた回転角度だけ回転して
+		// 矢印を描くための軸の始点を算出
+		arrowAxis[START] = m_points[END].Rotate(m_points[CENTER], angle);
+		// 矢印を描くための軸の終点は円弧の終点
+		arrowAxis[END] = m_points[END];
+
+		// 矢印を描画
+		m_canvas.DrawArrowHead(arrowAxis);
+	}
+
+	// 円弧の中心点を描画
+	if (m_canvas.GetIsDrawCenter()) {
+		m_canvas.DrawTrianglePoint(m_points[CENTER]);
+	}
+}
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeCircle::CalcBoundingBox() const
@@ -758,6 +816,19 @@ Manager::Manager(CDC* pDC, const CRect& rect) :
 	Clear();
 }
 
+// 全形状の最小包含箱を算出
+BoundingBox<double> Manager::CalcBoundingBox() const
+{
+	// ベースレイヤーの内容は含めない
+
+	BoundingBox<double> bbox;
+	// 全レイヤーの最小包含箱を合成
+	for (auto& pLayer : m_layers) {
+		bbox += pLayer->CalcBoundingBox();
+	}
+	return bbox;
+}
+
 // 初期化
 void Manager::Clear()
 {
@@ -771,9 +842,9 @@ void Manager::Clear()
 	// グリッドを登録
 	m_baseLayer.AddNode(new NodeGrid(this));
 	// 軸を登録
-	m_baseLayer.AddNode(new NodeOrigin(this, Coord<double>{ 0.0, 0.0 }));
+	m_baseLayer.AddNode(new NodeOrigin(this, Coord<double>(0.0, 0.0)));
 	// 原点を登録
-	m_baseLayer.AddNode(new NodeAxis(this, Coord<double>{ 0.0, 0.0 }));
+	m_baseLayer.AddNode(new NodeAxis(this, Coord<double>(0.0, 0.0)));
 
 	// レイヤーコレクションをクリア
 	m_layers.clear();
@@ -830,7 +901,7 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 			logBrush.lbColor = m_canvas.GetAxisColor();
 			PenBrushChanger pc(m_canvas.GetDC(), logPen);
 			PenBrushChanger bc(m_canvas.GetDC(), logBrush);
-			m_canvas.DrawAxis(Coord<double>{0.0, 0.0});
+			m_canvas.DrawAxis(Coord<double>(0.0, 0.0));
 		}
 		// 原点描画
 		{
@@ -839,7 +910,7 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 			logBrush.lbColor = m_canvas.GetOriginColor();
 			PenBrushChanger pc(m_canvas.GetDC(), logPen);
 			PenBrushChanger bc(m_canvas.GetDC(), logBrush);
-			m_canvas.DrawOrigin(Coord<double>{0.0, 0.0});
+			m_canvas.DrawOrigin(Coord<double>(0.0, 0.0));
 		}
 	}
 	// 通常の描画
@@ -951,10 +1022,10 @@ void Manager::Fit(double shapeOccupancy)
 	if (!bbox.Verify()) {
 		// 初期値とする
 		ratio = Canvas::DEFAULT_RATIO;
-		offset = Coord<double>{
+		offset = Coord<double>(
 			static_cast<double>(m_canvas.GetRect()->CenterPoint().x),
 			static_cast<double>(m_canvas.GetRect()->CenterPoint().y)
-		};
+		);
 	}
 	else {
 		// 形状の縦横比を算出
