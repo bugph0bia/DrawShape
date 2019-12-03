@@ -31,8 +31,8 @@ Coord<long> Canvas::CanvasToControl(const Coord<double> &canvasCoord) const
 {
 	Coord<long> ctrlCoord;
 	// コントロール座標値を計算
-	ctrlCoord.x = static_cast<long>(canvasCoord.x * m_ratio + m_offset.x);
-	ctrlCoord.y = static_cast<long>(-canvasCoord.y * m_ratio + m_offset.y);	// Y軸反転
+	ctrlCoord.x = static_cast<long>(CanvasToControl(canvasCoord.x) + m_offset.x);
+	ctrlCoord.y = static_cast<long>(-CanvasToControl(canvasCoord.y) + m_offset.y);	// Y軸反転
 	return ctrlCoord;
 }
 
@@ -41,9 +41,29 @@ Coord<double> Canvas::ControlToCanvas(const Coord<long> &ctrlCoord) const
 {
 	// 内部キャンバス座標値を計算
 	Coord<double> canvasCoord;
-	canvasCoord.x = static_cast<double>((ctrlCoord.x - m_offset.x) / m_ratio);
-	canvasCoord.y = -static_cast<double>((ctrlCoord.y - m_offset.y) / m_ratio);	// Y軸反転
+	canvasCoord.x = ControlToCanvas(ctrlCoord.x - m_offset.x);
+	canvasCoord.y = -ControlToCanvas(ctrlCoord.y - m_offset.y);	// Y軸反転
 	return canvasCoord;
+}
+
+// コレクション用の座標系変換：内部キャンバス座標系→コントロール座標系
+Coords_v<long> Canvas::CanvasToControl(const Coords_v<double>& canvasCoords) const
+{
+	Coords_v<long> ctrlCoords;
+	for (const auto& c : canvasCoords) {
+		ctrlCoords.push_back(CanvasToControl(c));
+	}
+	return ctrlCoords;
+}
+// コレクション用の座標系変換：コントロール座標系→内部キャンバス座標系
+//   ※テンプレート関数なのでヘッダ内で定義する必要あり
+Coords_v<double> Canvas::ControlToCanvas(const Coords_v<long>& ctrlCoords) const
+{
+	Coords_v<double> canvasCoords;
+	for (const auto& c : ctrlCoords) {
+		canvasCoords.push_back(ControlToCanvas(c));
+	}
+	return canvasCoords;
 }
 
 // 描画領域全体の座標を取得
@@ -68,7 +88,7 @@ void Canvas::DrawGrid() const
 	// グリッド描画OFF
 	if (m_isDrawGrid) return;
 	// グリッドが細かすぎたら描画を行わない
-	if ((m_gridSize * m_ratio) < DRAW_GRID_SIZE_MIN) return;
+	if ((CanvasToControl(m_gridSize)) < DRAW_GRID_SIZE_MIN) return;
 
 	// キャンバス全体の座標を取得
 	BoundingBox<double>	canvas = GetCanvasArea();
@@ -159,7 +179,7 @@ void Canvas::DrawAxis(Coord<double> base) const
 	}
 
 	// 目盛が細かすぎたら描画を行わない
-	if ((m_axisScale * m_ratio) < DRAW_AXIS_SCALE_MIN) return;
+	if (CanvasToControl(m_axisScale) < DRAW_AXIS_SCALE_MIN) return;
 
 	// X軸が表示される場合
 	if (canvas.min.y < base.y && base.y < canvas.max.y) {
@@ -295,9 +315,9 @@ void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment) const
 	}
 }
 
-// ベジエ曲線による円弧描画
+// ベジエ曲線による円弧表現を算出
 // 始点と終点が一致する円弧で呼び出した場合の動作は未定義（そのようなケースは事前に円と見なすべき）
-void Canvas::DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const
+Coords_v<double> Canvas::CalcBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const
 {
 	// 円弧方向が右回りなら左回りに変換する
 	if (direction == ArcDirectionType::Right) std::swap(arc[START], arc[END]);
@@ -348,7 +368,7 @@ void Canvas::DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) co
 	}
 
 	// ベジエ曲線を描くための点の配列
-	std::vector<Coord<double>> bezierPoints;
+	Coords_v<double> bezierPoints;
 
 	// 最初の点を格納
 	bezierPoints.push_back(arc[START]);
@@ -371,22 +391,22 @@ void Canvas::DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) co
 		// 途中の象限の場合、終端点 = 次の象限との間の軸上の点
 		else {
 			switch (quad % 4) {
-			// 第1象限
+				// 第1象限
 			case 1:
 				next.x = arc[CENTER].x;
 				next.y = arc[CENTER].y + radius;
 				break;
-			// 第2象限
+				// 第2象限
 			case 2:
 				next.x = arc[CENTER].x - radius;
 				next.y = arc[CENTER].y;
 				break;
-			// 第3象限
+				// 第3象限
 			case 3:
 				next.x = arc[CENTER].x;
 				next.y = arc[CENTER].y - radius;
 				break;
-			// 第4象限
+				// 第4象限
 			case 0:
 				next.x = arc[CENTER].x + radius;
 				next.y = arc[CENTER].y;
@@ -429,9 +449,19 @@ void Canvas::DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) co
 		bezierPoints.push_back(next);
 	}
 
+	return bezierPoints;
+}
+
+// ベジエ曲線による円弧描画
+// 始点と終点が一致する円弧で呼び出した場合の動作は未定義（そのようなケースは事前に円と見なすべき）
+void Canvas::DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const
+{
+	// ベジエ曲線の座標値配列を取得
+	Coords_v<double> bezierPoints = CalcBezierArc(arc, direction);
+
 	// ベジエ曲線の点をコントロール座標に変換
 	std::vector<POINT> drawPoints;
-	for (auto& pb : bezierPoints) {
+	for (const auto& pb : bezierPoints) {
 		auto pc = CanvasToControl(pb);
 		drawPoints.push_back(POINT{ pc.x, pc.y });
 	}
@@ -523,8 +553,8 @@ bool NodeGrid::IsIncludeCanvas() const
 	return true;
 }
 
-// 描画
-void NodeGrid::Draw()
+// 形状を描画
+void NodeGrid::DrawContent()
 {
 	// グリッド描画
 	m_canvas.DrawGrid();
@@ -535,8 +565,7 @@ void NodeGrid::Draw()
 BoundingBox<double> NodeOrigin::CalcBoundingBox() const
 {
 	// 原点のサイズ
-	// キャンバス座標系では相対的に拡大縮小が逆転された大きさとなる
-	double size = m_canvas.GetOriginSize() / m_canvas.GetRatio();
+	double size = m_canvas.ControlToCanvas(m_canvas.GetOriginSize());
 
 	// 原点の矩形を計算
 	BoundingBox<double> bbox;
@@ -547,11 +576,9 @@ BoundingBox<double> NodeOrigin::CalcBoundingBox() const
 	return bbox;
 }
 
-// 描画
-void NodeOrigin::Draw()
+// 形状を描画
+void NodeOrigin::DrawContent()
 {
-	// 描画領域に含まれなければ描画しない
-	if (!IsIncludeCanvas()) return;
 	// 原点描画
 	m_canvas.DrawOrigin(m_point);
 }
@@ -561,17 +588,12 @@ void NodeOrigin::Draw()
 BoundingBox<double> NodeAxis::CalcBoundingBox() const
 {
 	// 軸の場合は最小包含箱を原点とする
-	BoundingBox<double> bbox;
-	bbox.min = m_point;
-	bbox.max = m_point;
-	return bbox;
+	return BoundingBox<double>(m_point);
 }
 
-// 描画
-void NodeAxis::Draw()
+// 形状を描画
+void NodeAxis::DrawContent()
 {
-	// 描画領域に含まれなければ描画しない
-	if (!IsIncludeCanvas()) return;
 	// 軸描画
 	m_canvas.DrawAxis(m_point);
 }
@@ -580,18 +602,13 @@ void NodeAxis::Draw()
 // 形状の最小包含箱を算出
 BoundingBox<double> NodePoint::CalcBoundingBox() const
 {
-	BoundingBox<double> bbox;
-	bbox.min = m_point;
-	bbox.max = m_point;
-	return bbox;
+	// 最小包含箱を点とする
+	return BoundingBox<double>(m_point);
 }
 
-// 描画
-void NodePoint::Draw()
+// 形状を描画
+void NodePoint::DrawContent()
 {
-	// 描画領域に含まれなければ描画しない
-	if (!IsIncludeCanvas()) return;
-
 	// 点の種類別に描画
 	switch (m_pointType) {
 	case PointType::Pixel:
@@ -614,6 +631,7 @@ void NodePoint::Draw()
 Coords<double, 2> NodeLine::Segment() const
 {
 	Coords<double, 2> points;
+
 	// 有限の線分
 	if (m_lineLimitType == LineLimitType::Finite) {
 		points = m_points;
@@ -646,49 +664,59 @@ Coords<double, 2> NodeLine::Segment() const
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeLine::CalcBoundingBox() const
 {
+	// TODO:
+	// 線分を単純に最小包含箱として採用しているが
+	// 実際には描画領域に含まれないのに最小包含箱が重なってしまう場合がある
+
 	// 描画用の線分を取得
 	Coords<double, 2> points = Segment();
 	// 形状を構成する座標から最小包含箱を算出
 	BoundingBox<double> bbox;
-	for (auto& p : points) {
+	for (const auto& p : points) {
 		bbox += p;
 	}
 	return bbox;
 }
 
-// 描画
-void NodeLine::Draw()
+// 形状を描画
+void NodeLine::DrawContent()
 {
-	// 描画領域に含まれなければ描画しない
-	if (!IsIncludeCanvas()) return;
-
 	// 描画用の線分を取得
-	Coords<double, 2> points = Segment();
+	auto points = Segment();
 	// コントロール座標に変換
-	auto ctrlPoints = m_canvas.CanvasToControl(points);
+	auto ctrlPoints = m_canvas.CanvasToControl(Coords_v<double>(points.begin(), points.end()));
 	// 描画
 	m_canvas.GetDC()->MoveTo(ctrlPoints[0].x, ctrlPoints[0].y);
 	m_canvas.GetDC()->LineTo(ctrlPoints[1].x, ctrlPoints[1].y);
+
+	// 線分の場合、先端の矢印描画
+	if (m_lineLimitType == LineLimitType::Finite && m_canvas.GetIsDrawArrow()) {
+		// 矢印を描画
+		m_canvas.DrawArrowHead(points);
+	}
 }
 
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeArc::CalcBoundingBox() const
 {
-	// 形状を構成する座標から最小包含箱を算出
+	// ベジエ曲線による座標値配列を取得
+	Coords_v<double> bezierPoints = m_canvas.CalcBezierArc(m_points, m_arcDirectionType);
+
+	// 座標値配列は 3n+1 個で構成されている
+	// 円弧を象限分割したときの始点/終点の間に制御点が2つ挟まっている状態
+
+	// 制御点を除いた円弧の始点と終点のみから最小包含箱を算出
 	BoundingBox<double> bbox;
-	for (auto& p : m_points) {
-		bbox += p;
+	for (auto itr = bezierPoints.cbegin(); itr != bezierPoints.cend(); itr += 3) {
+		bbox += *itr;
 	}
 	return bbox;
 }
 
-// 描画
-void NodeArc::Draw()
+// 形状を描画
+void NodeArc::DrawContent()
 {
-	// 描画領域に含まれなければ描画しない
-	if (!IsIncludeCanvas()) return;
-
 	// ベジエ曲線で円弧を描画
 	m_canvas.DrawBezierArc(m_points, m_arcDirectionType);
 
@@ -721,48 +749,202 @@ void NodeArc::Draw()
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeCircle::CalcBoundingBox() const
 {
+	// 円の矩形を計算
 	BoundingBox<double> bbox;
-	// TODO:
+	bbox.min.x = m_point.x - m_radius;
+	bbox.min.y = m_point.y - m_radius;
+	bbox.max.x = m_point.x + m_radius;
+	bbox.max.y = m_point.y + m_radius;
 	return bbox;
 }
-// 描画
-void NodeCircle::Draw()
+// 形状を描画
+void NodeCircle::DrawContent()
 {
-	// 描画領域に含まれなければ描画しない
-	if (!IsIncludeCanvas()) return;
-	// TODO:
+	// 塗りつぶしなし
+	if (m_fillType == FillType::NoFill) {
+		// 0度から180度の円弧
+		Coords<double, 3> arc = { m_point, m_point, m_point };
+		arc[START].x += m_radius;
+		arc[END].x -= m_radius;
+		// 半円を描画
+		m_canvas.DrawBezierArc(arc, ArcDirectionType::Left);
+
+		// 180度から360度の円弧
+		std::swap(arc[START], arc[END]);
+		// 半円を描画
+		m_canvas.DrawBezierArc(arc, ArcDirectionType::Left);
+
+		// 中心点を描画
+		if (m_canvas.GetIsDrawCenter()) {
+			// 三角形の点を描画
+			m_canvas.DrawTrianglePoint(m_point);
+		}
+	}
+	// 塗りつぶしあり
+	else {
+		// 円の外接する矩形の左上と右下の点を算出
+		Coord<long> ctrlLeftUp = m_canvas.CanvasToControl(Coord<double>(m_point.x - m_radius, m_point.y + m_radius));
+		Coord<long> ctrlRightDown = m_canvas.CanvasToControl(Coord<double>(m_point.x + m_radius, m_point.y - m_radius));
+		// 円を描画
+		m_canvas.GetDC()->Ellipse(ctrlLeftUp.x, ctrlLeftUp.y, ctrlRightDown.x, ctrlRightDown.y);
+	}
 }
 
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodePolygon::CalcBoundingBox() const
 {
+	// 形状を構成する座標から最小包含箱を算出
 	BoundingBox<double> bbox;
-	// TODO:
+	for (const auto& p : m_points) {
+		bbox += p;
+	}
 	return bbox;
 }
-// 描画
-void NodePolygon::Draw()
+// 形状を描画
+void NodePolygon::DrawContent()
 {
-	// 描画領域に含まれなければ描画しない
-	if (!IsIncludeCanvas()) return;
-	// TODO:
+	// 塗りつぶしなし
+	if (m_fillType == FillType::NoFill) {
+		// 形状の座標値をコントロール座標に変換
+		Coords_v<long> ctrlPoints = m_canvas.CanvasToControl(m_points);
+
+		// 最後の点に移動しておく
+		m_canvas.GetDC()->MoveTo(ctrlPoints.rbegin()->x, ctrlPoints.rbegin()->y);
+		// 多角形を描画
+		for (const auto& here : ctrlPoints) {
+			m_canvas.GetDC()->LineTo(here.x, here.y);
+		}
+
+		// 矢印を描画
+		if (m_canvas.GetIsDrawArrow()) {
+			// 最後の点を矢印の軸の始点とする
+			Coord<double> s = *(m_points.rbegin());
+			// 矢印の軸の終点として座標を順に取得
+			for (const auto& e : m_points) {
+				// 矢印を描画
+				m_canvas.DrawArrowHead(Coords<double, 2>{s, e});
+				// 次の始点を更新
+				s = e;
+			}
+		}
+	}
+	// 塗りつぶしあり
+	else {
+		// 座標をPOINT型の配列へ変換
+		std::vector<POINT> ctrlPoints;
+		for (const auto& p : m_points) {
+			auto cp = m_canvas.CanvasToControl(p);
+			ctrlPoints.push_back(POINT{ cp.x, cp.y });
+		}
+		// 多角形を描画
+		m_canvas.GetDC()->Polygon(ctrlPoints.data(), ctrlPoints.size());
+	}
 }
 
+
+// 内側の円弧座標を算出
+Coords<double, 3> NodeSector::CalcInnerArc() const
+{
+	// 中心点から始点と終点へのベクトルを算出
+	Coord<double> vectorCS = m_points[START] - m_points[CENTER];
+	Coord<double> vectorCE = m_points[END] - m_points[CENTER];
+
+	// 外側の円弧半径を算出
+	double outerRadius = m_points[CENTER].Length(m_points[START]);
+
+	// 内側の円弧座標を算出（中心点からのベクトルを内側円弧の長さに変換し元の座標へ戻す）
+	Coords<double, 3> innerArc;
+	innerArc[START] = vectorCS / outerRadius * m_innerRadius + m_points[CENTER];
+	innerArc[END] = vectorCE / outerRadius * m_innerRadius + m_points[CENTER];
+	innerArc[CENTER] = m_points[CENTER];
+
+	return innerArc;
+}
+
+// 扇形のリージョン（コントロール座標）を算出
+void NodeSector::CalcSectorRgn(CRgn* sectorRgn) const
+{
+	// 外側の円弧（コントロール座標）
+	Coords_v<long> ctrlOuterArc = m_canvas.CanvasToControl(Coords_v<double>(m_points.begin(), m_points.end()));
+	// 左向きの円弧にしておく
+	if (m_arcDirectionType == ArcDirectionType::Right) {
+		std::swap(ctrlOuterArc[START], ctrlOuterArc[END]);
+	}
+
+	// DCを利用して外側の扇形のパスを作成
+	m_canvas.GetDC()->AbortPath();
+	// パスを開始
+	m_canvas.GetDC()->BeginPath();
+	// 円弧部分のパス→円弧終点から中心点へのパス→中心点から円弧始点へのパス
+	m_canvas.DrawBezierArc(m_points, m_arcDirectionType);
+	m_canvas.GetDC()->MoveTo(ctrlOuterArc[END].x, ctrlOuterArc[END].y);
+	m_canvas.GetDC()->LineTo(ctrlOuterArc[CENTER].x, ctrlOuterArc[CENTER].y);
+	m_canvas.GetDC()->LineTo(ctrlOuterArc[START].x, ctrlOuterArc[START].y);
+	// パスを終了
+	m_canvas.GetDC()->EndPath();
+
+	// 外側の扇形リージョンを取得
+	CRgn outerPieRgn;
+	outerPieRgn.CreateFromPath(m_canvas.GetDC());
+
+	// 内側円弧の半径をコントロール座標に変換
+	long ctrlInnerRadius = static_cast<long>(m_canvas.CanvasToControl(m_innerRadius));
+
+	// 内側の円形リージョンを取得
+	CRgn innerCircleRgn;
+	innerCircleRgn.CreateEllipticRgn(
+		ctrlOuterArc[CENTER].x - ctrlInnerRadius,
+		ctrlOuterArc[CENTER].y - ctrlInnerRadius,
+		ctrlOuterArc[CENTER].x + ctrlInnerRadius,
+		ctrlOuterArc[CENTER].y + ctrlInnerRadius
+	);
+
+	// 外側の扇形リージョン - 内側の円形リージョン
+	sectorRgn->CombineRgn(&outerPieRgn, &innerCircleRgn, RGN_DIFF);
+}
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeSector::CalcBoundingBox() const
 {
+	// 扇形のリージョンから最小包含箱（コントロール座標）を取得
+	CRgn sectorRgn;
+	CalcSectorRgn(&sectorRgn);
+	CRect ctrlRect;
+	sectorRgn.GetRgnBox(&ctrlRect);
+
+	// キャンバス座標系に変換
 	BoundingBox<double> bbox;
-	// TODO:
+	bbox.min = m_canvas.ControlToCanvas(Coord<long>(ctrlRect.left, ctrlRect.bottom));
+	bbox.max = m_canvas.ControlToCanvas(Coord<long>(ctrlRect.right, ctrlRect.top));
 	return bbox;
 }
-// 描画
-void NodeSector::Draw()
+// 形状を描画
+void NodeSector::DrawContent()
 {
-	// 描画領域に含まれなければ描画しない
-	if (!IsIncludeCanvas()) return;
-	// TODO:
+	// 塗りつぶしあり
+	if (m_fillType == FillType::Fill) {
+		// 扇形リージョンを取得して塗りつぶす
+		CRgn sectorRgn;
+		CalcSectorRgn(&sectorRgn);
+		m_canvas.GetDC()->FillRgn(&sectorRgn, m_canvas.GetDC()->GetCurrentBrush());
+	}
+
+	// 外側と内側の円弧
+	Coords<double, 3> outerArc = m_points;
+	Coords<double, 3> innerArc = CalcInnerArc();
+
+	// 円弧部分を描画
+	m_canvas.DrawBezierArc(outerArc, m_arcDirectionType);
+	m_canvas.DrawBezierArc(innerArc, m_arcDirectionType);
+
+	// コントロール座標に変換して直線部分を描画
+	Coords_v<long> ctrlOuterArc = m_canvas.CanvasToControl(Coords_v<double>(outerArc.begin(), outerArc.end()));
+	Coords_v<long> ctrlInnerArc = m_canvas.CanvasToControl(Coords_v<double>(innerArc.begin(), innerArc.end()));
+	m_canvas.GetDC()->MoveTo(ctrlOuterArc[START].x, ctrlOuterArc[START].y);
+	m_canvas.GetDC()->LineTo(ctrlOuterArc[END].x, ctrlOuterArc[END].y);
+	m_canvas.GetDC()->MoveTo(ctrlInnerArc[START].x, ctrlInnerArc[START].y);
+	m_canvas.GetDC()->LineTo(ctrlInnerArc[END].x, ctrlInnerArc[END].y);
 }
 
 
@@ -786,7 +968,7 @@ BoundingBox<double> Layer::CalcBoundingBox() const
 	// 描画フラグONなら
 	if (m_isDraw) {
 		// 全ノードの最小包含箱を合成
-		for (auto& pNode : m_nodes) {
+		for (const auto& pNode : m_nodes) {
 			bbox += pNode->CalcBoundingBox();
 		}
 	}
@@ -799,7 +981,7 @@ void Layer::Draw()
 	// 描画フラグONなら
 	if (m_isDraw) {
 		// 全ノードを描画
-		for (auto& pNode : m_nodes) {
+		for (const auto& pNode : m_nodes) {
 			pNode->Draw();
 		}
 	}
@@ -823,7 +1005,7 @@ BoundingBox<double> Manager::CalcBoundingBox() const
 
 	BoundingBox<double> bbox;
 	// 全レイヤーの最小包含箱を合成
-	for (auto& pLayer : m_layers) {
+	for (const auto& pLayer : m_layers) {
 		bbox += pLayer->CalcBoundingBox();
 	}
 	return bbox;
@@ -922,7 +1104,7 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 		m_baseLayer.Draw();
 
 		// 全レイヤーを描画
-		for (auto& pLayer : m_layers) {
+		for (const auto& pLayer : m_layers) {
 			pLayer->Draw();
 		}
 
@@ -993,8 +1175,8 @@ bool Manager::Pan(const Coord<long>& move)
 	Coord<double> offset = m_canvas.GetOffset();
 
 	// これ以上オフセットできない
-	if (OFFSET_MAX < fabs((offset.x + move.x) / ratio)) return false;
-	if (OFFSET_MAX < fabs((offset.y + move.y) / ratio)) return false;
+	if (OFFSET_MAX < fabs(m_canvas.ControlToCanvas(offset.x + move.x))) return false;
+	if (OFFSET_MAX < fabs(m_canvas.ControlToCanvas(offset.y + move.y))) return false;
 
 	// オフセット量を更新
 	offset.x += move.x;
