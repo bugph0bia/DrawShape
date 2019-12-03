@@ -178,6 +178,8 @@ Coord<T> operator/(const Coord<T>& lhs, double rhs) { return Coord<T>(lhs) /= rh
 // 座標データコレクション
 template<typename T, size_t N>
 using Coords = std::array<Coord<T>, N>;
+template<typename T>
+using Coords_v = std::vector<Coord<T>>;
 
 
 // 最小包含箱クラス
@@ -404,33 +406,20 @@ public:
 	// 描画領域を取得
 	const CRect* GetRect() const { return &m_rect; };
 
+	// 長さ変換：内部キャンバス座標系→コントロール座標系
+	//   ※コントロール座標はlong型だが計算途中で精度を落とさないためにdouble型で戻す
+	double CanvasToControl(double canvasVal) const { return canvasVal * m_ratio; }
+	// 長さ変換：コントロール座標系→内部キャンバス座標系
+	//   ※コントロール座標はlong型だが計算途中で精度を落とさないためにdouble型で渡す
+	double ControlToCanvas(double ctrlVal) const { return ctrlVal / m_ratio; }
 	// 座標系変換：内部キャンバス座標系→コントロール座標系
 	Coord<long> CanvasToControl(const Coord<double>& canvasCoord) const;
 	// 座標系変換：コントロール座標系→内部キャンバス座標系
 	Coord<double> ControlToCanvas(const Coord<long>& ctrlCoord) const;
-
-	// コレクションの座標系変換：内部キャンバス座標系→コントロール座標系
-	//   ※テンプレート関数なのでヘッダ内で定義する必要あり
-	template<std::size_t N>
-	Coords<long, N> CanvasToControl(const Coords<double, N>& canvasCoords) const
-	{
-		Coords<long, N> ctrlCoords;
-		for (int i = 0; i < N; i++) {
-			ctrlCoords[i] = CanvasToControl(canvasCoords[i]);
-		}
-		return ctrlCoords;
-	}
-	// コレクションの座標系変換：コントロール座標系→内部キャンバス座標系
-	//   ※テンプレート関数なのでヘッダ内で定義する必要あり
-	template<std::size_t N>
-	Coords<double, N> ControlToCanvas(const Coords<long, N>& ctrlCoords) const
-	{
-		Coords<double, N> canvasCoords;
-		for (int i = 0; i < N; i++) {
-			canvasCoords[i] = ControlToCanvas(ctrlCoords[i]);
-		}
-		return canvasCoords;
-	}
+	// コレクション用の座標系変換：内部キャンバス座標系→コントロール座標系
+	Coords_v<long> CanvasToControl(const Coords_v<double>& canvasCoords) const;
+	// コレクション用の座標系変換：コントロール座標系→内部キャンバス座標系
+	Coords_v<double> ControlToCanvas(const Coords_v<long>& ctrlCoords) const;
 
 	// 描画領域全体の座標を取得
 	BoundingBox<double> GetCanvasArea() const;
@@ -451,6 +440,8 @@ public:
 	void DrawLargePoint(const Coord<double>& point) const;
 	// 矢印先端描画
 	void DrawArrowHead(const Coords<double, 2>& baseSegment) const;
+	// ベジエ曲線による円弧表現を算出
+	Coords_v<double> CalcBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const;
 	// ベジエ曲線による円弧描画
 	void DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const;
 
@@ -545,6 +536,10 @@ protected:
 		return (bboxCanvas * bboxShape).Verify();
 	}
 
+	// 形状を描画
+	//   ※形状ごとにオーバーライドする
+	virtual void DrawContent() {}
+
 public:
 	// コンストラクタ
 	Node(Manager* pManager);
@@ -562,9 +557,18 @@ public:
 	// 形状の最小包含箱を算出
 	//   ※形状ごとにオーバーライドする
 	virtual BoundingBox<double> CalcBoundingBox() const { return BoundingBox<double>(); }
+
 	// 描画
-	//   ※形状ごとにオーバーライドする
-	virtual void Draw() {}
+	void Draw() {
+		// 描画領域に含まれなければ描画しない
+		if (!IsIncludeCanvas()) return;
+
+		// ペンとブラシを変更
+		PenBrushChanger pc(m_canvas.GetDC(), m_pen);
+		PenBrushChanger bc(m_canvas.GetDC(), m_brush);
+		// 形状を描画
+		DrawContent();
+	}
 };
 
 
@@ -584,8 +588,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -606,8 +610,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -628,8 +632,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -653,8 +657,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -713,8 +717,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -738,8 +742,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -766,8 +770,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -776,13 +780,13 @@ class NodePolygon : public Node
 {
 private:
 	// 座標データ
-	std::vector<Coord<double>> m_points;
+	Coords_v<double> m_points;
 	// 塗りつぶしの種類
 	FillType m_fillType;
 
 public:
 	// コンストラクタ
-	NodePolygon(Manager* pManager, const std::vector<Coord<double>>& points, FillType fillType) :
+	NodePolygon(Manager* pManager, const Coords_v<double>& points, FillType fillType) :
 		Node(pManager),
 		m_points(points),
 		m_fillType(fillType)
@@ -791,8 +795,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -809,6 +813,12 @@ private:
 	// 塗りつぶしの種類
 	FillType m_fillType;
 
+	// 内側の円弧座標を算出
+	Coords<double, 3> CalcInnerArc() const;
+
+	// 扇形のリージョン（コントロール座標）を算出
+	void CalcSectorRgn(CRgn* sectorRgn) const;
+
 public:
 	// コンストラクタ
 	NodeSector(Manager* pManager, const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType) :
@@ -822,8 +832,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox() const override;
-	// 描画
-	virtual void Draw() override;
+	// 形状を描画
+	virtual void DrawContent() override;
 };
 
 
@@ -1010,7 +1020,7 @@ public:
 		m_layers[m_currentLayerNo]->AddNode(new NodeCircle(this, point, radius, fillType));
 	}
 	// 多角形追加
-	void AddPlygon(const std::vector<Coord<double>>& points, FillType fillType)
+	void AddPlygon(const Coords_v<double>& points, FillType fillType)
 	{
 		m_layers[m_currentLayerNo]->AddNode(new NodePolygon(this, points, fillType));
 	}
