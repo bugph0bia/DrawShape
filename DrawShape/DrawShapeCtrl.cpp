@@ -140,7 +140,23 @@ BOOL CDrawShapeCtrl::CDrawShapeCtrlFactory::UpdateRegistry(BOOL bRegister)
 
 // CDrawShapeCtrl::CDrawShapeCtrl - コンストラクター
 
-CDrawShapeCtrl::CDrawShapeCtrl()
+CDrawShapeCtrl::CDrawShapeCtrl() :
+	m_BaseColor(0),
+	m_GridColor(0),
+	m_GridSize(0),
+	m_OriginColor(0),
+	m_OriginSize(0),
+	m_AxisColor(0),
+	m_AxisScale(0),
+	m_IsDrawGrid(0),
+	m_IsDrawOrigin(0),
+	m_IsDrawAxis(0),
+	m_IsDrawArrow(0),
+	m_IsDrawCenter(0),
+	m_CanMouseDragPan(0),
+	m_CanMouseWheelZoom(0),
+	m_pOldBmp(nullptr),
+	m_IsDragging(0)
 {
 	InitializeIIDs(&IID_DDrawShape, &IID_DDrawShapeEvents);
 	// TODO: この位置にコントロールのインスタンス データの初期化処理を追加してください
@@ -197,6 +213,9 @@ int CDrawShapeCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// TODO: ここに特定な作成コードを追加してください。
 
+	// 初期化処理
+	Initialize();
+
 	return 0;
 }
 
@@ -206,6 +225,9 @@ void CDrawShapeCtrl::OnDestroy()
 	COleControl::OnDestroy();
 
 	// TODO: ここにメッセージ ハンドラー コードを追加します。
+
+	// 終了処理
+	Terminate();
 }
 
 
@@ -214,12 +236,51 @@ void CDrawShapeCtrl::OnSize(UINT nType, int cx, int cy)
 	COleControl::OnSize(nType, cx, cy);
 
 	// TODO: ここにメッセージ ハンドラー コードを追加します。
+
+	// 実行モード
+	if (AmbientUserMode()) {
+		// デバイスコンテキスト取得
+		CDC* pDC = GetDC();
+
+		// コントロールの矩形領域の再設定
+		CRect rect;
+		GetClientRect(&rect);
+		// メモリデバイスコンテキストの実体を削除
+		m_memDC.SelectObject(m_pOldBmp);
+		m_memBmp.DeleteObject();
+		// 新しいサイズに合わせてメモリデバイスコンテキストを再設定
+		m_memBmp.CreateCompatibleBitmap(pDC, rect.Width(), rect.Height());
+		m_pOldBmp = m_memDC.SelectObject(&m_memBmp);
+		// デバイスコンテキスト解放
+		ReleaseDC(pDC);
+
+		// 描画管理オブジェクトを再設定
+		m_pDrawManager->ResetCanvas(&m_memDC, rect);
+
+		// 再描画
+		Redraw();
+	}
 }
 
 
 void CDrawShapeCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
+
+	// ドラッグによるパンを許可している場合
+	if (m_CanMouseDragPan) {
+		// ドラッグ中であることを覚える
+		m_IsDragging = TRUE;
+		m_pntDraggingBasePos = point;
+
+		// ドラッグ中カーソル：全方向矢印
+		SetCursor(::LoadCursor(NULL, IDC_SIZEALL));
+
+		// マウスカーソルの移動範囲をコントロール内に制限
+		CRect rect;
+		GetWindowRect(&rect);
+		::ClipCursor(&rect);
+	}
 
 	COleControl::OnLButtonDown(nFlags, point);
 }
@@ -229,6 +290,19 @@ void CDrawShapeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 
+	// ドラッグによるパンを許可している場合
+	if (m_CanMouseDragPan) {
+		// ドラッグ終了とする
+		m_IsDragging = FALSE;
+		m_pntDraggingBasePos = POINT{ 0, 0 };
+
+		// カーソルを戻す：十字
+		SetCursor(::LoadCursor(NULL, IDC_CROSS));
+
+		// マウスカーソルの移動範囲の制限を解除
+		::ClipCursor(NULL);
+	}
+
 	COleControl::OnLButtonUp(nFlags, point);
 }
 
@@ -236,6 +310,22 @@ void CDrawShapeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 void CDrawShapeCtrl::OnMouseMove(UINT nFlags, CPoint point)
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
+
+	// ドラッグによるパンを許可 かつ ドラッグ中
+	if (m_CanMouseDragPan && m_IsDragging) {
+		// パン
+		if (!Pan((point.x - m_pntDraggingBasePos.x), (point.y - m_pntDraggingBasePos.y))) {
+			// これ以上ドラッグさせないようにカーソルをドラッグ開始位置に設定
+			CPoint	dragStartPosScreen = m_pntDraggingBasePos;
+			ClientToScreen(&dragStartPosScreen);
+			SetCursorPos(dragStartPosScreen.x, dragStartPosScreen.y);
+			point = m_pntDraggingBasePos;
+		}
+		else {
+			// 基準カーソル位置を更新
+			m_pntDraggingBasePos = point;
+		}
+	}
 
 	COleControl::OnMouseMove(nFlags, point);
 }
@@ -245,9 +335,22 @@ BOOL CDrawShapeCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 
+	// マウスホイールによるズームを許可
+	if (m_CanMouseWheelZoom) {
+		// カーソル位置をクライアント座標系に変換
+		CPoint pntClient = pt;
+		ScreenToClient(&pntClient);
+
+		// 拡大
+		if (zDelta > 0) Zoom(ZOOM_UP_RATIO, pntClient.x, pntClient.y);
+		// 縮小
+		else Zoom(ZOOM_DOWN_RATIO, pntClient.x, pntClient.y);
+	}
+
 	return COleControl::OnMouseWheel(nFlags, zDelta, pt);
 }
 
+// TODO: ↓未実装
 
 OLE_COLOR CDrawShapeCtrl::GetBaseColor()
 {
@@ -289,7 +392,7 @@ void CDrawShapeCtrl::SetGridColor(OLE_COLOR newVal)
 }
 
 
-double CDrawShapeCtrl::GetGridSize()
+DOUBLE CDrawShapeCtrl::GetGridSize()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -299,7 +402,7 @@ double CDrawShapeCtrl::GetGridSize()
 }
 
 
-void CDrawShapeCtrl::SetGridSize(double newVal)
+void CDrawShapeCtrl::SetGridSize(DOUBLE newVal)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -329,7 +432,7 @@ void CDrawShapeCtrl::SetOriginColor(OLE_COLOR newVal)
 }
 
 
-long CDrawShapeCtrl::GetOriginSize()
+LONG CDrawShapeCtrl::GetOriginSize()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -339,7 +442,7 @@ long CDrawShapeCtrl::GetOriginSize()
 }
 
 
-void CDrawShapeCtrl::SetOriginSize(long newVal)
+void CDrawShapeCtrl::SetOriginSize(LONG newVal)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -369,7 +472,7 @@ void CDrawShapeCtrl::SetAxisColor(OLE_COLOR newVal)
 }
 
 
-double CDrawShapeCtrl::GetAxisScale()
+DOUBLE CDrawShapeCtrl::GetAxisScale()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -379,7 +482,7 @@ double CDrawShapeCtrl::GetAxisScale()
 }
 
 
-void CDrawShapeCtrl::SetAxisScale(double newVal)
+void CDrawShapeCtrl::SetAxisScale(DOUBLE newVal)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -788,4 +891,47 @@ void CDrawShapeCtrl::AddAxis(DOUBLE ox, DOUBLE oy)
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+}
+
+
+// 初期化処理
+void CDrawShapeCtrl::Initialize()
+{
+	// ドラッグ状態をクリア
+	m_IsDragging = FALSE;
+	m_pntDraggingBasePos = POINT{ 0, 0 };
+
+	// コントロールの矩形領域
+	CRect rect;
+	GetClientRect(&rect);
+	// デバイスコンテキスト取得
+	CDC* pDC = GetDC();
+	// メモリデバイスコンテキストを作成
+	m_memDC.CreateCompatibleDC(pDC);
+	m_memBmp.CreateCompatibleBitmap(pDC, rect.Width(), rect.Height());
+	m_pOldBmp = m_memDC.SelectObject(&m_memBmp);
+	// バックグラウンドを変更しないように背景モードを透明に設定
+	//   ※点線を描くときなどに影響
+	m_memDC.SetBkMode(TRANSPARENT);
+	// デバイスコンテキスト解放
+	ReleaseDC(pDC);
+
+	// 通常時カーソル：十字
+	SetCursor(::LoadCursor(NULL, IDC_CROSS));
+
+	// 描画管理オブジェクトを作成
+	m_pDrawManager = std::make_unique<Drawer::Manager>(&m_memDC, rect);
+	// 描画領域初期化
+	Redraw();
+}
+
+// 終了処理
+void CDrawShapeCtrl::Terminate()
+{
+	// メモリデバイスコンテキストの実態を戻す
+	m_memDC.SelectObject(m_pOldBmp);
+	// ビットマップを削除
+	m_memBmp.DeleteObject();
+	// メモリデバイスコンテキストを削除
+	m_memDC.DeleteDC();
 }
