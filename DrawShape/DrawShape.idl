@@ -20,7 +20,49 @@ library DrawShapeLib
 	dispinterface _DDrawShape
 	{
 		properties:
+			[id(1)] OLE_COLOR BaseColor;
+			[id(2)] OLE_COLOR GridColor;
+			[id(3)] double GridSize;
+			[id(4)] OLE_COLOR OriginColor;
+			[id(5)] long OriginSize;
+			[id(6)] OLE_COLOR AxisColor;
+			[id(7)] double AxisScale;
+			[id(8)] VARIANT_BOOL IsDrawGrid;
+			[id(9)] VARIANT_BOOL IsDrawOrigin;
+			[id(10)] VARIANT_BOOL IsDrawAxis;
+			[id(11)] VARIANT_BOOL IsDrawArrow;
+			[id(12)] VARIANT_BOOL IsDrawCenter;
+			[id(13), nonbrowsable] LONG CurrentLayerNo;
+			[id(14), nonbrowsable] LONG LayerCount;
+			[id(15)] VARIANT_BOOL CanMouseDragPan;
+			[id(16)] VARIANT_BOOL CanMouseWheelZoom;
 		methods:
+			[id(17)] void Redraw();
+			[id(18)] void Clear();
+			[id(19)] VARIANT_BOOL SaveBitmap(BSTR filePath);
+			[id(20)] VARIANT_BOOL CopyBitmap();
+			[id(21)] void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
+			[id(22)] void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
+			[id(23)] VARIANT_BOOL InsertLayer(LONG insertNo);
+			[id(24)] void ClearCurrentLayer();
+			[id(25)] LONG DeleteCurrentLayer();
+			[id(26)] void SetEnableCurrentLayer(VARIANT_BOOL enable);
+			[id(27)] VARIANT_BOOL GetEnableCurrentLayer();
+			[id(28)] VARIANT_BOOL Zoom(DOUBLE ratio, LONG ctrlBaseX, LONG ctrlBaseY);
+			[id(29)] VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
+			[id(30)] void Fit(DOUBLE ratio);
+			[id(31)] void ChangePen(LONG style, LONG width, OLE_COLOR color);
+			[id(32)] void ChangeBrush(LONG style, OLE_COLOR color, LONG hatch);
+			[id(33)] void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+			[id(34)] void AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+			[id(35)] void AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
+			[id(36)] void AddPoint(DOUBLE x, DOUBLE y, LONG type);
+			[id(37)] void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
+			[id(38)] void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
+			[id(39)] void AddPolygon(DOUBLE* points, LONG pointCount, VARIANT_BOOL fill);
+			[id(40)] void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
+			[id(41)] void AddGrid(DOUBLE ox, DOUBLE oy);
+			[id(42)] void AddAxis(DOUBLE ox, DOUBLE oy);
 	};
 
 	//  CDrawShapeCtrl のイベント ディスパッチ インターフェイス
