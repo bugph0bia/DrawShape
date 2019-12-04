@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Drawer.h"
+
 // DrawShapeCtrl.h : CDrawShapeCtrl ActiveX コントロール クラスの宣言。
 
 
@@ -83,6 +85,8 @@ public:
 		dispidGridColor = 2,
 		dispidBaseColor = 1
 	};
+
+	// イベントハンドラ
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -90,21 +94,55 @@ public:
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+
 protected:
+	// IDLインタフェース - プロパティ(実体)
+
+	// 背景色
+	OLE_COLOR m_BaseColor;
+	// グリッド色
+	OLE_COLOR m_GridColor;
+	// グリッドサイズ
+	DOUBLE m_GridSize;
+	// 原点色
+	OLE_COLOR m_OriginColor;
+	// 原点サイズ(半径)
+	LONG m_OriginSize;
+	// 軸色
+	OLE_COLOR m_AxisColor;
+	// 軸目盛サイズ
+	DOUBLE m_AxisScale;
+	// グリッド描画フラグ
+	VARIANT_BOOL m_IsDrawGrid;
+	// 原点描画フラグ
+	VARIANT_BOOL m_IsDrawOrigin;
+	// 軸描画フラグ
+	VARIANT_BOOL m_IsDrawAxis;
+	// 矢印描画フラグ
+	VARIANT_BOOL m_IsDrawArrow;
+	// 円弧中心点描画フラグ
+	VARIANT_BOOL m_IsDrawCenter;
+	// マウスドラッグによるパンの許可
+	VARIANT_BOOL m_CanMouseDragPan;
+	// マウスホイールによるズームの許可
+	VARIANT_BOOL m_CanMouseWheelZoom;
+
+	// IDLインタフェース - プロパティ
+
 	OLE_COLOR GetBaseColor();
 	void SetBaseColor(OLE_COLOR newVal);
 	OLE_COLOR GetGridColor();
 	void SetGridColor(OLE_COLOR newVal);
-	double GetGridSize();
-	void SetGridSize(double newVal);
+	DOUBLE GetGridSize();
+	void SetGridSize(DOUBLE newVal);
 	OLE_COLOR GetOriginColor();
 	void SetOriginColor(OLE_COLOR newVal);
-	long GetOriginSize();
-	void SetOriginSize(long newVal);
+	LONG GetOriginSize();
+	void SetOriginSize(LONG newVal);
 	OLE_COLOR GetAxisColor();
 	void SetAxisColor(OLE_COLOR newVal);
-	double GetAxisScale();
-	void SetAxisScale(double newVal);
+	DOUBLE GetAxisScale();
+	void SetAxisScale(DOUBLE newVal);
 	VARIANT_BOOL GetIsDrawGrid();
 	void SetIsDrawGrid(VARIANT_BOOL newVal);
 	VARIANT_BOOL GetIsDrawOrigin();
@@ -123,6 +161,9 @@ protected:
 	void SetCanMouseDragPan(VARIANT_BOOL newVal);
 	VARIANT_BOOL GetCanMouseWheelZoom();
 	void SetCanMouseWheelZoom(VARIANT_BOOL newVal);
+
+	// IDLインタフェース - メソッド
+
 	void Redraw();
 	void Clear();
 	VARIANT_BOOL SaveBitmap(BSTR filePath);
@@ -149,5 +190,29 @@ protected:
 	void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
 	void AddGrid(DOUBLE ox, DOUBLE oy);
 	void AddAxis(DOUBLE ox, DOUBLE oy);
+
+private:
+	// ズームの拡大縮小率
+	static constexpr double ZOOM_UP_RATIO = (5.0 / 4.0);
+	static constexpr double ZOOM_DOWN_RATIO = (4.0 / 5.0);
+
+	// メモリDC
+	CDC m_memDC;
+	// メモリDCの実体のビットマップ
+	CBitmap m_memBmp;
+	CBitmap* m_pOldBmp;
+
+	// 描画管理オブジェクト
+	std::unique_ptr<Drawer::Manager> m_pDrawManager;
+
+	// ドラッグフラグ
+	BOOL m_IsDragging;
+	// ドラッグ中基準点
+	CPoint m_pntDraggingBasePos;
+
+	// 初期化処理
+	void Initialize();
+	// 終了処理
+	void Terminate();
 };
 
