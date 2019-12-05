@@ -20,7 +20,7 @@ library DrawShapeLib
 	dispinterface _DDrawShape
 	{
 		properties:
-			[id(1)] OLE_COLOR BaseColor;
+			[id(1)] OLE_COLOR BackColor;
 			[id(2)] OLE_COLOR GridColor;
 			[id(3)] DOUBLE GridSize;
 			[id(4)] OLE_COLOR OriginColor;

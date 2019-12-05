@@ -29,7 +29,7 @@ END_MESSAGE_MAP()
 // ディスパッチ マップ
 
 BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
-	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "BaseColor", dispidBaseColor, GetBaseColor, SetBaseColor, VT_COLOR)
+	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "BackColor", dispidBackColor, GetBackColor, SetBackColor, VT_COLOR)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "GridColor", dispidGridColor, GetGridColor, SetGridColor, VT_COLOR)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "GridSize", dispidGridSize, GetGridSize, SetGridSize, VT_R8)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "OriginColor", dispidOriginColor, GetOriginColor, SetOriginColor, VT_COLOR)
@@ -141,22 +141,8 @@ BOOL CDrawShapeCtrl::CDrawShapeCtrlFactory::UpdateRegistry(BOOL bRegister)
 // CDrawShapeCtrl::CDrawShapeCtrl - コンストラクター
 
 CDrawShapeCtrl::CDrawShapeCtrl() :
-	m_BaseColor(0),
-	m_GridColor(0),
-	m_GridSize(0),
-	m_OriginColor(0),
-	m_OriginSize(0),
-	m_AxisColor(0),
-	m_AxisScale(0),
-	m_IsDrawGrid(0),
-	m_IsDrawOrigin(0),
-	m_IsDrawAxis(0),
-	m_IsDrawArrow(0),
-	m_IsDrawCenter(0),
-	m_CanMouseDragPan(0),
-	m_CanMouseWheelZoom(0),
 	m_pOldBmp(nullptr),
-	m_IsDragging(0)
+	m_isDragging(0)
 {
 	InitializeIIDs(&IID_DDrawShape, &IID_DDrawShapeEvents);
 	// TODO: この位置にコントロールのインスタンス データの初期化処理を追加してください
@@ -270,7 +256,7 @@ void CDrawShapeCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 	// ドラッグによるパンを許可している場合
 	if (m_CanMouseDragPan) {
 		// ドラッグ中であることを覚える
-		m_IsDragging = TRUE;
+		m_isDragging = TRUE;
 		m_pntDraggingBasePos = point;
 
 		// ドラッグ中カーソル：全方向矢印
@@ -293,7 +279,7 @@ void CDrawShapeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 	// ドラッグによるパンを許可している場合
 	if (m_CanMouseDragPan) {
 		// ドラッグ終了とする
-		m_IsDragging = FALSE;
+		m_isDragging = FALSE;
 		m_pntDraggingBasePos = POINT{ 0, 0 };
 
 		// カーソルを戻す：十字
@@ -312,7 +298,7 @@ void CDrawShapeCtrl::OnMouseMove(UINT nFlags, CPoint point)
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 
 	// ドラッグによるパンを許可 かつ ドラッグ中
-	if (m_CanMouseDragPan && m_IsDragging) {
+	if (m_CanMouseDragPan && m_isDragging) {
 		// パン
 		if (!Pan((point.x - m_pntDraggingBasePos.x), (point.y - m_pntDraggingBasePos.y))) {
 			// これ以上ドラッグさせないようにカーソルをドラッグ開始位置に設定
@@ -352,7 +338,7 @@ BOOL CDrawShapeCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 // TODO: ↓未実装
 
-OLE_COLOR CDrawShapeCtrl::GetBaseColor()
+OLE_COLOR CDrawShapeCtrl::GetBackColor()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -362,7 +348,7 @@ OLE_COLOR CDrawShapeCtrl::GetBaseColor()
 }
 
 
-void CDrawShapeCtrl::SetBaseColor(OLE_COLOR newVal)
+void CDrawShapeCtrl::SetBackColor(OLE_COLOR newVal)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -898,7 +884,7 @@ void CDrawShapeCtrl::AddAxis(DOUBLE ox, DOUBLE oy)
 void CDrawShapeCtrl::Initialize()
 {
 	// ドラッグ状態をクリア
-	m_IsDragging = FALSE;
+	m_isDragging = FALSE;
 	m_pntDraggingBasePos = POINT{ 0, 0 };
 
 	// コントロールの矩形領域
