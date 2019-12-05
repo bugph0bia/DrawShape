@@ -64,8 +64,8 @@ public:
 		dispidInsertLayer = 23L,
 		dispidControlToCanvas = 22L,
 		dispidCanvasToControl = 21L,
-		dispidCopyBitmap = 20L,
-		dispidSaveBitmap = 19L,
+		dispidCopyImage = 20L,
+		dispidSaveImage = 19L,
 		dispidClear = 18L,
 		dispidRedraw = 17L,
 		dispidCanMouseWheelZoom = 16,
@@ -166,8 +166,8 @@ protected:
 
 	void Redraw();
 	void Clear();
-	VARIANT_BOOL SaveBitmap(BSTR filePath);
-	VARIANT_BOOL CopyBitmap();
+	VARIANT_BOOL SaveImage(BSTR filePath);
+	VARIANT_BOOL CopyImage();
 	void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
 	void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
 	VARIANT_BOOL InsertLayer(LONG insertNo);
