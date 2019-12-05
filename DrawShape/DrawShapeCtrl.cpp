@@ -42,7 +42,7 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "IsDrawArrow", dispidIsDrawArrow, GetIsDrawArrow, SetIsDrawArrow, VT_BOOL)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "IsDrawCenter", dispidIsDrawCenter, GetIsDrawCenter, SetIsDrawCenter, VT_BOOL)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentLayerNo", dispidCurrentLayerNo, GetCurrentLayerNo, SetCurrentLayerNo, VT_I4)
-	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "LayerCount", dispidLayerCount, GetLayerCount, SetLayerCount, VT_I4)
+	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "LayerCount", dispidLayerCount, GetLayerCount, SetNotSupported, VT_I4)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CanMouseDragPan", dispidCanMouseDragPan, GetCanMouseDragPan, SetCanMouseDragPan, VT_BOOL)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CanMouseWheelZoom", dispidCanMouseWheelZoom, GetCanMouseWheelZoom, SetCanMouseWheelZoom, VT_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Redraw", dispidRedraw, Redraw, VT_EMPTY, VTS_NONE)
@@ -67,9 +67,9 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPoint", dispidAddPoint, AddPoint, VT_EMPTY, VTS_R8 VTS_R8 VTS_I4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddArc", dispidAddArc, AddArc, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddCircle", dispidAddCircle, AddCircle, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPolygon", dispidAddPolygon, AddPolygon, VT_EMPTY, VTS_PR8 VTS_I4 VTS_BOOL)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPolygon", dispidAddPolygon, AddPolygon, VT_BOOL, VTS_PR8 VTS_I4 VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddSector", dispidAddSector, AddSector, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL VTS_BOOL)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddGrid", dispidAddGrid, AddGrid, VT_EMPTY, VTS_R8 VTS_R8)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddOrigin", dispidAddOrigin, AddOrigin, VT_EMPTY, VTS_R8 VTS_R8)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddAxis", dispidAddAxis, AddAxis, VT_EMPTY, VTS_R8 VTS_R8)
 END_DISPATCH_MAP()
 
@@ -141,11 +141,16 @@ BOOL CDrawShapeCtrl::CDrawShapeCtrlFactory::UpdateRegistry(BOOL bRegister)
 // CDrawShapeCtrl::CDrawShapeCtrl - コンストラクター
 
 CDrawShapeCtrl::CDrawShapeCtrl() :
+	m_CanMouseDragPan(0),
+	m_CanMouseWheelZoom(0),
 	m_pOldBmp(nullptr),
 	m_isDragging(0)
 {
 	InitializeIIDs(&IID_DDrawShape, &IID_DDrawShapeEvents);
 	// TODO: この位置にコントロールのインスタンス データの初期化処理を追加してください
+
+	// 描画管理オブジェクトを作成
+	m_pDrawManager = std::make_unique<Drawer::Manager>();
 }
 
 // CDrawShapeCtrl::~CDrawShapeCtrl - デストラクタ―
@@ -164,8 +169,18 @@ void CDrawShapeCtrl::OnDraw(
 		return;
 
 	// TODO: 以下のコードを描画用のコードに置き換えてください
-	pdc->FillRect(rcBounds, CBrush::FromHandle((HBRUSH)GetStockObject(WHITE_BRUSH)));
-	pdc->Ellipse(rcBounds);
+
+	// 実行モード時
+	if (AmbientUserMode()) {
+		// メモリデバイスコンテキストの内容をコントロールデバイスコンテキストに転送
+		pdc->BitBlt(0, 0, rcBounds.Width(), rcBounds.Height(), &m_memDC, 0, 0, SRCCOPY);
+	}
+	// デザインモード時
+	else {
+		// デザインモード用描画処理
+		m_pDrawManager->ResetCanvas(pdc, rcBounds);
+		m_pDrawManager->Draw(true);
+	}
 }
 
 // CDrawShapeCtrl::DoPropExchange - 永続性のサポート
@@ -186,6 +201,35 @@ void CDrawShapeCtrl::OnResetState()
 	COleControl::OnResetState();  // DoPropExchange を呼び出して既定値にリセット
 
 	// TODO: この位置にコントロールの状態をリセットする処理を追加してください
+
+	// 背景色
+	m_pDrawManager->SetBackColor(DEFAULT_BACK_COLOR);
+	// グリッド色
+	m_pDrawManager->SetGridColor(DEFAULT_GRID_COLOR);
+	// グリッドサイズ
+	m_pDrawManager->SetGridSize(DEFAULT_GRID_SIZE);
+	// 原点色
+	m_pDrawManager->SetOriginColor(DEFAULT_ORIGIN_COLOR);
+	// 原点サイズ
+	m_pDrawManager->SetOriginSize(DEFAULT_ORIGIN_SIZE);
+	// 軸色
+	m_pDrawManager->SetAxisColor(DEFAULT_AXIS_COLOR);
+	// 軸スケール
+	m_pDrawManager->SetAxisScale(DEFAULT_AXIS_SIZE);
+	// グリッド描画可否
+	m_pDrawManager->SetIsDrawGrid(DEFAULT_IS_DRAW_GRID);
+	// 原点描画可否
+	m_pDrawManager->SetIsDrawOrigin(DEFAULT_IS_DRAW_ORIGIN);
+	// 軸描画可否
+	m_pDrawManager->SetIsDrawAxis(DEFAULT_IS_DRAW_AXIS);
+	// 矢印描画可否
+	m_pDrawManager->SetIsDrawArrow(DEFAULT_IS_DRAW_ARROW);
+	// 円中心点描画可否
+	m_pDrawManager->SetIsDrawCenter(DEFAULT_IS_DRAW_CENTER);
+	// マウスドラッグによるパンの許可
+	BOOL m_CanMouseDragPan = DEFAULT_IS_MOUSE_DRAG_PAN;
+	// マウスホイールによるズームの許可
+	BOOL m_CanMouseWheelZoom = DEFAULT_IS_MOUSE_WHEEL_ZOOM;
 }
 
 
@@ -344,7 +388,7 @@ OLE_COLOR CDrawShapeCtrl::GetBackColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return RGB(0, 0, 0);
+	return m_pDrawManager->GetBackColor();
 }
 
 
@@ -354,6 +398,7 @@ void CDrawShapeCtrl::SetBackColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetBackColor(newVal);
 	SetModifiedFlag();
 }
 
@@ -364,7 +409,7 @@ OLE_COLOR CDrawShapeCtrl::GetGridColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return RGB(0, 0, 0);
+	return m_pDrawManager->GetGridColor();
 }
 
 
@@ -374,6 +419,7 @@ void CDrawShapeCtrl::SetGridColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetGridColor(newVal);
 	SetModifiedFlag();
 }
 
@@ -384,7 +430,7 @@ DOUBLE CDrawShapeCtrl::GetGridSize()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return 0;
+	return m_pDrawManager->GetGridSize();
 }
 
 
@@ -394,6 +440,7 @@ void CDrawShapeCtrl::SetGridSize(DOUBLE newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetGridSize(newVal);
 	SetModifiedFlag();
 }
 
@@ -404,7 +451,7 @@ OLE_COLOR CDrawShapeCtrl::GetOriginColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return RGB(0, 0, 0);
+	return m_pDrawManager->GetOriginColor();
 }
 
 
@@ -414,6 +461,7 @@ void CDrawShapeCtrl::SetOriginColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetOriginColor(newVal);
 	SetModifiedFlag();
 }
 
@@ -424,7 +472,7 @@ LONG CDrawShapeCtrl::GetOriginSize()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return 0;
+	return m_pDrawManager->GetOriginSize();
 }
 
 
@@ -434,6 +482,7 @@ void CDrawShapeCtrl::SetOriginSize(LONG newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetOriginSize(newVal);
 	SetModifiedFlag();
 }
 
@@ -444,7 +493,7 @@ OLE_COLOR CDrawShapeCtrl::GetAxisColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return RGB(0, 0, 0);
+	return m_pDrawManager->GetAxisColor();
 }
 
 
@@ -454,6 +503,7 @@ void CDrawShapeCtrl::SetAxisColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetAxisColor(newVal);
 	SetModifiedFlag();
 }
 
@@ -464,7 +514,7 @@ DOUBLE CDrawShapeCtrl::GetAxisScale()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return 0;
+	return m_pDrawManager->GetAxisScale();
 }
 
 
@@ -474,6 +524,7 @@ void CDrawShapeCtrl::SetAxisScale(DOUBLE newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetAxisScale(newVal);
 	SetModifiedFlag();
 }
 
@@ -484,7 +535,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawGrid()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->GetIsDrawGrid() ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -494,6 +545,7 @@ void CDrawShapeCtrl::SetIsDrawGrid(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetIsDrawGrid(newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -504,7 +556,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawOrigin()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return 0;
+	return m_pDrawManager->GetIsDrawOrigin() ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -514,6 +566,7 @@ void CDrawShapeCtrl::SetIsDrawOrigin(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetIsDrawOrigin(newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -524,7 +577,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawAxis()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return 0;
+	return m_pDrawManager->GetIsDrawAxis() ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -534,6 +587,7 @@ void CDrawShapeCtrl::SetIsDrawAxis(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetIsDrawAxis(newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -544,7 +598,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawArrow()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->GetIsDrawArrow() ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -554,6 +608,7 @@ void CDrawShapeCtrl::SetIsDrawArrow(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetIsDrawArrow(newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -564,7 +619,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawCenter()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->GetIsDrawCenter() ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -574,6 +629,7 @@ void CDrawShapeCtrl::SetIsDrawCenter(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetIsDrawCenter(newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -584,7 +640,7 @@ LONG CDrawShapeCtrl::GetCurrentLayerNo()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return 0;
+	return m_pDrawManager->GetCurrentLayerNo();
 }
 
 
@@ -594,6 +650,7 @@ void CDrawShapeCtrl::SetCurrentLayerNo(LONG newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_pDrawManager->SetCurrentLayerNo(newVal);
 	SetModifiedFlag();
 }
 
@@ -604,17 +661,8 @@ LONG CDrawShapeCtrl::GetLayerCount()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
+	m_pDrawManager->GetLayerCount();
 	return 0;
-}
-
-
-void CDrawShapeCtrl::SetLayerCount(LONG newVal)
-{
-	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
-	// TODO: ここにプロパティ ハンドラー コードを追加します
-
-	SetModifiedFlag();
 }
 
 
@@ -624,7 +672,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetCanMouseDragPan()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_CanMouseDragPan ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -634,6 +682,7 @@ void CDrawShapeCtrl::SetCanMouseDragPan(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_CanMouseDragPan = (newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -644,7 +693,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetCanMouseWheelZoom()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_CanMouseWheelZoom ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -654,6 +703,7 @@ void CDrawShapeCtrl::SetCanMouseWheelZoom(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
+	m_CanMouseWheelZoom = (newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -663,6 +713,12 @@ void CDrawShapeCtrl::Redraw()
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->Draw();
+
+	// 再描画
+	InvalidateRect(nullptr, FALSE);
+	UpdateWindow();
 }
 
 
@@ -671,16 +727,18 @@ void CDrawShapeCtrl::Clear()
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->Clear();
 }
 
 
-VARIANT_BOOL CDrawShapeCtrl::SaveImage(BSTR filePath)
+VARIANT_BOOL CDrawShapeCtrl::SaveImage(LPCTSTR filePath)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->SaveImage(filePath) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -690,7 +748,7 @@ VARIANT_BOOL CDrawShapeCtrl::CopyImage()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->CopyImage(this) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -699,6 +757,10 @@ void CDrawShapeCtrl::CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrl
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	auto ctrlCoord = m_pDrawManager->CanvasToControl(Drawer::Coord<double>(canvasX, canvasY));
+	*pCtrlX = ctrlCoord.x;
+	*pCtrlY = ctrlCoord.y;
 }
 
 
@@ -707,6 +769,10 @@ void CDrawShapeCtrl::ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, D
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	auto canvasCoord = m_pDrawManager->ControlToCanvas(Drawer::Coord<long>(ctrlX, ctrlY));
+	*pCanvasX = canvasCoord.x;
+	*pCanvasY = canvasCoord.y;
 }
 
 
@@ -716,7 +782,7 @@ VARIANT_BOOL CDrawShapeCtrl::InsertLayer(LONG insertNo)
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->InsertLayer(insertNo) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -725,6 +791,8 @@ void CDrawShapeCtrl::ClearCurrentLayer()
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->ClearCurrentLayer();
 }
 
 
@@ -734,7 +802,7 @@ LONG CDrawShapeCtrl::DeleteCurrentLayer()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return 0;
+	return m_pDrawManager->DeleteCurrentLayer();
 }
 
 
@@ -743,6 +811,8 @@ void CDrawShapeCtrl::SetEnableCurrentLayer(VARIANT_BOOL enable)
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->SetEnableCurrentLayer(enable != VARIANT_FALSE);
 }
 
 
@@ -752,17 +822,17 @@ VARIANT_BOOL CDrawShapeCtrl::GetEnableCurrentLayer()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->GetEnableCurrentLayer() ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-VARIANT_BOOL CDrawShapeCtrl::Zoom(DOUBLE ratio, LONG ctrlBaseX, LONG ctrlBaseY)
+VARIANT_BOOL CDrawShapeCtrl::Zoom(DOUBLE coef, LONG ctrlBaseX, LONG ctrlBaseY)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->Zoom(coef, Drawer::Coord<long>(ctrlBaseX, ctrlBaseY)) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -772,15 +842,17 @@ VARIANT_BOOL CDrawShapeCtrl::Pan(LONG ctrlMoveX, LONG ctrlMoveY)
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return VARIANT_TRUE;
+	return m_pDrawManager->Pan(Drawer::Coord<long>(ctrlMoveX, ctrlMoveY)) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::Fit(DOUBLE ratio)
+void CDrawShapeCtrl::Fit(DOUBLE shapeOccupancy)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->Fit(shapeOccupancy);
 }
 
 
@@ -789,6 +861,8 @@ void CDrawShapeCtrl::ChangePen(LONG style, LONG width, OLE_COLOR color)
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->SetCurrentPen(LOGPEN{ static_cast<UINT>(style), { width, 0 }, color });
 }
 
 
@@ -797,6 +871,8 @@ void CDrawShapeCtrl::ChangeBrush(LONG style, OLE_COLOR color, LONG hatch)
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->SetCurrentBrush(LOGBRUSH{ static_cast<UINT>(style), color, static_cast<ULONG_PTR>(hatch) });
 }
 
 
@@ -805,6 +881,11 @@ void CDrawShapeCtrl::AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey)
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->AddLine(
+		Drawer::Coords<double, 2>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey) },
+		Drawer::LineLimitType::Finite
+	);
 }
 
 
@@ -813,6 +894,11 @@ void CDrawShapeCtrl::AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUB
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->AddLine(
+		Drawer::Coords<double, 2>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey) },
+		Drawer::LineLimitType::Infinite
+	);
 }
 
 
@@ -821,6 +907,15 @@ void CDrawShapeCtrl::AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	// 直線上の仮想終点を決める
+	double ex = x + cos(angle);
+	double ey = x + sin(angle);
+
+	m_pDrawManager->AddLine(
+		Drawer::Coords<double, 2>{ Drawer::Coord<double>(x, y), Drawer::Coord<double>(ex, ey) },
+		Drawer::LineLimitType::Infinite
+	);
 }
 
 
@@ -829,6 +924,11 @@ void CDrawShapeCtrl::AddPoint(DOUBLE x, DOUBLE y, LONG type)
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->AddPoint(
+		Drawer::Coord<double>(x, y),
+		static_cast<Drawer::PointType>(type)
+	);
 }
 
 
@@ -837,6 +937,11 @@ void CDrawShapeCtrl::AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE c
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->AddArc(
+		Drawer::Coords<double, 3>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey), Drawer::Coord<double>(cx, cy) },
+		(left ? Drawer::ArcDirectionType::Left : Drawer::ArcDirectionType::Right)
+	);
 }
 
 
@@ -845,14 +950,38 @@ void CDrawShapeCtrl::AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->AddCircle(
+		Drawer::Coord<double>(cx, cy),
+		radius,
+		(fill ? Drawer::FillType::Fill : Drawer::FillType::NoFill)
+	);
 }
 
 
-void CDrawShapeCtrl::AddPolygon(DOUBLE* points, LONG pointCount, VARIANT_BOOL fill)
+VARIANT_BOOL CDrawShapeCtrl::AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	// 座標値の数が奇数なら末尾を読み捨てる
+	if (pointCoordsCount % 2 == 1) pointCoordsCount -= 1;
+	// 座標値の数が0なら終了
+	if (pointCoordsCount <= 0) return VARIANT_FALSE;
+
+	// 座標値配列を変換
+	Drawer::Coords_v<double> points;
+	for (int i = 0; i < pointCoordsCount; i += 2) {
+		points.push_back(Drawer::Coord<double>(pointCoords[i + 0], pointCoords[i + 1]));
+	}
+
+	m_pDrawManager->AddPolygon(
+		points,
+		(fill ? Drawer::FillType::Fill : Drawer::FillType::NoFill)
+	);
+
+	return VARIANT_TRUE;
 }
 
 
@@ -861,14 +990,25 @@ void CDrawShapeCtrl::AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBL
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->AddSector(
+		Drawer::Coords<double, 3>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey), Drawer::Coord<double>(cx, cy) },
+		innerRadius,
+		(left ? Drawer::ArcDirectionType::Left : Drawer::ArcDirectionType::Right),
+		(fill ? Drawer::FillType::Fill : Drawer::FillType::NoFill)
+	);
 }
 
 
-void CDrawShapeCtrl::AddGrid(DOUBLE ox, DOUBLE oy)
+void CDrawShapeCtrl::AddOrigin(DOUBLE ox, DOUBLE oy)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->AddOrigin(
+		Drawer::Coord<double>(ox, oy)
+	);
 }
 
 
@@ -877,6 +1017,10 @@ void CDrawShapeCtrl::AddAxis(DOUBLE ox, DOUBLE oy)
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	m_pDrawManager->AddAxis(
+		Drawer::Coord<double>(ox, oy)
+	);
 }
 
 
@@ -906,7 +1050,7 @@ void CDrawShapeCtrl::Initialize()
 	SetCursor(::LoadCursor(NULL, IDC_CROSS));
 
 	// 描画管理オブジェクトを作成
-	m_pDrawManager = std::make_unique<Drawer::Manager>(&m_memDC, rect);
+	m_pDrawManager->ResetCanvas(&m_memDC, rect);
 	// 描画領域初期化
 	Redraw();
 }
