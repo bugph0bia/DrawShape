@@ -83,7 +83,7 @@ public:
 		dispidOriginColor = 4,
 		dispidGridSize = 3,
 		dispidGridColor = 2,
-		dispidBaseColor = 1
+		dispidBackColor = 1
 	};
 
 	// イベントハンドラ
@@ -96,41 +96,10 @@ public:
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 
 protected:
-	// IDLインタフェース - プロパティ(実体)
-
-	// 背景色
-	OLE_COLOR m_BaseColor;
-	// グリッド色
-	OLE_COLOR m_GridColor;
-	// グリッドサイズ
-	DOUBLE m_GridSize;
-	// 原点色
-	OLE_COLOR m_OriginColor;
-	// 原点サイズ(半径)
-	LONG m_OriginSize;
-	// 軸色
-	OLE_COLOR m_AxisColor;
-	// 軸目盛サイズ
-	DOUBLE m_AxisScale;
-	// グリッド描画フラグ
-	VARIANT_BOOL m_IsDrawGrid;
-	// 原点描画フラグ
-	VARIANT_BOOL m_IsDrawOrigin;
-	// 軸描画フラグ
-	VARIANT_BOOL m_IsDrawAxis;
-	// 矢印描画フラグ
-	VARIANT_BOOL m_IsDrawArrow;
-	// 円弧中心点描画フラグ
-	VARIANT_BOOL m_IsDrawCenter;
-	// マウスドラッグによるパンの許可
-	VARIANT_BOOL m_CanMouseDragPan;
-	// マウスホイールによるズームの許可
-	VARIANT_BOOL m_CanMouseWheelZoom;
-
 	// IDLインタフェース - プロパティ
 
-	OLE_COLOR GetBaseColor();
-	void SetBaseColor(OLE_COLOR newVal);
+	OLE_COLOR GetBackColor();
+	void SetBackColor(OLE_COLOR newVal);
 	OLE_COLOR GetGridColor();
 	void SetGridColor(OLE_COLOR newVal);
 	DOUBLE GetGridSize();
@@ -206,7 +175,7 @@ private:
 	std::unique_ptr<Drawer::Manager> m_pDrawManager;
 
 	// ドラッグフラグ
-	BOOL m_IsDragging;
+	BOOL m_isDragging;
 	// ドラッグ中基準点
 	CPoint m_pntDraggingBasePos;
 
