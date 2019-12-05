@@ -39,8 +39,8 @@ library DrawShapeLib
 		methods:
 			[id(17)] void Redraw();
 			[id(18)] void Clear();
-			[id(19)] VARIANT_BOOL SaveBitmap(BSTR filePath);
-			[id(20)] VARIANT_BOOL CopyBitmap();
+			[id(19)] VARIANT_BOOL SaveImage(BSTR filePath);
+			[id(20)] VARIANT_BOOL CopyImage();
 			[id(21)] void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
 			[id(22)] void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
 			[id(23)] VARIANT_BOOL InsertLayer(LONG insertNo);

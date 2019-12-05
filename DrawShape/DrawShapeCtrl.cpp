@@ -47,8 +47,8 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CanMouseWheelZoom", dispidCanMouseWheelZoom, GetCanMouseWheelZoom, SetCanMouseWheelZoom, VT_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Redraw", dispidRedraw, Redraw, VT_EMPTY, VTS_NONE)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Clear", dispidClear, Clear, VT_EMPTY, VTS_NONE)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "SaveBitmap", dispidSaveBitmap, SaveBitmap, VT_BOOL, VTS_BSTR)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "CopyBitmap", dispidCopyBitmap, CopyBitmap, VT_BOOL, VTS_NONE)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "SaveImage", dispidSaveImage, SaveImage, VT_BOOL, VTS_BSTR)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "CopyImage", dispidCopyImage, CopyImage, VT_BOOL, VTS_NONE)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "CanvasToControl", dispidCanvasToControl, CanvasToControl, VT_EMPTY, VTS_R8 VTS_R8 VTS_PI4 VTS_PI4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "ControlToCanvas", dispidControlToCanvas, ControlToCanvas, VT_EMPTY, VTS_I4 VTS_I4 VTS_PR8 VTS_PR8)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "InsertLayer", dispidInsertLayer, InsertLayer, VT_BOOL, VTS_I4)
@@ -688,7 +688,7 @@ void CDrawShapeCtrl::Clear()
 }
 
 
-VARIANT_BOOL CDrawShapeCtrl::SaveBitmap(BSTR filePath)
+VARIANT_BOOL CDrawShapeCtrl::SaveImage(BSTR filePath)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -698,7 +698,7 @@ VARIANT_BOOL CDrawShapeCtrl::SaveBitmap(BSTR filePath)
 }
 
 
-VARIANT_BOOL CDrawShapeCtrl::CopyBitmap()
+VARIANT_BOOL CDrawShapeCtrl::CopyImage()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
