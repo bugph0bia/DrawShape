@@ -6,9 +6,9 @@ namespace Drawer
 {
 
 // コンストラクタ
-Canvas::Canvas(CDC* pDC, const CRect& rect) :
-	m_pDC(pDC),
-	m_rect(rect),
+Canvas::Canvas() :
+	m_pDC(nullptr),
+	m_rect(0, 0, 0, 0),
 	m_ratio(DEFAULT_RATIO),
 	m_offset(DEFAULT_OFFSET),
 	m_backColor(0),
@@ -950,7 +950,7 @@ void NodeSector::DrawContent()
 
 // コンストラクタ
 Layer::Layer() :
-	m_isDraw(false)
+	m_enableDraw(true)
 {
 }
 
@@ -966,7 +966,7 @@ BoundingBox<double> Layer::CalcBoundingBox() const
 {
 	BoundingBox<double> bbox;
 	// 描画フラグONなら
-	if (m_isDraw) {
+	if (m_enableDraw) {
 		// 全ノードの最小包含箱を合成
 		for (const auto& pNode : m_nodes) {
 			bbox += pNode->CalcBoundingBox();
@@ -979,7 +979,7 @@ BoundingBox<double> Layer::CalcBoundingBox() const
 void Layer::Draw()
 {
 	// 描画フラグONなら
-	if (m_isDraw) {
+	if (m_enableDraw) {
 		// 全ノードを描画
 		for (const auto& pNode : m_nodes) {
 			pNode->Draw();
@@ -989,8 +989,8 @@ void Layer::Draw()
 
 
 // コンストラクタ
-Manager::Manager(CDC* pDC, const CRect& rect) :
-	m_canvas(pDC, rect),
+Manager::Manager() :
+	m_canvas(),
 	m_baseLayer(),
 	m_currentLayerNo(false)
 {
@@ -1009,6 +1009,39 @@ BoundingBox<double> Manager::CalcBoundingBox() const
 		bbox += pLayer->CalcBoundingBox();
 	}
 	return bbox;
+}
+
+// レイヤーを挿入
+bool Manager::InsertLayer(std::size_t insertNo)
+{
+	// レイヤーNoエラー
+	if (m_layers.size() <= insertNo) return false;
+
+	// 指定位置に新しいレイヤーを挿入
+	m_layers.insert(m_layers.begin() + insertNo, std::make_unique<Layer>());
+	// 挿入したレイヤーをカレントとする
+	m_currentLayerNo = insertNo;
+
+	return true;
+}
+
+// カレントレイヤーをクリア
+std::size_t Manager::DeleteCurrentLayer()
+{
+	// 最後のレイヤーの場合
+	if (m_layers.size() <= 1) {
+		m_currentLayerNo = 0;
+		m_layers[m_currentLayerNo]->Clear();
+	}
+	// レイヤーが複数枚ある場合
+	else {
+		// カレントレイヤーを削除
+		m_layers.erase(m_layers.begin() + m_currentLayerNo);
+		// 最終レイヤーを削除した場合のカレント調整
+		if (m_layers.size() <= m_currentLayerNo) m_currentLayerNo = m_layers.size() - 1;
+	}
+	// レイヤー枚数を返す
+	return m_layers.size();
 }
 
 // 初期化
@@ -1040,21 +1073,6 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 {
 	// デザインモード用の描画
 	if (isDesignMode) {
-		// ※これを使用する場合は以下を推奨
-		//   ・本クラスのオブジェクトは一時的な変数とし、コンストラクタを Manager(デザインモード用のDC, Rect); で呼び出しておく
-		//   ・少なくとも以下のプロパティを設定する
-		//       SetBackColor
-		//       SetGridColor
-		//       SetGridSize
-		//       SetOriginColor
-		//       SetOriginSize
-		//       SetAxisColor
-		//       SetAxisScale
-		//       SetIsDrawGrid
-		//       SetIsDrawOrigin
-		//       SetIsDrawAxis
-		//   ・引数 rect にデザインモード時のコントロールの矩形を渡す
-
 		// 拡大縮小率はコンストラクト時の初期値とする
 		m_canvas.SetRatio(Canvas::DEFAULT_RATIO);
 		// オフセットはコントロールの矩形の中央とする
@@ -1107,13 +1125,6 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 		for (const auto& pLayer : m_layers) {
 			pLayer->Draw();
 		}
-
-		/*
-		TODO: これはコントロール側に行わせる予定
-			// 描画イベント発行
-			m_pCtrl->InvalidateRect(nullptr, FALSE);	// 領域無効化
-			m_pCtrl->UpdateWindow();					// 再描画命令
-		*/
 	}
 }
 
@@ -1131,8 +1142,8 @@ bool Manager::Zoom(double coef, const Coord<long>& base)
 
 	// 基準座標から描画オフセット量を算出して更新
 	Coord<double> offset = m_canvas.GetOffset();
-	offset.x = base.x - ((base.x - offset.x) * coef);
-	offset.y = base.y - ((base.y - offset.y) * coef);
+	offset.x = base.x - ((base.x - offset.x) * ratio);
+	offset.y = base.y - ((base.y - offset.y) * ratio);
 	m_canvas.SetOffset(offset);
 
 	// 再描画
@@ -1140,31 +1151,6 @@ bool Manager::Zoom(double coef, const Coord<long>& base)
 
 	return true;
 }
-
-/*
-TODO: これはコントロール側に行わせる予定
-
-// 拡大縮小（カーソル位置基準）
-bool Manager::Zoom(double coef)
-{
-	// マウスカーソル位置
-	CPoint cursor;
-	::GetCursorPos(&cursor);
-
-	// コントロールの矩形（スクリーン座標系）
-	CRect rect;
-	m_pCtrl->GetWindowRect(&rect);
-
-	// マウスカーソルがコントロール内に無い
-	if (!rect.PtInRect(cursor)) return false;
-
-	// マウスカーソル位置をコントロールのクライアント座標に変換
-	m_pCtrl->ScreenToClient(&cursor);
-
-	// 拡大縮小
-	return Zoom(coef, Coord<long>{ cursor.x, cursor.y });
-}
-*/
 
 // パン
 bool Manager::Pan(const Coord<long>& move)

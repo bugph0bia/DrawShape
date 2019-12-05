@@ -353,7 +353,7 @@ public:
 	static constexpr double ARROW_WING_ANGLE = 20.0 * PI / 180.0;
 
 	// コンストラクタ
-	Canvas(CDC* pDC, const CRect& rect);
+	Canvas();
 
 	// 拡大縮小率
 	void SetRatio(double val) { m_ratio = val;  }
@@ -845,7 +845,7 @@ private:
 	std::vector<std::unique_ptr<Node>> m_nodes;
 
 	// 描画フラグ
-	bool m_isDraw;
+	bool m_enableDraw;
 
 public:
 	// コンストラクタ
@@ -861,8 +861,8 @@ public:
 	BoundingBox<double> CalcBoundingBox() const;
 
 	// 描画フラグ
-	void SetIsDraw(bool val) { m_isDraw = val; }
-	bool GetIsDraw() const { return m_isDraw; }
+	void SetEnableDraw(bool val) { m_enableDraw = val; }
+	bool GetEnableDraw() const { return m_enableDraw; }
 
 	// 描画
 	void Draw();
@@ -887,7 +887,7 @@ private:
 	LOGBRUSH m_currentBrush;
 
 	// カレントレイヤー番号
-	int m_currentLayerNo;
+	std::size_t m_currentLayerNo;
 
 	// 全形状の最小包含箱を算出
 	BoundingBox<double> CalcBoundingBox() const;
@@ -906,7 +906,7 @@ public:
 	static constexpr double OFFSET_MAX = 999999.0;
 
 	// コンストラクタ
-	Manager(CDC* pDC, const CRect& rect);
+	Manager();
 
 	// コピーコンストラクタ
 	Manager(const Manager&) = delete;
@@ -964,8 +964,33 @@ public:
 	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; };
 	int GetCurrentLayerNo() const { return m_currentLayerNo; };
 
+	// レイヤーを挿入
+	bool InsertLayer(std::size_t noinsertNo);
 	// レイヤー枚数を取得
-	size_t GetLayerCount() const { return m_layers.size(); }
+	std::size_t GetLayerCount() const { return m_layers.size(); }
+	// カレントレイヤーをクリア
+	void ClearCurrentLayer() { m_layers[m_currentLayerNo]->Clear(); }
+	// カレントレイヤーをクリア
+	std::size_t DeleteCurrentLayer();
+	// カレントレイヤーの描画可否
+	void SetEnableCurrentLayer(bool val) { m_layers[m_currentLayerNo]->SetEnableDraw(val); };
+	bool GetEnableCurrentLayer() const { return m_layers[m_currentLayerNo]->GetEnableDraw(); };
+
+	// 描画内容をファイル保存(BMP/PNG/JPEG/GIF)
+	bool SaveImage(const std::tstring& filePath) const { return m_canvas.SaveImage(filePath); }
+	// 描画内容をクリップボードへコピー
+	bool CopyImage(CWnd* pOwner) const { return m_canvas.CopyImage(pOwner); }
+
+	// 座標系変換：内部キャンバス座標系→コントロール座標系
+	Coord<long> CanvasToControl(Coord<double> canvasCoord) const
+	{
+		return m_canvas.CanvasToControl(canvasCoord);
+	}
+	// 座標系変換：コントロール座標系→内部キャンバス座標系
+	Coord<double> ControlToCanvas(Coord<long> canvasCoord) const
+	{
+		return m_canvas.ControlToCanvas(canvasCoord);
+	}
 
 	// 描画領域の情報を再設定
 	// OnSize()等のイベントで呼び出す必要あり
@@ -1020,7 +1045,7 @@ public:
 		m_layers[m_currentLayerNo]->AddNode(new NodeCircle(this, point, radius, fillType));
 	}
 	// 多角形追加
-	void AddPlygon(const Coords_v<double>& points, FillType fillType)
+	void AddPolygon(const Coords_v<double>& points, FillType fillType)
 	{
 		m_layers[m_currentLayerNo]->AddNode(new NodePolygon(this, points, fillType));
 	}

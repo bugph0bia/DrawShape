@@ -43,7 +43,7 @@ protected:
 public:
 	enum {
 		dispidAddAxis = 42L,
-		dispidAddGrid = 41L,
+		dispidAddOrigin = 41L,
 		dispidAddSector = 40L,
 		dispidAddPolygon = 39L,
 		dispidAddCircle = 38L,
@@ -96,6 +96,13 @@ public:
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 
 protected:
+	// IDLインタフェース - プロパティの実体
+
+	// マウスドラッグによるパンの許可
+	BOOL m_CanMouseDragPan;
+	// マウスホイールによるズームの許可
+	BOOL m_CanMouseWheelZoom;
+
 	// IDLインタフェース - プロパティ
 
 	OLE_COLOR GetBackColor();
@@ -125,7 +132,6 @@ protected:
 	LONG GetCurrentLayerNo();
 	void SetCurrentLayerNo(LONG newVal);
 	LONG GetLayerCount();
-	void SetLayerCount(LONG newVal);
 	VARIANT_BOOL GetCanMouseDragPan();
 	void SetCanMouseDragPan(VARIANT_BOOL newVal);
 	VARIANT_BOOL GetCanMouseWheelZoom();
@@ -135,7 +141,7 @@ protected:
 
 	void Redraw();
 	void Clear();
-	VARIANT_BOOL SaveImage(BSTR filePath);
+	VARIANT_BOOL SaveImage(LPCTSTR filePath);
 	VARIANT_BOOL CopyImage();
 	void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
 	void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
@@ -146,7 +152,7 @@ protected:
 	VARIANT_BOOL GetEnableCurrentLayer();
 	VARIANT_BOOL Zoom(DOUBLE ratio, LONG ctrlBaseX, LONG ctrlBaseY);
 	VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
-	void Fit(DOUBLE ratio);
+	void Fit(DOUBLE shapeOccupancy);
 	void ChangePen(LONG style, LONG width, OLE_COLOR color);
 	void ChangeBrush(LONG style, OLE_COLOR color, LONG hatch);
 	void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
@@ -155,15 +161,30 @@ protected:
 	void AddPoint(DOUBLE x, DOUBLE y, LONG type);
 	void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
 	void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
-	void AddPolygon(DOUBLE* points, LONG pointCount, VARIANT_BOOL fill);
+	VARIANT_BOOL AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
 	void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
-	void AddGrid(DOUBLE ox, DOUBLE oy);
+	void AddOrigin(DOUBLE ox, DOUBLE oy);
 	void AddAxis(DOUBLE ox, DOUBLE oy);
 
 private:
 	// ズームの拡大縮小率
 	static constexpr double ZOOM_UP_RATIO = (5.0 / 4.0);
 	static constexpr double ZOOM_DOWN_RATIO = (4.0 / 5.0);
+	// プロパティの初期値
+	static constexpr COLORREF DEFAULT_BACK_COLOR = RGB(0, 0, 0);
+	static constexpr COLORREF DEFAULT_GRID_COLOR = RGB(0, 255, 0);
+	static constexpr double DEFAULT_GRID_SIZE = 10.0;
+	static constexpr COLORREF DEFAULT_ORIGIN_COLOR = RGB(255, 255, 0);
+	static constexpr long DEFAULT_ORIGIN_SIZE = 15;
+	static constexpr COLORREF DEFAULT_AXIS_COLOR = RGB(255, 255, 255);
+	static constexpr double DEFAULT_AXIS_SIZE = 50.0;
+	static constexpr bool DEFAULT_IS_DRAW_GRID = true;
+	static constexpr bool DEFAULT_IS_DRAW_ORIGIN = true;
+	static constexpr bool DEFAULT_IS_DRAW_AXIS = false;
+	static constexpr bool DEFAULT_IS_DRAW_ARROW = false;
+	static constexpr bool DEFAULT_IS_DRAW_CENTER = false;
+	static constexpr bool DEFAULT_IS_MOUSE_DRAG_PAN = true;
+	static constexpr bool DEFAULT_IS_MOUSE_WHEEL_ZOOM = true;
 
 	// メモリDC
 	CDC m_memDC;

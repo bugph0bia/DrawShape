@@ -48,9 +48,9 @@ library DrawShapeLib
 			[id(25)] LONG DeleteCurrentLayer();
 			[id(26)] void SetEnableCurrentLayer(VARIANT_BOOL enable);
 			[id(27)] VARIANT_BOOL GetEnableCurrentLayer();
-			[id(28)] VARIANT_BOOL Zoom(DOUBLE ratio, LONG ctrlBaseX, LONG ctrlBaseY);
+			[id(28)] VARIANT_BOOL Zoom(DOUBLE coef, LONG ctrlBaseX, LONG ctrlBaseY);
 			[id(29)] VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
-			[id(30)] void Fit(DOUBLE ratio);
+			[id(30)] void Fit(DOUBLE shapeOccupancy);
 			[id(31)] void ChangePen(LONG style, LONG width, OLE_COLOR color);
 			[id(32)] void ChangeBrush(LONG style, OLE_COLOR color, LONG hatch);
 			[id(33)] void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
@@ -59,9 +59,9 @@ library DrawShapeLib
 			[id(36)] void AddPoint(DOUBLE x, DOUBLE y, LONG type);
 			[id(37)] void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
 			[id(38)] void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
-			[id(39)] void AddPolygon(DOUBLE* points, LONG pointCount, VARIANT_BOOL fill);
+			[id(39)] VARIANT_BOOL AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
 			[id(40)] void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
-			[id(41)] void AddGrid(DOUBLE ox, DOUBLE oy);
+			[id(41)] void AddOrigin(DOUBLE ox, DOUBLE oy);
 			[id(42)] void AddAxis(DOUBLE ox, DOUBLE oy);
 	};
 
