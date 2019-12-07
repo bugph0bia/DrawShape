@@ -24,5 +24,16 @@ protected:
 // メッセージ マップ
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	double m_EdGridSize;
+	long m_EdOriginSize;
+	double m_EdAxisScale;
+	BOOL m_CkIsDrawGrid;
+	BOOL m_CkIsDrawOrigin;
+	BOOL m_CkIsDrawAxis;
+	BOOL m_CkDrawArrow;
+	BOOL m_CkIsDrawCenter;
+	BOOL m_CkCanMouseDragPan;
+	BOOL m_CkCanMouseWheelZoom;
 };
 
