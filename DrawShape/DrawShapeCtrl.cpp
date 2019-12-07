@@ -230,6 +230,8 @@ void CDrawShapeCtrl::OnResetState()
 	BOOL m_CanMouseDragPan = DEFAULT_IS_MOUSE_DRAG_PAN;
 	// マウスホイールによるズームの許可
 	BOOL m_CanMouseWheelZoom = DEFAULT_IS_MOUSE_WHEEL_ZOOM;
+
+	SetModifiedFlag();
 }
 
 
@@ -297,19 +299,22 @@ void CDrawShapeCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 
-	// ドラッグによるパンを許可している場合
-	if (m_CanMouseDragPan) {
-		// ドラッグ中であることを覚える
-		m_isDragging = TRUE;
-		m_pntDraggingBasePos = point;
+	// 実行モード
+	if (AmbientUserMode()) {
+		// ドラッグによるパンを許可している場合
+		if (m_CanMouseDragPan) {
+			// ドラッグ中であることを覚える
+			m_isDragging = TRUE;
+			m_pntDraggingBasePos = point;
 
-		// ドラッグ中カーソル：全方向矢印
-		SetCursor(::LoadCursor(NULL, IDC_SIZEALL));
+			// ドラッグ中カーソル：全方向矢印
+			SetCursor(::LoadCursor(NULL, IDC_SIZEALL));
 
-		// マウスカーソルの移動範囲をコントロール内に制限
-		CRect rect;
-		GetWindowRect(&rect);
-		::ClipCursor(&rect);
+			// マウスカーソルの移動範囲をコントロール内に制限
+			CRect rect;
+			GetWindowRect(&rect);
+			::ClipCursor(&rect);
+		}
 	}
 
 	COleControl::OnLButtonDown(nFlags, point);
@@ -320,17 +325,20 @@ void CDrawShapeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 
-	// ドラッグによるパンを許可している場合
-	if (m_CanMouseDragPan) {
-		// ドラッグ終了とする
-		m_isDragging = FALSE;
-		m_pntDraggingBasePos = POINT{ 0, 0 };
+	// 実行モード
+	if (AmbientUserMode()) {
+		// ドラッグによるパンを許可している場合
+		if (m_CanMouseDragPan) {
+			// ドラッグ終了とする
+			m_isDragging = FALSE;
+			m_pntDraggingBasePos = POINT{ 0, 0 };
 
-		// カーソルを戻す：十字
-		SetCursor(::LoadCursor(NULL, IDC_CROSS));
+			// カーソルを戻す：十字
+			SetCursor(::LoadCursor(NULL, IDC_CROSS));
 
-		// マウスカーソルの移動範囲の制限を解除
-		::ClipCursor(NULL);
+			// マウスカーソルの移動範囲の制限を解除
+			::ClipCursor(NULL);
+		}
 	}
 
 	COleControl::OnLButtonUp(nFlags, point);
@@ -341,19 +349,22 @@ void CDrawShapeCtrl::OnMouseMove(UINT nFlags, CPoint point)
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 
-	// ドラッグによるパンを許可 かつ ドラッグ中
-	if (m_CanMouseDragPan && m_isDragging) {
-		// パン
-		if (!Pan((point.x - m_pntDraggingBasePos.x), (point.y - m_pntDraggingBasePos.y))) {
-			// これ以上ドラッグさせないようにカーソルをドラッグ開始位置に設定
-			CPoint	dragStartPosScreen = m_pntDraggingBasePos;
-			ClientToScreen(&dragStartPosScreen);
-			SetCursorPos(dragStartPosScreen.x, dragStartPosScreen.y);
-			point = m_pntDraggingBasePos;
-		}
-		else {
-			// 基準カーソル位置を更新
-			m_pntDraggingBasePos = point;
+	// 実行モード
+	if (AmbientUserMode()) {
+		// ドラッグによるパンを許可 かつ ドラッグ中
+		if (m_CanMouseDragPan && m_isDragging) {
+			// パン
+			if (!Pan((point.x - m_pntDraggingBasePos.x), (point.y - m_pntDraggingBasePos.y))) {
+				// これ以上ドラッグさせないようにカーソルをドラッグ開始位置に設定
+				CPoint	dragStartPosScreen = m_pntDraggingBasePos;
+				ClientToScreen(&dragStartPosScreen);
+				SetCursorPos(dragStartPosScreen.x, dragStartPosScreen.y);
+				point = m_pntDraggingBasePos;
+			}
+			else {
+				// 基準カーソル位置を更新
+				m_pntDraggingBasePos = point;
+			}
 		}
 	}
 
@@ -365,22 +376,23 @@ BOOL CDrawShapeCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
 
-	// マウスホイールによるズームを許可
-	if (m_CanMouseWheelZoom) {
-		// カーソル位置をクライアント座標系に変換
-		CPoint pntClient = pt;
-		ScreenToClient(&pntClient);
+	// 実行モード
+	if (AmbientUserMode()) {
+		// マウスホイールによるズームを許可
+		if (m_CanMouseWheelZoom) {
+			// カーソル位置をクライアント座標系に変換
+			CPoint pntClient = pt;
+			ScreenToClient(&pntClient);
 
-		// 拡大
-		if (zDelta > 0) Zoom(ZOOM_UP_RATIO, pntClient.x, pntClient.y);
-		// 縮小
-		else Zoom(ZOOM_DOWN_RATIO, pntClient.x, pntClient.y);
+			// 拡大
+			if (zDelta > 0) Zoom(ZOOM_UP_RATIO, pntClient.x, pntClient.y);
+			// 縮小
+			else Zoom(ZOOM_DOWN_RATIO, pntClient.x, pntClient.y);
+		}
 	}
 
 	return COleControl::OnMouseWheel(nFlags, zDelta, pt);
 }
-
-// TODO: ↓未実装
 
 OLE_COLOR CDrawShapeCtrl::GetBackColor()
 {
