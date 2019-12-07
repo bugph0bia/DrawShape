@@ -12,6 +12,7 @@
 library DrawShapeLib
 {
 	importlib(STDOLE_TLB);
+	importlib(STDTYPE_TLB);
 
 	//  CDrawShapeCtrl のプライマリ ディスパッチ インターフェイス
 	[ 
