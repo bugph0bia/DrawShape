@@ -24,6 +24,7 @@ BEGIN_MESSAGE_MAP(CDrawShapeCtrl, COleControl)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_MOUSEWHEEL()
+	ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
 
 // ディスパッチ マップ
@@ -81,7 +82,8 @@ END_EVENT_MAP()
 // プロパティ ページ
 
 // TODO: プロパティ ページを追加して、BEGIN 行の最後にあるカウントを増やしてください。
-BEGIN_PROPPAGEIDS(CDrawShapeCtrl, 1)
+BEGIN_PROPPAGEIDS(CDrawShapeCtrl, 2)
+	PROPPAGEID(CLSID_CColorPropPage)
 	PROPPAGEID(CDrawShapePropPage::guid)
 END_PROPPAGEIDS(CDrawShapeCtrl)
 
@@ -144,13 +146,11 @@ CDrawShapeCtrl::CDrawShapeCtrl() :
 	m_CanMouseDragPan(0),
 	m_CanMouseWheelZoom(0),
 	m_pOldBmp(nullptr),
-	m_isDragging(0)
+	m_isDragging(0),
+	m_pDrawManager(std::make_unique<Drawer::Manager>())
 {
 	InitializeIIDs(&IID_DDrawShape, &IID_DDrawShapeEvents);
 	// TODO: この位置にコントロールのインスタンス データの初期化処理を追加してください
-
-	// 描画管理オブジェクトを作成
-	m_pDrawManager = std::make_unique<Drawer::Manager>();
 }
 
 // CDrawShapeCtrl::~CDrawShapeCtrl - デストラクタ―
@@ -173,7 +173,8 @@ void CDrawShapeCtrl::OnDraw(
 	// 実行モード時
 	if (AmbientUserMode()) {
 		// メモリデバイスコンテキストの内容をコントロールデバイスコンテキストに転送
-		pdc->BitBlt(0, 0, rcBounds.Width(), rcBounds.Height(), &m_memDC, 0, 0, SRCCOPY);
+		//pdc->BitBlt(0, 0, rcBounds.Width(), rcBounds.Height(), &m_memDC, 0, 0, SRCCOPY);
+		pdc->BitBlt(0, 0, 100, 100, &m_memDC, 0, 0, SRCCOPY);
 	}
 	// デザインモード時
 	else {
@@ -393,6 +394,16 @@ BOOL CDrawShapeCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 	return COleControl::OnMouseWheel(nFlags, zDelta, pt);
 }
+
+
+BOOL CDrawShapeCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+{
+	// TODO: ここにメッセージ ハンドラー コードを追加するか、既定の処理を呼び出します。
+
+	//return COleControl::OnSetCursor(pWnd, nHitTest, message);
+	return TRUE;
+}
+
 
 OLE_COLOR CDrawShapeCtrl::GetBackColor()
 {
@@ -741,6 +752,7 @@ void CDrawShapeCtrl::Clear()
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
 	m_pDrawManager->Clear();
+	Redraw();
 }
 
 
@@ -844,7 +856,9 @@ VARIANT_BOOL CDrawShapeCtrl::Zoom(DOUBLE coef, LONG ctrlBaseX, LONG ctrlBaseY)
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->Zoom(coef, Drawer::Coord<long>(ctrlBaseX, ctrlBaseY)) ? VARIANT_TRUE : VARIANT_FALSE;
+	VARIANT_BOOL ret = m_pDrawManager->Zoom(coef, Drawer::Coord<long>(ctrlBaseX, ctrlBaseY)) ? VARIANT_TRUE : VARIANT_FALSE;
+	Redraw();
+	return ret;
 }
 
 
@@ -854,7 +868,9 @@ VARIANT_BOOL CDrawShapeCtrl::Pan(LONG ctrlMoveX, LONG ctrlMoveY)
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->Pan(Drawer::Coord<long>(ctrlMoveX, ctrlMoveY)) ? VARIANT_TRUE : VARIANT_FALSE;
+	VARIANT_BOOL ret = m_pDrawManager->Pan(Drawer::Coord<long>(ctrlMoveX, ctrlMoveY)) ? VARIANT_TRUE : VARIANT_FALSE;
+	Redraw();
+	return ret;
 }
 
 
@@ -865,6 +881,7 @@ void CDrawShapeCtrl::Fit(DOUBLE shapeOccupancy)
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
 	m_pDrawManager->Fit(shapeOccupancy);
+	Redraw();
 }
 
 

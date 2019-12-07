@@ -31,9 +31,77 @@ protected:
 	DECLARE_OLECTLTYPE(CDrawShapeCtrl)		// タイプ名とその他のステータス
 
 // メッセージ マップ
+	// イベントハンドラ
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnDestroy();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	DECLARE_MESSAGE_MAP()
 
 // ディスパッチ マップ
+	// IDLインタフェース - プロパティ
+	afx_msg OLE_COLOR GetBackColor();
+	afx_msg void SetBackColor(OLE_COLOR newVal);
+	afx_msg OLE_COLOR GetGridColor();
+	afx_msg void SetGridColor(OLE_COLOR newVal);
+	afx_msg DOUBLE GetGridSize();
+	afx_msg void SetGridSize(DOUBLE newVal);
+	afx_msg OLE_COLOR GetOriginColor();
+	afx_msg void SetOriginColor(OLE_COLOR newVal);
+	afx_msg LONG GetOriginSize();
+	afx_msg void SetOriginSize(LONG newVal);
+	afx_msg OLE_COLOR GetAxisColor();
+	afx_msg void SetAxisColor(OLE_COLOR newVal);
+	afx_msg DOUBLE GetAxisScale();
+	afx_msg void SetAxisScale(DOUBLE newVal);
+	afx_msg VARIANT_BOOL GetIsDrawGrid();
+	afx_msg void SetIsDrawGrid(VARIANT_BOOL newVal);
+	afx_msg VARIANT_BOOL GetIsDrawOrigin();
+	afx_msg void SetIsDrawOrigin(VARIANT_BOOL newVal);
+	afx_msg VARIANT_BOOL GetIsDrawAxis();
+	afx_msg void SetIsDrawAxis(VARIANT_BOOL newVal);
+	afx_msg VARIANT_BOOL GetIsDrawArrow();
+	afx_msg void SetIsDrawArrow(VARIANT_BOOL newVal);
+	afx_msg VARIANT_BOOL GetIsDrawCenter();
+	afx_msg void SetIsDrawCenter(VARIANT_BOOL newVal);
+	afx_msg LONG GetCurrentLayerNo();
+	afx_msg void SetCurrentLayerNo(LONG newVal);
+	afx_msg LONG GetLayerCount();
+	afx_msg VARIANT_BOOL GetCanMouseDragPan();
+	afx_msg void SetCanMouseDragPan(VARIANT_BOOL newVal);
+	afx_msg VARIANT_BOOL GetCanMouseWheelZoom();
+	afx_msg void SetCanMouseWheelZoom(VARIANT_BOOL newVal);
+	// IDLインタフェース - メソッド
+	afx_msg void Redraw();
+	afx_msg void Clear();
+	afx_msg VARIANT_BOOL SaveImage(LPCTSTR filePath);
+	afx_msg VARIANT_BOOL CopyImage();
+	afx_msg void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
+	afx_msg void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
+	afx_msg VARIANT_BOOL InsertLayer(LONG insertNo);
+	afx_msg void ClearCurrentLayer();
+	afx_msg LONG DeleteCurrentLayer();
+	afx_msg void SetEnableCurrentLayer(VARIANT_BOOL enable);
+	afx_msg VARIANT_BOOL GetEnableCurrentLayer();
+	afx_msg VARIANT_BOOL Zoom(DOUBLE ratio, LONG ctrlBaseX, LONG ctrlBaseY);
+	afx_msg VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
+	afx_msg void Fit(DOUBLE shapeOccupancy);
+	afx_msg void ChangePen(LONG style, LONG width, OLE_COLOR color);
+	afx_msg void ChangeBrush(LONG style, OLE_COLOR color, LONG hatch);
+	afx_msg void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+	afx_msg void AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+	afx_msg void AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
+	afx_msg void AddPoint(DOUBLE x, DOUBLE y, LONG type);
+	afx_msg void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
+	afx_msg void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
+	afx_msg VARIANT_BOOL AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
+	afx_msg void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
+	afx_msg void AddOrigin(DOUBLE ox, DOUBLE oy);
+	afx_msg void AddAxis(DOUBLE ox, DOUBLE oy);
 	DECLARE_DISPATCH_MAP()
 
 // イベント マップ
@@ -86,85 +154,12 @@ public:
 		dispidBackColor = 1
 	};
 
-	// イベントハンドラ
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnDestroy();
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-
 protected:
 	// IDLインタフェース - プロパティの実体
-
 	// マウスドラッグによるパンの許可
 	BOOL m_CanMouseDragPan;
 	// マウスホイールによるズームの許可
 	BOOL m_CanMouseWheelZoom;
-
-	// IDLインタフェース - プロパティ
-
-	OLE_COLOR GetBackColor();
-	void SetBackColor(OLE_COLOR newVal);
-	OLE_COLOR GetGridColor();
-	void SetGridColor(OLE_COLOR newVal);
-	DOUBLE GetGridSize();
-	void SetGridSize(DOUBLE newVal);
-	OLE_COLOR GetOriginColor();
-	void SetOriginColor(OLE_COLOR newVal);
-	LONG GetOriginSize();
-	void SetOriginSize(LONG newVal);
-	OLE_COLOR GetAxisColor();
-	void SetAxisColor(OLE_COLOR newVal);
-	DOUBLE GetAxisScale();
-	void SetAxisScale(DOUBLE newVal);
-	VARIANT_BOOL GetIsDrawGrid();
-	void SetIsDrawGrid(VARIANT_BOOL newVal);
-	VARIANT_BOOL GetIsDrawOrigin();
-	void SetIsDrawOrigin(VARIANT_BOOL newVal);
-	VARIANT_BOOL GetIsDrawAxis();
-	void SetIsDrawAxis(VARIANT_BOOL newVal);
-	VARIANT_BOOL GetIsDrawArrow();
-	void SetIsDrawArrow(VARIANT_BOOL newVal);
-	VARIANT_BOOL GetIsDrawCenter();
-	void SetIsDrawCenter(VARIANT_BOOL newVal);
-	LONG GetCurrentLayerNo();
-	void SetCurrentLayerNo(LONG newVal);
-	LONG GetLayerCount();
-	VARIANT_BOOL GetCanMouseDragPan();
-	void SetCanMouseDragPan(VARIANT_BOOL newVal);
-	VARIANT_BOOL GetCanMouseWheelZoom();
-	void SetCanMouseWheelZoom(VARIANT_BOOL newVal);
-
-	// IDLインタフェース - メソッド
-
-	void Redraw();
-	void Clear();
-	VARIANT_BOOL SaveImage(LPCTSTR filePath);
-	VARIANT_BOOL CopyImage();
-	void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
-	void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
-	VARIANT_BOOL InsertLayer(LONG insertNo);
-	void ClearCurrentLayer();
-	LONG DeleteCurrentLayer();
-	void SetEnableCurrentLayer(VARIANT_BOOL enable);
-	VARIANT_BOOL GetEnableCurrentLayer();
-	VARIANT_BOOL Zoom(DOUBLE ratio, LONG ctrlBaseX, LONG ctrlBaseY);
-	VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
-	void Fit(DOUBLE shapeOccupancy);
-	void ChangePen(LONG style, LONG width, OLE_COLOR color);
-	void ChangeBrush(LONG style, OLE_COLOR color, LONG hatch);
-	void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-	void AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-	void AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
-	void AddPoint(DOUBLE x, DOUBLE y, LONG type);
-	void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
-	void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
-	VARIANT_BOOL AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
-	void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
-	void AddOrigin(DOUBLE ox, DOUBLE oy);
-	void AddAxis(DOUBLE ox, DOUBLE oy);
 
 private:
 	// ズームの拡大縮小率

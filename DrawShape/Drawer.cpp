@@ -86,7 +86,7 @@ void Canvas::FillBackground() const
 void Canvas::DrawGrid() const
 {
 	// グリッド描画OFF
-	if (m_isDrawGrid) return;
+	if (!m_isDrawGrid) return;
 	// グリッドが細かすぎたら描画を行わない
 	if ((CanvasToControl(m_gridSize)) < DRAW_GRID_SIZE_MIN) return;
 
@@ -112,7 +112,7 @@ void Canvas::DrawGrid() const
 void Canvas::DrawOrigin(Coord<double> base) const
 {
 	// 原点描画OFF
-	if (m_isDrawOrigin) return;
+	if (!m_isDrawOrigin) return;
 
 	// 原点のコントロール座標を算出
 	Coord<long> origin = CanvasToControl(base);
@@ -154,7 +154,7 @@ void Canvas::DrawOrigin(Coord<double> base) const
 void Canvas::DrawAxis(Coord<double> base) const
 {
 	// 軸描画OFF
-	if (m_isDrawAxis) return;
+	if (!m_isDrawAxis) return;
 
 	// キャンバス全体の座標を取得
 	BoundingBox<double>	canvas = GetCanvasArea();
