@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29519.87
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DrawShape", "DrawShape\DrawShape.vcxproj", "{015576DC-8427-4E6E-97F5-B23CD752433B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DrawerTest", "DrawerTest\DrawerTest.vcxproj", "{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{015576DC-8427-4E6E-97F5-B23CD752433B}.Release|x64.Build.0 = Release|x64
 		{015576DC-8427-4E6E-97F5-B23CD752433B}.Release|x86.ActiveCfg = Release|Win32
 		{015576DC-8427-4E6E-97F5-B23CD752433B}.Release|x86.Build.0 = Release|Win32
+		{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}.Debug|x64.ActiveCfg = Debug|x64
+		{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}.Debug|x64.Build.0 = Debug|x64
+		{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}.Debug|x86.ActiveCfg = Debug|Win32
+		{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}.Debug|x86.Build.0 = Debug|Win32
+		{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}.Release|x64.ActiveCfg = Release|x64
+		{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}.Release|x64.Build.0 = Release|x64
+		{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}.Release|x86.ActiveCfg = Release|Win32
+		{DD960FD0-98DE-4796-A56C-07EB85B8A4F9}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

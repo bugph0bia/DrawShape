@@ -350,7 +350,9 @@ public:
 	// 点の強調時のサイズ
 	static constexpr long LARGE_POINT_SIZE = 3;
 	// 矢印の羽の軸からの角度(20°)
-	static constexpr double ARROW_WING_ANGLE = 20.0 * PI / 180.0;
+	static constexpr double ARROW_WING_ANGLE = 25.0 * PI / 180.0;
+	// 矢印の羽の長さ(コントロール座標)
+	static constexpr long ARROW_WING_LENGTH = 8;
 
 	// コンストラクタ
 	Canvas();
@@ -400,7 +402,13 @@ public:
 	bool GetIsDrawCenter() const { return m_isDrawCenter; };
 
 	// 描画領域の再設定
-	void Reset(CDC* pDC, const CRect& rect) { m_pDC = pDC; m_rect = rect; }
+	void Reset(CDC* pDC, const CRect& rect)
+	{
+		m_pDC = pDC;
+		m_rect = rect;
+		m_ratio = DEFAULT_RATIO;
+		m_offset = Coord<double>(rect.CenterPoint().x, rect.CenterPoint().y);
+	}
 	// デバイスコンテキストを取得
 	CDC* GetDC() const { return m_pDC; };
 	// 描画領域を取得
@@ -917,52 +925,64 @@ public:
 	const Canvas& GetCanvas() const { return m_canvas; }
 
 	// カレントペン
-	void SetCurrentPen(const LOGPEN& val) { m_currentPen = val; };
-	LOGPEN GetCurrentPen() const { return m_currentPen; };
+	void SetCurrentPen(const LOGPEN& val) { m_currentPen = val; }
+	LOGPEN GetCurrentPen() const { return m_currentPen; }
 	// カレントブラシ
-	void SetCurrentBrush(const LOGBRUSH& val) { m_currentBrush = val; };
-	LOGBRUSH GetCurrentBrush() const { return m_currentBrush; };
+	void SetCurrentBrush(const LOGBRUSH& val) { m_currentBrush = val; }
+	LOGBRUSH GetCurrentBrush() const { return m_currentBrush; }
 
 	// 背景色
-	void SetBackColor(COLORREF val) { m_canvas.SetBackColor(val); };
-	COLORREF GetBackColor() const { return m_canvas.GetBackColor(); };
+	void SetBackColor(COLORREF val) { m_canvas.SetBackColor(val); }
+	COLORREF GetBackColor() const { return m_canvas.GetBackColor(); }
 	// グリッド色
-	void SetGridColor(COLORREF val) { m_canvas.SetGridColor(val); };
-	COLORREF GetGridColor() const { return m_canvas.GetGridColor(); };
+	void SetGridColor(COLORREF val)
+	{
+		m_canvas.SetGridColor(val);
+		ResetBaseLayer();
+	}
+	COLORREF GetGridColor() const { return m_canvas.GetGridColor(); }
 	// グリッドサイズ
-	void SetGridSize(double val) { m_canvas.SetGridSize(val); };
-	double GetGridSize() const { return m_canvas.GetGridSize(); };
+	void SetGridSize(double val)
+	{
+		m_canvas.SetGridSize(val);
+		ResetBaseLayer();
+	}
+	double GetGridSize() const { return m_canvas.GetGridSize(); }
 	// 原点色
-	void SetOriginColor(COLORREF val) { m_canvas.SetOriginColor(val); };
-	COLORREF GetOriginColor() const { return m_canvas.GetOriginColor(); };
+	void SetOriginColor(COLORREF val)
+	{
+		m_canvas.SetOriginColor(val);
+		ResetBaseLayer();
+	}
+	COLORREF GetOriginColor() const { return m_canvas.GetOriginColor(); }
 	// 原点サイズ
-	void SetOriginSize(long val) { m_canvas.SetOriginSize(val); };
-	long GetOriginSize() const { return m_canvas.GetOriginSize(); };
+	void SetOriginSize(long val) { m_canvas.SetOriginSize(val); }
+	long GetOriginSize() const { return m_canvas.GetOriginSize(); }
 	// 軸色
-	void SetAxisColor(COLORREF val) { m_canvas.SetAxisColor(val); };
-	COLORREF GetAxisColor() const { return m_canvas.GetAxisColor(); };
+	void SetAxisColor(COLORREF val) { m_canvas.SetAxisColor(val); }
+	COLORREF GetAxisColor() const { return m_canvas.GetAxisColor(); }
 	// 軸スケール
-	void SetAxisScale(double val) { m_canvas.SetAxisScale(val); };
-	double GetAxisScale() const { return m_canvas.GetAxisScale(); };
+	void SetAxisScale(double val) { m_canvas.SetAxisScale(val); }
+	double GetAxisScale() const { return m_canvas.GetAxisScale(); }
 	// グリッド描画可否
-	void SetIsDrawGrid(bool val) { m_canvas.SetIsDrawGrid(val); };
-	bool GetIsDrawGrid() const { return m_canvas.GetIsDrawGrid(); };
+	void SetIsDrawGrid(bool val) { m_canvas.SetIsDrawGrid(val); }
+	bool GetIsDrawGrid() const { return m_canvas.GetIsDrawGrid(); }
 	// 原点描画可否
-	void SetIsDrawOrigin(bool val) { m_canvas.SetIsDrawOrigin(val); };
-	bool GetIsDrawOrigin() const { return m_canvas.GetIsDrawOrigin(); };
+	void SetIsDrawOrigin(bool val) { m_canvas.SetIsDrawOrigin(val); }
+	bool GetIsDrawOrigin() const { return m_canvas.GetIsDrawOrigin(); }
 	// 軸描画可否
-	void SetIsDrawAxis(bool val) { m_canvas.SetIsDrawAxis(val); };
-	bool GetIsDrawAxis() const { return m_canvas.GetIsDrawAxis(); };
+	void SetIsDrawAxis(bool val) { m_canvas.SetIsDrawAxis(val); }
+	bool GetIsDrawAxis() const { return m_canvas.GetIsDrawAxis(); }
 	// 矢印描画可否
-	void SetIsDrawArrow(bool val) { m_canvas.SetIsDrawArrow(val); };
-	bool GetIsDrawArrow() const { return m_canvas.GetIsDrawArrow(); };
+	void SetIsDrawArrow(bool val) { m_canvas.SetIsDrawArrow(val); }
+	bool GetIsDrawArrow() const { return m_canvas.GetIsDrawArrow(); }
 	// 円中心点描画可否
-	void SetIsDrawCenter(bool val) { m_canvas.SetIsDrawCenter(val); };
-	bool GetIsDrawCenter() const { return m_canvas.GetIsDrawCenter(); };
+	void SetIsDrawCenter(bool val) { m_canvas.SetIsDrawCenter(val); }
+	bool GetIsDrawCenter() const { return m_canvas.GetIsDrawCenter(); }
 
 	// カレントレイヤー番号
-	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; };
-	int GetCurrentLayerNo() const { return m_currentLayerNo; };
+	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; }
+	int GetCurrentLayerNo() const { return m_currentLayerNo; }
 
 	// レイヤーを挿入
 	bool InsertLayer(std::size_t noinsertNo);
@@ -995,6 +1015,9 @@ public:
 	// 描画領域の情報を再設定
 	// OnSize()等のイベントで呼び出す必要あり
 	void ResetCanvas(CDC* pDC, const CRect& rect) { m_canvas.Reset(pDC, rect); }
+
+	// ベースレイヤーの再設定
+	void ResetBaseLayer();
 
 	// 初期化
 	void Clear();

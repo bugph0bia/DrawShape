@@ -115,37 +115,37 @@ void Canvas::DrawOrigin(Coord<double> base) const
 	if (!m_isDrawOrigin) return;
 
 	// 原点のコントロール座標を算出
-	Coord<long> origin = CanvasToControl(base);
+	Coord<long> ctrlBase = CanvasToControl(base);
 
 	// 中央の矩形を描画
 	std::array<POINT, 4> points = {
 		// 左上, 右上, 右下, 左下
-		POINT{origin.x - ORIGIN_CENTER_SIZE, origin.y - ORIGIN_CENTER_SIZE},
-		POINT{origin.x + ORIGIN_CENTER_SIZE, origin.y - ORIGIN_CENTER_SIZE},
-		POINT{origin.x + ORIGIN_CENTER_SIZE, origin.y + ORIGIN_CENTER_SIZE},
-		POINT{origin.x - ORIGIN_CENTER_SIZE, origin.y + ORIGIN_CENTER_SIZE}
+		POINT{ctrlBase.x - ORIGIN_CENTER_SIZE, ctrlBase.y - ORIGIN_CENTER_SIZE},
+		POINT{ctrlBase.x + ORIGIN_CENTER_SIZE, ctrlBase.y - ORIGIN_CENTER_SIZE},
+		POINT{ctrlBase.x + ORIGIN_CENTER_SIZE, ctrlBase.y + ORIGIN_CENTER_SIZE},
+		POINT{ctrlBase.x - ORIGIN_CENTER_SIZE, ctrlBase.y + ORIGIN_CENTER_SIZE}
 	};
 	GetDC()->Polygon(points.data(), points.size());
 
 	// X軸方向の矢印
-	GetDC()->MoveTo(origin.x, origin.y);
-	GetDC()->LineTo(origin.x + m_originSize, origin.y);
+	GetDC()->MoveTo(ctrlBase.x, ctrlBase.y);
+	GetDC()->LineTo(ctrlBase.x + m_originSize, ctrlBase.y);
 	// 矢印先端を描画
 	DrawArrowHead(
 		Coords<double, 2>{
 			base,
-			ControlToCanvas(Coord<long>(origin.x + m_originSize, origin.y))
+			ControlToCanvas(Coord<long>(ctrlBase.x + m_originSize, ctrlBase.y))
 		}
 	);
 
 	// Y軸方向の矢印
-	GetDC()->MoveTo(origin.x, origin.y);
-	GetDC()->LineTo(origin.x, origin.y - m_originSize);
+	GetDC()->MoveTo(ctrlBase.x, ctrlBase.y);
+	GetDC()->LineTo(ctrlBase.x, ctrlBase.y - m_originSize);
 	// 矢印先端を描画
 	DrawArrowHead(
 		Coords<double, 2>{
 			base,
-			ControlToCanvas(Coord<long>(origin.x, origin.y - m_originSize))
+			ControlToCanvas(Coord<long>(ctrlBase.x, ctrlBase.y - m_originSize))
 		}
 	);
 }
@@ -292,26 +292,32 @@ void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment) const
 	PenBrushChanger pc(GetDC(), logPen);
 
 	// 先端のコントロール座標を算出
-	Coord<long> tip = CanvasToControl(baseSegment[END]);
+	Coords_v<long> ctrlBaseSegment = CanvasToControl(Coords_v<double>(baseSegment.begin(), baseSegment.end()));
 
 	// 線分の長さ
-	double length = baseSegment[START].Length(baseSegment[END]);
-	// 線分の単位ベクトルを算出
-	Coord<double> unit;
-	unit = (baseSegment[END] - baseSegment[START]) / length;
+	double length = ctrlBaseSegment[START].Length(ctrlBaseSegment[END]);
+	// 線分の単位ベクトルを算出(計算誤差のためにdouble型とする)
+	Coord<double> vec;
+	vec.x = (ctrlBaseSegment[END].x - ctrlBaseSegment[START].x) / length;
+	vec.y = (ctrlBaseSegment[END].y - ctrlBaseSegment[START].y) / length;
 
-	// 左側→右側の羽
-	for (double angle = PI - ARROW_WING_ANGLE; angle <= PI + ARROW_WING_ANGLE; angle += ARROW_WING_ANGLE * 2) {
-		// 羽の先端の座標
-		Coord<long> wing = CanvasToControl(
-			Coord<double>(
-				unit.x * cos(angle) - unit.y * sin(angle),
-				unit.x * sin(angle) + unit.y * cos(angle)
-			)
-		);
+	// 両側の羽
+	double angle = PI - ARROW_WING_ANGLE;
+	for (int i = 0; i < 2; i++) {
+		// 回転
+		Coord<double> wing;
+		wing.x = vec.x * cos(angle) - vec.y * sin(angle);
+		wing.y = vec.x * sin(angle) + vec.y * cos(angle);
+		// 矢印先端に移動して長さを設定
+		wing *= ARROW_WING_LENGTH;
+		wing.x += ctrlBaseSegment[END].x;
+		wing.y += ctrlBaseSegment[END].y;
+
 		// 描画
-		GetDC()->MoveTo(tip.x, tip.y);
-		GetDC()->LineTo(wing.x, wing.y);
+		GetDC()->MoveTo(ctrlBaseSegment[END].x, ctrlBaseSegment[END].y);
+		GetDC()->LineTo(static_cast<long>(wing.x), static_cast<long>(wing.y));
+
+		angle += ARROW_WING_ANGLE * 2;
 	}
 }
 
@@ -1044,26 +1050,52 @@ std::size_t Manager::DeleteCurrentLayer()
 	return m_layers.size();
 }
 
-// 初期化
-void Manager::Clear()
+// ベースレイヤーの再設定
+void Manager::ResetBaseLayer()
 {
-	// ペン初期化
-	m_currentPen = DEFAULT_PEN;
-	// ブラシ初期化
-	m_currentBrush = DEFAULT_BRUSH;
+	// ペンとブラシを退避
+	LOGPEN bkPen = m_currentPen;
+	LOGBRUSH bkBrush = m_currentBrush;
 
 	// ベースレイヤーを初期化
 	m_baseLayer.Clear();
+
 	// グリッドを登録
+	// ペンとブラシを変更（デフォルトから色のみ変更）
+	m_currentPen.lopnColor = m_canvas.GetGridColor();
+	m_currentBrush.lbColor = m_canvas.GetGridColor();
 	m_baseLayer.AddNode(new NodeGrid(this));
+
 	// 軸を登録
+	// ペンとブラシを変更（デフォルトから色のみ変更）
+	m_currentPen.lopnColor = m_canvas.GetOriginColor();
+	m_currentBrush.lbColor = m_canvas.GetOriginColor();
 	m_baseLayer.AddNode(new NodeOrigin(this, Coord<double>(0.0, 0.0)));
+
 	// 原点を登録
+	// ペンとブラシを変更（デフォルトから色のみ変更）
+	m_currentPen.lopnColor = m_canvas.GetAxisColor();
+	m_currentBrush.lbColor = m_canvas.GetAxisColor();
 	m_baseLayer.AddNode(new NodeAxis(this, Coord<double>(0.0, 0.0)));
+
+	// ペンとブラシを元に戻す
+	m_currentPen = bkPen;
+	m_currentBrush = bkBrush;
+}
+
+// 初期化
+void Manager::Clear()
+{
+	// ペンとブラシを初期化
+	m_currentPen = DEFAULT_PEN;
+	m_currentBrush = DEFAULT_BRUSH;
+
+	// ベースレイヤーを再設定
+	ResetBaseLayer();
 
 	// レイヤーコレクションをクリア
 	m_layers.clear();
-	// カレントレイヤーを追加
+	// レイヤーを1枚追加
 	m_layers.push_back(std::make_unique<Layer>());
 	m_currentLayerNo = 0;
 }

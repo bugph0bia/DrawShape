@@ -1081,6 +1081,7 @@ void CDrawShapeCtrl::Initialize()
 	// 描画管理オブジェクトを作成
 	m_pDrawManager->ResetCanvas(&m_memDC, rect);
 	// 描画領域初期化
+	m_pDrawManager->Clear();
 	Redraw();
 }
 
