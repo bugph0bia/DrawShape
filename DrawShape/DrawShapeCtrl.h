@@ -170,7 +170,7 @@ private:
 	static constexpr COLORREF DEFAULT_GRID_COLOR = RGB(0, 255, 0);
 	static constexpr double DEFAULT_GRID_SIZE = 10.0;
 	static constexpr COLORREF DEFAULT_ORIGIN_COLOR = RGB(255, 255, 0);
-	static constexpr long DEFAULT_ORIGIN_SIZE = 15;
+	static constexpr long DEFAULT_ORIGIN_SIZE = 20;
 	static constexpr COLORREF DEFAULT_AXIS_COLOR = RGB(255, 255, 255);
 	static constexpr double DEFAULT_AXIS_SIZE = 50.0;
 	static constexpr bool DEFAULT_IS_DRAW_GRID = true;
