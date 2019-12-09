@@ -173,8 +173,7 @@ void CDrawShapeCtrl::OnDraw(
 	// 実行モード時
 	if (AmbientUserMode()) {
 		// メモリデバイスコンテキストの内容をコントロールデバイスコンテキストに転送
-		//pdc->BitBlt(0, 0, rcBounds.Width(), rcBounds.Height(), &m_memDC, 0, 0, SRCCOPY);
-		pdc->BitBlt(0, 0, 100, 100, &m_memDC, 0, 0, SRCCOPY);
+		pdc->BitBlt(0, 0, rcBounds.Width(), rcBounds.Height(), &m_memDC, 0, 0, SRCCOPY);
 	}
 	// デザインモード時
 	else {
@@ -192,6 +191,21 @@ void CDrawShapeCtrl::DoPropExchange(CPropExchange* pPX)
 	COleControl::DoPropExchange(pPX);
 
 	// TODO: 永続属性を持つ各カスタム プロパティ用の PX_ 関数を呼び出します。
+
+	PX_Color(pPX, _T("BackColor"), m_pDrawManager->m_info.backColor, DEFAULT_BACK_COLOR);
+	PX_Color(pPX, _T("GridColor"), m_pDrawManager->m_info.gridColor, DEFAULT_GRID_COLOR);
+	PX_Double(pPX, _T("GridSize"), m_pDrawManager->m_info.gridSize, DEFAULT_GRID_SIZE);
+	PX_Color(pPX, _T("OriginColor"), m_pDrawManager->m_info.originColor, DEFAULT_ORIGIN_COLOR);
+	PX_Long(pPX, _T("OriginSize"), m_pDrawManager->m_info.originSize, DEFAULT_ORIGIN_SIZE);
+	PX_Color(pPX, _T("AxisColor"), m_pDrawManager->m_info.axisColor, DEFAULT_AXIS_COLOR);
+	PX_Double(pPX, _T("AxisScale"), m_pDrawManager->m_info.axisScale, DEFAULT_AXIS_SIZE);
+	PX_Bool(pPX, _T("IsDrawGrid"), m_pDrawManager->m_info.isDrawGrid, DEFAULT_IS_DRAW_GRID);
+	PX_Bool(pPX, _T("IsDrawOrigin"), m_pDrawManager->m_info.isDrawOrigin, DEFAULT_IS_DRAW_ORIGIN);
+	PX_Bool(pPX, _T("IsDrawAxis"), m_pDrawManager->m_info.isDrawAxis, DEFAULT_IS_DRAW_AXIS);
+	PX_Bool(pPX, _T("IsDrawArrow"), m_pDrawManager->m_info.isDrawArrow, DEFAULT_IS_DRAW_ARROW);
+	PX_Bool(pPX, _T("IsDrawCenter"), m_pDrawManager->m_info.isDrawCenter, DEFAULT_IS_DRAW_CENTER);
+	PX_Bool(pPX, _T("CanMouseDragPan"), m_CanMouseDragPan, DEFAULT_IS_MOUSE_DRAG_PAN);
+	PX_Bool(pPX, _T("CanMouseWheelZoom"), m_CanMouseWheelZoom, DEFAULT_IS_MOUSE_WHEEL_ZOOM);
 }
 
 
@@ -202,37 +216,6 @@ void CDrawShapeCtrl::OnResetState()
 	COleControl::OnResetState();  // DoPropExchange を呼び出して既定値にリセット
 
 	// TODO: この位置にコントロールの状態をリセットする処理を追加してください
-
-	// 背景色
-	m_pDrawManager->SetBackColor(DEFAULT_BACK_COLOR);
-	// グリッド色
-	m_pDrawManager->SetGridColor(DEFAULT_GRID_COLOR);
-	// グリッドサイズ
-	m_pDrawManager->SetGridSize(DEFAULT_GRID_SIZE);
-	// 原点色
-	m_pDrawManager->SetOriginColor(DEFAULT_ORIGIN_COLOR);
-	// 原点サイズ
-	m_pDrawManager->SetOriginSize(DEFAULT_ORIGIN_SIZE);
-	// 軸色
-	m_pDrawManager->SetAxisColor(DEFAULT_AXIS_COLOR);
-	// 軸スケール
-	m_pDrawManager->SetAxisScale(DEFAULT_AXIS_SIZE);
-	// グリッド描画可否
-	m_pDrawManager->SetIsDrawGrid(DEFAULT_IS_DRAW_GRID);
-	// 原点描画可否
-	m_pDrawManager->SetIsDrawOrigin(DEFAULT_IS_DRAW_ORIGIN);
-	// 軸描画可否
-	m_pDrawManager->SetIsDrawAxis(DEFAULT_IS_DRAW_AXIS);
-	// 矢印描画可否
-	m_pDrawManager->SetIsDrawArrow(DEFAULT_IS_DRAW_ARROW);
-	// 円中心点描画可否
-	m_pDrawManager->SetIsDrawCenter(DEFAULT_IS_DRAW_CENTER);
-	// マウスドラッグによるパンの許可
-	BOOL m_CanMouseDragPan = DEFAULT_IS_MOUSE_DRAG_PAN;
-	// マウスホイールによるズームの許可
-	BOOL m_CanMouseWheelZoom = DEFAULT_IS_MOUSE_WHEEL_ZOOM;
-
-	SetModifiedFlag();
 }
 
 
@@ -411,7 +394,7 @@ OLE_COLOR CDrawShapeCtrl::GetBackColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetBackColor();
+	return m_pDrawManager->m_info.backColor;
 }
 
 
@@ -421,7 +404,7 @@ void CDrawShapeCtrl::SetBackColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetBackColor(newVal);
+	m_pDrawManager->m_info.backColor = newVal;
 	SetModifiedFlag();
 }
 
@@ -432,7 +415,7 @@ OLE_COLOR CDrawShapeCtrl::GetGridColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetGridColor();
+	return m_pDrawManager->m_info.gridColor;
 }
 
 
@@ -442,7 +425,7 @@ void CDrawShapeCtrl::SetGridColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetGridColor(newVal);
+	m_pDrawManager->m_info.gridColor = newVal;
 	SetModifiedFlag();
 }
 
@@ -453,7 +436,7 @@ DOUBLE CDrawShapeCtrl::GetGridSize()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetGridSize();
+	return m_pDrawManager->m_info.gridSize;
 }
 
 
@@ -463,7 +446,7 @@ void CDrawShapeCtrl::SetGridSize(DOUBLE newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetGridSize(newVal);
+	m_pDrawManager->m_info.gridSize = newVal;
 	SetModifiedFlag();
 }
 
@@ -474,7 +457,7 @@ OLE_COLOR CDrawShapeCtrl::GetOriginColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetOriginColor();
+	return m_pDrawManager->m_info.originColor;
 }
 
 
@@ -484,7 +467,7 @@ void CDrawShapeCtrl::SetOriginColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetOriginColor(newVal);
+	m_pDrawManager->m_info.originColor = newVal;
 	SetModifiedFlag();
 }
 
@@ -495,7 +478,7 @@ LONG CDrawShapeCtrl::GetOriginSize()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetOriginSize();
+	return m_pDrawManager->m_info.originSize;
 }
 
 
@@ -505,7 +488,7 @@ void CDrawShapeCtrl::SetOriginSize(LONG newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetOriginSize(newVal);
+	m_pDrawManager->m_info.originSize = newVal;
 	SetModifiedFlag();
 }
 
@@ -516,7 +499,7 @@ OLE_COLOR CDrawShapeCtrl::GetAxisColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetAxisColor();
+	return m_pDrawManager->m_info.axisColor;
 }
 
 
@@ -526,7 +509,7 @@ void CDrawShapeCtrl::SetAxisColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetAxisColor(newVal);
+	m_pDrawManager->m_info.axisColor = newVal;
 	SetModifiedFlag();
 }
 
@@ -537,7 +520,7 @@ DOUBLE CDrawShapeCtrl::GetAxisScale()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetAxisScale();
+	return m_pDrawManager->m_info.axisScale;
 }
 
 
@@ -547,7 +530,7 @@ void CDrawShapeCtrl::SetAxisScale(DOUBLE newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetAxisScale(newVal);
+	m_pDrawManager->m_info.axisScale = newVal;
 	SetModifiedFlag();
 }
 
@@ -558,7 +541,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawGrid()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetIsDrawGrid() ? VARIANT_TRUE : VARIANT_FALSE;
+	return m_pDrawManager->m_info.isDrawGrid ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -568,7 +551,7 @@ void CDrawShapeCtrl::SetIsDrawGrid(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetIsDrawGrid(newVal != VARIANT_FALSE);
+	m_pDrawManager->m_info.isDrawGrid = (newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -579,7 +562,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawOrigin()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetIsDrawOrigin() ? VARIANT_TRUE : VARIANT_FALSE;
+	return m_pDrawManager->m_info.isDrawOrigin ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -589,7 +572,7 @@ void CDrawShapeCtrl::SetIsDrawOrigin(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetIsDrawOrigin(newVal != VARIANT_FALSE);
+	m_pDrawManager->m_info.isDrawOrigin = (newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -600,7 +583,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawAxis()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetIsDrawAxis() ? VARIANT_TRUE : VARIANT_FALSE;
+	return m_pDrawManager->m_info.isDrawAxis ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -610,7 +593,7 @@ void CDrawShapeCtrl::SetIsDrawAxis(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetIsDrawAxis(newVal != VARIANT_FALSE);
+	m_pDrawManager->m_info.isDrawAxis = (newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -621,7 +604,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawArrow()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetIsDrawArrow() ? VARIANT_TRUE : VARIANT_FALSE;
+	return m_pDrawManager->m_info.isDrawArrow ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -631,7 +614,7 @@ void CDrawShapeCtrl::SetIsDrawArrow(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetIsDrawArrow(newVal != VARIANT_FALSE);
+	m_pDrawManager->m_info.isDrawArrow = (newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 
@@ -642,7 +625,7 @@ VARIANT_BOOL CDrawShapeCtrl::GetIsDrawCenter()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->GetIsDrawCenter() ? VARIANT_TRUE : VARIANT_FALSE;
+	return m_pDrawManager->m_info.isDrawCenter ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -652,7 +635,7 @@ void CDrawShapeCtrl::SetIsDrawCenter(VARIANT_BOOL newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->SetIsDrawCenter(newVal != VARIANT_FALSE);
+	m_pDrawManager->m_info.isDrawCenter = (newVal != VARIANT_FALSE);
 	SetModifiedFlag();
 }
 

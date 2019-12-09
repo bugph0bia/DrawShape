@@ -291,6 +291,35 @@ template<typename T>
 BoundingBox<T> operator*(const BoundingBox<T>& lhs, const BoundingBox<T>& rhs) { return BoundingBox<T>(lhs) *= rhs; }
 
 
+// 設定情報構造体
+struct SettingInfo
+{
+	// 背景色
+	COLORREF backColor;
+	// グリッド色
+	COLORREF gridColor;
+	// グリッドサイズ
+	double gridSize;
+	// 原点色
+	COLORREF originColor;
+	// 原点サイズ
+	long originSize;
+	// 軸色
+	COLORREF axisColor;
+	// 軸スケール
+	double axisScale;
+	// グリッド描画可否
+	BOOL isDrawGrid;
+	// 原点描画可否
+	BOOL isDrawOrigin;
+	// 軸描画可否
+	BOOL isDrawAxis;
+	// 矢印描画可否
+	BOOL isDrawArrow;
+	// 円中心点描画可否
+	BOOL isDrawCenter;
+};
+
 // 描画キャンバスクラス
 class Canvas
 {
@@ -305,31 +334,6 @@ private:
 	// オフセット
 	// ※コントロール座標だが計算制度のためにdouble型とする
 	Coord<double> m_offset;
-
-	// 背景色
-	COLORREF m_backColor;
-	// グリッド色
-	COLORREF m_gridColor;
-	// グリッドサイズ
-	double m_gridSize;
-	// 原点色
-	COLORREF m_originColor;
-	// 原点サイズ
-	long m_originSize;
-	// 軸色
-	COLORREF m_axisColor;
-	// 軸スケール
-	double m_axisScale;
-	// グリッド描画可否
-	bool m_isDrawGrid;
-	// 原点描画可否
-	bool m_isDrawOrigin;
-	// 軸描画可否
-	bool m_isDrawAxis;
-	// 矢印描画可否
-	bool m_isDrawArrow;
-	// 円中心点描画可否
-	bool m_isDrawCenter;
 
 public:
 	// 定数
@@ -363,43 +367,6 @@ public:
 	// オフセット
 	void SetOffset(Coord<double> val) { m_offset = val; }
 	Coord<double> GetOffset() const { return m_offset; }
-
-	// 背景色
-	void SetBackColor(COLORREF val) { m_backColor = val; };
-	COLORREF GetBackColor() const { return m_backColor; };
-	// グリッド色
-	void SetGridColor(COLORREF val) { m_gridColor = val; };
-	COLORREF GetGridColor() const { return m_gridColor; };
-	// グリッドサイズ
-	void SetGridSize(double val) { m_gridSize = val; };
-	double GetGridSize() const { return m_gridSize; };
-	// 原点色
-	void SetOriginColor(COLORREF val) { m_originColor = val; };
-	COLORREF GetOriginColor() const { return m_originColor; };
-	// 原点サイズ
-	void SetOriginSize(long val) { m_originSize = val; };
-	long GetOriginSize() const { return m_originSize; };
-	// 軸色
-	void SetAxisColor(COLORREF val) { m_axisColor = val; };
-	COLORREF GetAxisColor() const { return m_axisColor; };
-	// 軸スケール
-	void SetAxisScale(double val) { m_axisScale = val; };
-	double GetAxisScale() const { return m_axisScale; };
-	// グリッド描画可否
-	void SetIsDrawGrid(bool val) { m_isDrawGrid = val; };
-	bool GetIsDrawGrid() const { return m_isDrawGrid; };
-	// 原点描画可否
-	void SetIsDrawOrigin(bool val) { m_isDrawOrigin = val; };
-	bool GetIsDrawOrigin() const { return m_isDrawOrigin; };
-	// 軸描画可否
-	void SetIsDrawAxis(bool val) { m_isDrawAxis = val; };
-	bool GetIsDrawAxis() const { return m_isDrawAxis; };
-	// 矢印描画可否
-	void SetIsDrawArrow(bool val) { m_isDrawArrow = val; };
-	bool GetIsDrawArrow() const { return m_isDrawArrow; };
-	// 円中心点描画可否
-	void SetIsDrawCenter(bool val) { m_isDrawCenter = val; };
-	bool GetIsDrawCenter() const { return m_isDrawCenter; };
 
 	// 描画領域の再設定
 	void Reset(CDC* pDC, const CRect& rect)
@@ -435,11 +402,11 @@ public:
 	// 背景を塗りつぶす
 	void FillBackground() const;
 	// グリッド描画
-	void DrawGrid() const;
+	void DrawGrid(double size) const;
 	// 原点描画
-	void DrawOrigin(Coord<double> base) const;
+	void DrawOrigin(const Coord<double>& base, long size) const;
 	// 軸描画
-	void DrawAxis(Coord<double> base) const;
+	void DrawAxis(const Coord<double>& base, double scale) const;
 	// ピクセル(点)を描画
 	void DrawPixel(const Coord<double>& point) const;
 	// 点を三角形で描画
@@ -525,6 +492,8 @@ public:
 class Node
 {
 protected:
+	// 設定情報
+	const SettingInfo& m_info;
 	// キャンバスオブジェクト
 	const Canvas& m_canvas;
 	// ペン
@@ -552,7 +521,8 @@ public:
 	// コンストラクタ
 	Node(Manager* pManager);
 	// コンストラクタ
-	Node(const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush) :
+	Node(const SettingInfo& info, const Canvas& canvas, const LOGPEN& pen, const LOGBRUSH& brush) :
+		m_info(info),
 		m_canvas(canvas),
 		m_pen(pen),
 		m_brush(brush)
@@ -884,8 +854,6 @@ private:
 	// 描画キャンバス
 	Canvas m_canvas;
 
-	// ベースレイヤー
-	Layer m_baseLayer;
 	// 描画レイヤーコレクション
 	std::vector<std::unique_ptr<Layer>> m_layers;
 
@@ -913,6 +881,9 @@ public:
 	// 最大移動量X,Y
 	static constexpr double OFFSET_MAX = 999999.0;
 
+	// 設定情報
+	SettingInfo m_info;
+
 	// コンストラクタ
 	Manager();
 
@@ -930,55 +901,6 @@ public:
 	// カレントブラシ
 	void SetCurrentBrush(const LOGBRUSH& val) { m_currentBrush = val; }
 	LOGBRUSH GetCurrentBrush() const { return m_currentBrush; }
-
-	// 背景色
-	void SetBackColor(COLORREF val) { m_canvas.SetBackColor(val); }
-	COLORREF GetBackColor() const { return m_canvas.GetBackColor(); }
-	// グリッド色
-	void SetGridColor(COLORREF val)
-	{
-		m_canvas.SetGridColor(val);
-		ResetBaseLayer();
-	}
-	COLORREF GetGridColor() const { return m_canvas.GetGridColor(); }
-	// グリッドサイズ
-	void SetGridSize(double val)
-	{
-		m_canvas.SetGridSize(val);
-		ResetBaseLayer();
-	}
-	double GetGridSize() const { return m_canvas.GetGridSize(); }
-	// 原点色
-	void SetOriginColor(COLORREF val)
-	{
-		m_canvas.SetOriginColor(val);
-		ResetBaseLayer();
-	}
-	COLORREF GetOriginColor() const { return m_canvas.GetOriginColor(); }
-	// 原点サイズ
-	void SetOriginSize(long val) { m_canvas.SetOriginSize(val); }
-	long GetOriginSize() const { return m_canvas.GetOriginSize(); }
-	// 軸色
-	void SetAxisColor(COLORREF val) { m_canvas.SetAxisColor(val); }
-	COLORREF GetAxisColor() const { return m_canvas.GetAxisColor(); }
-	// 軸スケール
-	void SetAxisScale(double val) { m_canvas.SetAxisScale(val); }
-	double GetAxisScale() const { return m_canvas.GetAxisScale(); }
-	// グリッド描画可否
-	void SetIsDrawGrid(bool val) { m_canvas.SetIsDrawGrid(val); }
-	bool GetIsDrawGrid() const { return m_canvas.GetIsDrawGrid(); }
-	// 原点描画可否
-	void SetIsDrawOrigin(bool val) { m_canvas.SetIsDrawOrigin(val); }
-	bool GetIsDrawOrigin() const { return m_canvas.GetIsDrawOrigin(); }
-	// 軸描画可否
-	void SetIsDrawAxis(bool val) { m_canvas.SetIsDrawAxis(val); }
-	bool GetIsDrawAxis() const { return m_canvas.GetIsDrawAxis(); }
-	// 矢印描画可否
-	void SetIsDrawArrow(bool val) { m_canvas.SetIsDrawArrow(val); }
-	bool GetIsDrawArrow() const { return m_canvas.GetIsDrawArrow(); }
-	// 円中心点描画可否
-	void SetIsDrawCenter(bool val) { m_canvas.SetIsDrawCenter(val); }
-	bool GetIsDrawCenter() const { return m_canvas.GetIsDrawCenter(); }
 
 	// カレントレイヤー番号
 	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; }
@@ -1015,9 +937,6 @@ public:
 	// 描画領域の情報を再設定
 	// OnSize()等のイベントで呼び出す必要あり
 	void ResetCanvas(CDC* pDC, const CRect& rect) { m_canvas.Reset(pDC, rect); }
-
-	// ベースレイヤーの再設定
-	void ResetBaseLayer();
 
 	// 初期化
 	void Clear();

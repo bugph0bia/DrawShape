@@ -10,19 +10,7 @@ Canvas::Canvas() :
 	m_pDC(nullptr),
 	m_rect(0, 0, 0, 0),
 	m_ratio(DEFAULT_RATIO),
-	m_offset(DEFAULT_OFFSET),
-	m_backColor(0),
-	m_gridColor(0),
-	m_gridSize(0.0),
-	m_originColor(0),
-	m_originSize(0),
-	m_axisColor(0),
-	m_axisScale(0),
-	m_isDrawGrid(false),
-	m_isDrawOrigin(false),
-	m_isDrawAxis(false),
-	m_isDrawArrow(false),
-	m_isDrawCenter(false)
+	m_offset(DEFAULT_OFFSET)
 {
 }
 
@@ -71,49 +59,50 @@ BoundingBox<double> Canvas::GetCanvasArea() const
 {
 	// 内部キャンバス座標値を計算
 	BoundingBox<double> canvas;
-	canvas.min = ControlToCanvas(Coord<long>(0, m_rect.Height()));
-	canvas.max = ControlToCanvas(Coord<long>(m_rect.Width(), 0));
+	canvas.min = ControlToCanvas(Coord<long>(0, GetRect()->Height()));
+	canvas.max = ControlToCanvas(Coord<long>(GetRect()->Width(), 0));
 	return canvas;
 }
 
 // 背景を塗りつぶす
 void Canvas::FillBackground() const
 {
-	m_pDC->FillSolidRect(m_rect, m_backColor);
+	// カレントブラシの色を取得
+	LOGBRUSH brush;
+	GetDC()->GetCurrentBrush()->GetLogBrush(&brush);
+	COLORREF color = brush.lbColor;
+
+	// 全体を塗りつぶす
+	m_pDC->FillSolidRect(GetRect(), color);
 }
 
 // グリッド描画
-void Canvas::DrawGrid() const
+void Canvas::DrawGrid(double size) const
 {
-	// グリッド描画OFF
-	if (!m_isDrawGrid) return;
 	// グリッドが細かすぎたら描画を行わない
-	if ((CanvasToControl(m_gridSize)) < DRAW_GRID_SIZE_MIN) return;
+	if ((CanvasToControl(size)) < DRAW_GRID_SIZE_MIN) return;
 
 	// キャンバス全体の座標を取得
 	BoundingBox<double>	canvas = GetCanvasArea();
 
 	// キャンバスに含まれるグリッドのインデックス
-	long xstart = static_cast<long>(canvas.min.x / m_gridSize);
-	long xend = static_cast<long>(canvas.max.x / m_gridSize);
-	long ystart = static_cast<long>(canvas.min.y / m_gridSize);
-	long yend = static_cast<long>(canvas.max.y / m_gridSize);
+	long xstart = static_cast<long>(canvas.min.x / size);
+	long xend = static_cast<long>(canvas.max.x / size);
+	long ystart = static_cast<long>(canvas.min.y / size);
+	long yend = static_cast<long>(canvas.max.y / size);
 
 	// グリッド描画
 	for (long y = ystart; y <= yend; y++) {
 		for (long x = xstart; x <= xend; x++) {
 			// 点を描画
-			DrawPixel(Coord<double>(x * m_gridSize, y * m_gridSize));
+			DrawPixel(Coord<double>(x * size, y * size));
 		}
 	}
 }
 
 // 原点描画
-void Canvas::DrawOrigin(Coord<double> base) const
+void Canvas::DrawOrigin(const Coord<double>& base, long size) const
 {
-	// 原点描画OFF
-	if (!m_isDrawOrigin) return;
-
 	// 原点のコントロール座標を算出
 	Coord<long> ctrlBase = CanvasToControl(base);
 
@@ -129,33 +118,30 @@ void Canvas::DrawOrigin(Coord<double> base) const
 
 	// X軸方向の矢印
 	GetDC()->MoveTo(ctrlBase.x, ctrlBase.y);
-	GetDC()->LineTo(ctrlBase.x + m_originSize, ctrlBase.y);
+	GetDC()->LineTo(ctrlBase.x + size, ctrlBase.y);
 	// 矢印先端を描画
 	DrawArrowHead(
 		Coords<double, 2>{
 			base,
-			ControlToCanvas(Coord<long>(ctrlBase.x + m_originSize, ctrlBase.y))
+			ControlToCanvas(Coord<long>(ctrlBase.x + size, ctrlBase.y))
 		}
 	);
 
 	// Y軸方向の矢印
 	GetDC()->MoveTo(ctrlBase.x, ctrlBase.y);
-	GetDC()->LineTo(ctrlBase.x, ctrlBase.y - m_originSize);
+	GetDC()->LineTo(ctrlBase.x, ctrlBase.y - size);
 	// 矢印先端を描画
 	DrawArrowHead(
 		Coords<double, 2>{
 			base,
-			ControlToCanvas(Coord<long>(ctrlBase.x, ctrlBase.y - m_originSize))
+			ControlToCanvas(Coord<long>(ctrlBase.x, ctrlBase.y - size))
 		}
 	);
 }
 
 // 軸描画
-void Canvas::DrawAxis(Coord<double> base) const
+void Canvas::DrawAxis(const Coord<double>& base, double scale) const
 {
-	// 軸描画OFF
-	if (!m_isDrawAxis) return;
-
 	// キャンバス全体の座標を取得
 	BoundingBox<double>	canvas = GetCanvasArea();
 
@@ -167,7 +153,7 @@ void Canvas::DrawAxis(Coord<double> base) const
 
 		// X軸を描画
 		GetDC()->MoveTo(0, origin.y);
-		GetDC()->LineTo(m_rect.Width(), origin.y);
+		GetDC()->LineTo(GetRect()->Width(), origin.y);
 	}
 
 	// Y軸が表示される場合
@@ -175,22 +161,22 @@ void Canvas::DrawAxis(Coord<double> base) const
 
 		// 軸描画
 		GetDC()->MoveTo(origin.x, 0);
-		GetDC()->LineTo(origin.x, m_rect.Height());
+		GetDC()->LineTo(origin.x, GetRect()->Height());
 	}
 
 	// 目盛が細かすぎたら描画を行わない
-	if (CanvasToControl(m_axisScale) < DRAW_AXIS_SCALE_MIN) return;
+	if (CanvasToControl(scale) < DRAW_AXIS_SCALE_MIN) return;
 
 	// X軸が表示される場合
 	if (canvas.min.y < base.y && base.y < canvas.max.y) {
 		// キャンバスに含まれる目盛のインデックス
-		long xstart = static_cast<long>(canvas.min.x / m_axisScale);
-		long xend = static_cast<long>(canvas.max.x / m_axisScale);
+		long xstart = static_cast<long>(canvas.min.x / scale);
+		long xend = static_cast<long>(canvas.max.x / scale);
 
 		// 目盛描画
 		for (long x = xstart; x <= xend; x++) {
 			// コントロール座標に変換
-			Coord<long> point = CanvasToControl(Coord<double>(x * m_axisScale, base.y));
+			Coord<long> point = CanvasToControl(Coord<double>(x * scale, base.y));
 			// 描画
 			GetDC()->MoveTo(point.x, point.y - AXIS_SCALE_LENGTH);
 			GetDC()->LineTo(point.x, point.y + AXIS_SCALE_LENGTH + 1);
@@ -200,13 +186,13 @@ void Canvas::DrawAxis(Coord<double> base) const
 	// Y軸が表示される場合
 	if (canvas.min.x < base.x && base.x < canvas.max.x) {
 		// キャンバスに含まれる目盛のインデックス
-		long ystart = static_cast<long>(canvas.min.y / m_axisScale);
-		long yend = static_cast<long>(canvas.max.y / m_axisScale);
+		long ystart = static_cast<long>(canvas.min.y / scale);
+		long yend = static_cast<long>(canvas.max.y / scale);
 
 		// 目盛描画
 		for (long y = ystart; y <= yend; y++) {
 			// コントロール座標に変換
-			Coord<long> point = CanvasToControl(Coord<double>(base.x, y * m_axisScale));
+			Coord<long> point = CanvasToControl(Coord<double>(base.x, y * scale));
 			// 描画
 			GetDC()->MoveTo(point.x - AXIS_SCALE_LENGTH, point.y);
 			GetDC()->LineTo(point.x + AXIS_SCALE_LENGTH + 1, point.y);
@@ -298,8 +284,8 @@ void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment) const
 	double length = ctrlBaseSegment[START].Length(ctrlBaseSegment[END]);
 	// 線分の単位ベクトルを算出(計算誤差のためにdouble型とする)
 	Coord<double> vec;
-	vec.x = (ctrlBaseSegment[END].x - ctrlBaseSegment[START].x) / length;
-	vec.y = (ctrlBaseSegment[END].y - ctrlBaseSegment[START].y) / length;
+	vec.x = (static_cast<double>(ctrlBaseSegment[END].x) - ctrlBaseSegment[START].x) / length;
+	vec.y = (static_cast<double>(ctrlBaseSegment[END].y) - ctrlBaseSegment[START].y) / length;
 
 	// 両側の羽
 	double angle = PI - ARROW_WING_ANGLE;
@@ -538,6 +524,7 @@ bool Canvas::CopyImage(CWnd* pOwner) const
 // コンストラクタ
 //   ※Managerクラスのメンバを使用するためヘッダファイルに定義不可
 Node::Node(Manager* pManager) :
+	m_info(pManager->m_info),
 	m_canvas(pManager->GetCanvas()),
 	m_pen(pManager->GetCurrentPen()),
 	m_brush(pManager->GetCurrentBrush())
@@ -563,7 +550,7 @@ bool NodeGrid::IsIncludeCanvas() const
 void NodeGrid::DrawContent()
 {
 	// グリッド描画
-	m_canvas.DrawGrid();
+	if(m_info.isDrawGrid) m_canvas.DrawGrid(m_info.gridSize);
 }
 
 
@@ -571,7 +558,7 @@ void NodeGrid::DrawContent()
 BoundingBox<double> NodeOrigin::CalcBoundingBox() const
 {
 	// 原点のサイズ
-	double size = m_canvas.ControlToCanvas(m_canvas.GetOriginSize());
+	double size = m_canvas.ControlToCanvas(m_info.gridSize);
 
 	// 原点の矩形を計算
 	BoundingBox<double> bbox;
@@ -586,7 +573,7 @@ BoundingBox<double> NodeOrigin::CalcBoundingBox() const
 void NodeOrigin::DrawContent()
 {
 	// 原点描画
-	m_canvas.DrawOrigin(m_point);
+	if (m_info.isDrawOrigin) m_canvas.DrawOrigin(m_point, m_info.originSize);
 }
 
 
@@ -601,7 +588,7 @@ BoundingBox<double> NodeAxis::CalcBoundingBox() const
 void NodeAxis::DrawContent()
 {
 	// 軸描画
-	m_canvas.DrawAxis(m_point);
+	if (m_info.isDrawAxis) m_canvas.DrawAxis(m_point, m_info.axisScale);
 }
 
 
@@ -696,7 +683,7 @@ void NodeLine::DrawContent()
 	m_canvas.GetDC()->LineTo(ctrlPoints[1].x, ctrlPoints[1].y);
 
 	// 線分の場合、先端の矢印描画
-	if (m_lineLimitType == LineLimitType::Finite && m_canvas.GetIsDrawArrow()) {
+	if (m_lineLimitType == LineLimitType::Finite && m_info.isDrawArrow) {
 		// 矢印を描画
 		m_canvas.DrawArrowHead(points);
 	}
@@ -727,7 +714,7 @@ void NodeArc::DrawContent()
 	m_canvas.DrawBezierArc(m_points, m_arcDirectionType);
 
 	// 円弧の先端の矢印描画
-	if (m_canvas.GetIsDrawArrow()) {
+	if (m_info.isDrawArrow) {
 		// 矢印を描くための軸
 		Coords<double, 2> arrowAxis;
 
@@ -747,7 +734,7 @@ void NodeArc::DrawContent()
 	}
 
 	// 円弧の中心点を描画
-	if (m_canvas.GetIsDrawCenter()) {
+	if (m_info.isDrawCenter) {
 		m_canvas.DrawTrianglePoint(m_points[CENTER]);
 	}
 }
@@ -781,7 +768,7 @@ void NodeCircle::DrawContent()
 		m_canvas.DrawBezierArc(arc, ArcDirectionType::Left);
 
 		// 中心点を描画
-		if (m_canvas.GetIsDrawCenter()) {
+		if (m_info.isDrawCenter) {
 			// 三角形の点を描画
 			m_canvas.DrawTrianglePoint(m_point);
 		}
@@ -823,7 +810,7 @@ void NodePolygon::DrawContent()
 		}
 
 		// 矢印を描画
-		if (m_canvas.GetIsDrawArrow()) {
+		if (m_info.isDrawArrow) {
 			// 最後の点を矢印の軸の始点とする
 			Coord<double> s = *(m_points.rbegin());
 			// 矢印の軸の終点として座標を順に取得
@@ -997,8 +984,8 @@ void Layer::Draw()
 // コンストラクタ
 Manager::Manager() :
 	m_canvas(),
-	m_baseLayer(),
-	m_currentLayerNo(false)
+	m_currentLayerNo(0),
+	m_info({ 0 })
 {
 	// 初期化
 	Clear();
@@ -1050,48 +1037,12 @@ std::size_t Manager::DeleteCurrentLayer()
 	return m_layers.size();
 }
 
-// ベースレイヤーの再設定
-void Manager::ResetBaseLayer()
-{
-	// ペンとブラシを退避
-	LOGPEN bkPen = m_currentPen;
-	LOGBRUSH bkBrush = m_currentBrush;
-
-	// ベースレイヤーを初期化
-	m_baseLayer.Clear();
-
-	// グリッドを登録
-	// ペンとブラシを変更（デフォルトから色のみ変更）
-	m_currentPen.lopnColor = m_canvas.GetGridColor();
-	m_currentBrush.lbColor = m_canvas.GetGridColor();
-	m_baseLayer.AddNode(new NodeGrid(this));
-
-	// 軸を登録
-	// ペンとブラシを変更（デフォルトから色のみ変更）
-	m_currentPen.lopnColor = m_canvas.GetOriginColor();
-	m_currentBrush.lbColor = m_canvas.GetOriginColor();
-	m_baseLayer.AddNode(new NodeOrigin(this, Coord<double>(0.0, 0.0)));
-
-	// 原点を登録
-	// ペンとブラシを変更（デフォルトから色のみ変更）
-	m_currentPen.lopnColor = m_canvas.GetAxisColor();
-	m_currentBrush.lbColor = m_canvas.GetAxisColor();
-	m_baseLayer.AddNode(new NodeAxis(this, Coord<double>(0.0, 0.0)));
-
-	// ペンとブラシを元に戻す
-	m_currentPen = bkPen;
-	m_currentBrush = bkBrush;
-}
-
 // 初期化
 void Manager::Clear()
 {
 	// ペンとブラシを初期化
 	m_currentPen = DEFAULT_PEN;
 	m_currentBrush = DEFAULT_BRUSH;
-
-	// ベースレイヤーを再設定
-	ResetBaseLayer();
 
 	// レイヤーコレクションをクリア
 	m_layers.clear();
@@ -1103,61 +1054,81 @@ void Manager::Clear()
 // 描画
 void Manager::Draw(bool isDesignMode/*=false*/)
 {
+	// デザインモード用に描画情報をバックアップ
+	double bkRatio = m_canvas.GetRatio();
+	Coord<double> bkOffset = m_canvas.GetOffset();
+	LOGPEN bkPen = m_currentPen;
+	LOGBRUSH bkBrush = m_currentBrush;
+
 	// デザインモード用の描画
 	if (isDesignMode) {
 		// 拡大縮小率はコンストラクト時の初期値とする
 		m_canvas.SetRatio(Canvas::DEFAULT_RATIO);
 		// オフセットはコントロールの矩形の中央とする
-		Coord<double> offset{ (double)m_canvas.GetRect()->CenterPoint().x, (double)m_canvas.GetRect()->CenterPoint().y };
-		m_canvas.SetOffset(offset);
+		m_canvas.SetOffset(
+			Coord<double> { (double)m_canvas.GetRect()->CenterPoint().x, (double)m_canvas.GetRect()->CenterPoint().y }
+		);
+	}
 
+	// ペンとブラシの初期値
+	LOGPEN logPen = DEFAULT_PEN;
+	LOGBRUSH logBrush = DEFAULT_BRUSH;
+
+	if(true){
+		// ペンとブラシを変更（デフォルトから色のみ変更）
+		logPen.lopnColor = m_info.backColor;
+		logBrush.lbColor = m_info.backColor;
+		PenBrushChanger pc(m_canvas.GetDC(), logPen);
+		PenBrushChanger bc(m_canvas.GetDC(), logBrush);
 		// 背景色で塗りつぶす
 		m_canvas.FillBackground();
-
-		LOGPEN logPen = DEFAULT_PEN;
-		LOGBRUSH logBrush = DEFAULT_BRUSH;
-
-		// グリッド描画
-		{
-			// ペンとブラシを変更（デフォルトから色のみ変更）
-			logPen.lopnColor = m_canvas.GetGridColor();
-			logBrush.lbColor = m_canvas.GetGridColor();
-			PenBrushChanger pc(m_canvas.GetDC(), logPen);
-			PenBrushChanger bc(m_canvas.GetDC(), logBrush);
-			m_canvas.DrawGrid();
-		}
-		// 軸描画
-		{
-			// ペンとブラシを変更（デフォルトから色のみ変更）
-			logPen.lopnColor = m_canvas.GetAxisColor();
-			logBrush.lbColor = m_canvas.GetAxisColor();
-			PenBrushChanger pc(m_canvas.GetDC(), logPen);
-			PenBrushChanger bc(m_canvas.GetDC(), logBrush);
-			m_canvas.DrawAxis(Coord<double>(0.0, 0.0));
-		}
-		// 原点描画
-		{
-			// ペンとブラシを変更（デフォルトから色のみ変更）
-			logPen.lopnColor = m_canvas.GetOriginColor();
-			logBrush.lbColor = m_canvas.GetOriginColor();
-			PenBrushChanger pc(m_canvas.GetDC(), logPen);
-			PenBrushChanger bc(m_canvas.GetDC(), logBrush);
-			m_canvas.DrawOrigin(Coord<double>(0.0, 0.0));
-		}
 	}
+
+	if (m_info.isDrawGrid) {
+		// ペンとブラシを変更（デフォルトから色のみ変更）
+		logPen.lopnColor = m_info.gridColor;
+		logBrush.lbColor = m_info.gridColor;
+		PenBrushChanger pc(m_canvas.GetDC(), logPen);
+		PenBrushChanger bc(m_canvas.GetDC(), logBrush);
+		// グリッド描画
+		m_canvas.DrawGrid(m_info.gridSize);
+	}
+
+	if (m_info.isDrawAxis) {
+		// ペンとブラシを変更（デフォルトから色のみ変更）
+		logPen.lopnColor = m_info.axisColor;
+		logBrush.lbColor = m_info.axisColor;
+		PenBrushChanger pc(m_canvas.GetDC(), logPen);
+		PenBrushChanger bc(m_canvas.GetDC(), logBrush);
+		// 軸描画
+		m_canvas.DrawAxis(Coord<double>(0.0, 0.0), m_info.axisScale);
+	}
+
+	if (m_info.isDrawOrigin) {
+		// ペンとブラシを変更（デフォルトから色のみ変更）
+		logPen.lopnColor = m_info.originColor;
+		logBrush.lbColor = m_info.originColor;
+		PenBrushChanger pc(m_canvas.GetDC(), logPen);
+		PenBrushChanger bc(m_canvas.GetDC(), logBrush);
+		// 原点描画
+		m_canvas.DrawOrigin(Coord<double>(0.0, 0.0), m_info.originSize);
+	}
+
 	// 通常の描画
+	if (!isDesignMode) {
+	}
 	else {
-		// 背景を塗りつぶす
-		m_canvas.FillBackground();
-
-		// ベースレイヤーを描画
-		m_baseLayer.Draw();
-
 		// 全レイヤーを描画
 		for (const auto& pLayer : m_layers) {
 			pLayer->Draw();
 		}
 	}
+
+	// デザインモード用に描画情報をリストア
+	m_canvas.SetRatio(bkRatio);
+	m_canvas.SetOffset(bkOffset);
+	m_currentPen = bkPen;
+	m_currentBrush = bkBrush;
 }
 
 // 拡大縮小
@@ -1174,8 +1145,8 @@ bool Manager::Zoom(double coef, const Coord<long>& base)
 
 	// 基準座標から描画オフセット量を算出して更新
 	Coord<double> offset = m_canvas.GetOffset();
-	offset.x = base.x - ((base.x - offset.x) * ratio);
-	offset.y = base.y - ((base.y - offset.y) * ratio);
+	offset.x = base.x - ((base.x - offset.x) * coef);
+	offset.y = base.y - ((base.y - offset.y) * coef);
 	m_canvas.SetOffset(offset);
 
 	// 再描画
