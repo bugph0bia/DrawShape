@@ -20,6 +20,8 @@
 CDrawerTestDlg::CDrawerTestDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DRAWERTEST_DIALOG, pParent)
 	, m_pDrawManager(std::make_unique<Drawer::Manager>())
+	, m_isDragging(false)
+	, m_pOldBmp(nullptr)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -137,15 +139,15 @@ void CDrawerTestDlg::Initialize()
 	// 描画管理オブジェクトを作成
 	m_pDrawManager->ResetCanvas(&m_memDC, rect);
 
-	m_pDrawManager->SetGridColor(RGB(0, 255, 0));
-	m_pDrawManager->SetGridSize(5.0);
-	m_pDrawManager->SetIsDrawGrid(true);
-	m_pDrawManager->SetOriginSize(20);
-	m_pDrawManager->SetOriginColor(RGB(255, 255, 0));
-	m_pDrawManager->SetIsDrawOrigin(true);
-	m_pDrawManager->SetAxisColor(RGB(255, 255, 255));
-	m_pDrawManager->SetAxisScale(10.0);
-	m_pDrawManager->SetIsDrawAxis(false);
+	m_pDrawManager->m_info.gridColor = RGB(0, 255, 0);
+	m_pDrawManager->m_info.gridSize = 5.0;
+	m_pDrawManager->m_info.isDrawGrid = TRUE;
+	m_pDrawManager->m_info.originSize = 20;
+	m_pDrawManager->m_info.originColor = RGB(255, 255, 0);
+	m_pDrawManager->m_info.isDrawOrigin = TRUE;
+	m_pDrawManager->m_info.axisColor = RGB(255, 255, 255);
+	m_pDrawManager->m_info.axisScale = 10.0;
+	m_pDrawManager->m_info.isDrawAxis = FALSE;
 
 	// 描画領域初期化
 	m_pDrawManager->Clear();
