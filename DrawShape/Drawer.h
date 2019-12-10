@@ -342,7 +342,7 @@ public:
 	// オフセットの初期値
 	static inline const Coord<double> DEFAULT_OFFSET = Coord<double>();
 	// 最小グリッド描画サイズ(コントロール座標)
-	static constexpr long DRAW_GRID_SIZE_MIN = 5;
+	static constexpr long DRAW_GRID_SIZE_MIN = 10;
 	// 最小軸目盛描画サイズ(コントロール座標)
 	static constexpr long DRAW_AXIS_SCALE_MIN = 10;
 	// 目盛の長さ(軸の片側の長さ)
@@ -354,9 +354,9 @@ public:
 	// 点の強調時のサイズ
 	static constexpr long LARGE_POINT_SIZE = 3;
 	// 矢印の羽の軸からの角度(20°)
-	static constexpr double ARROW_WING_ANGLE = 25.0 * PI / 180.0;
+	static constexpr double ARROW_WING_ANGLE = 24.0 * PI / 180.0;
 	// 矢印の羽の長さ(コントロール座標)
-	static constexpr long ARROW_WING_LENGTH = 8;
+	static constexpr long ARROW_WING_LENGTH = 10;
 
 	// コンストラクタ
 	Canvas();
@@ -414,7 +414,7 @@ public:
 	// 点を強調して描画
 	void DrawLargePoint(const Coord<double>& point) const;
 	// 矢印先端描画
-	void DrawArrowHead(const Coords<double, 2>& baseSegment) const;
+	void DrawArrowHead(const Coords<double, 2>& baseSegment, FillType fillType=FillType::NoFill) const;
 	// ベジエ曲線による円弧表現を算出
 	Coords_v<double> CalcBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const;
 	// ベジエ曲線による円弧描画
@@ -875,11 +875,11 @@ public:
 	// デフォルトブラシ = ソリッド, 白色, ハッチ無し
 	static constexpr LOGBRUSH DEFAULT_BRUSH = LOGBRUSH{ BS_SOLID, RGB(0xFF, 0xFF, 0xFF), 0 };
 	// 最大拡大率
-	static constexpr double RATIO_MAX = 50000.0;
+	static constexpr double RATIO_MAX = 10000.0;
 	// 最小縮小率
-	static constexpr double RATIO_MIN = 0.0001;
+	static constexpr double RATIO_MIN = 0.001;
 	// 最大移動量X,Y
-	static constexpr double OFFSET_MAX = 999999.0;
+	static constexpr double OFFSET_MAX = 99999.0;
 
 	// 設定情報
 	SettingInfo m_info;
