@@ -139,15 +139,16 @@ void CDrawerTestDlg::Initialize()
 	// 描画管理オブジェクトを作成
 	m_pDrawManager->ResetCanvas(&m_memDC, rect);
 
-	m_pDrawManager->m_info.gridColor = RGB(0, 255, 0);
-	m_pDrawManager->m_info.gridSize = 5.0;
+	m_pDrawManager->m_info.backColor = RGB(0, 0, 0);
+	m_pDrawManager->m_info.gridColor = RGB(128, 128, 128);
+	m_pDrawManager->m_info.gridSize = 10.0;
 	m_pDrawManager->m_info.isDrawGrid = TRUE;
-	m_pDrawManager->m_info.originSize = 20;
+	m_pDrawManager->m_info.originSize = 30;
 	m_pDrawManager->m_info.originColor = RGB(255, 255, 0);
 	m_pDrawManager->m_info.isDrawOrigin = TRUE;
-	m_pDrawManager->m_info.axisColor = RGB(255, 255, 255);
-	m_pDrawManager->m_info.axisScale = 10.0;
-	m_pDrawManager->m_info.isDrawAxis = FALSE;
+	m_pDrawManager->m_info.axisColor = RGB(128, 128, 128);
+	m_pDrawManager->m_info.axisScale = 50.0;
+	m_pDrawManager->m_info.isDrawAxis = TRUE;
 
 	// 描画領域初期化
 	m_pDrawManager->Clear();

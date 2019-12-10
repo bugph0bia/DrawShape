@@ -198,7 +198,7 @@ void CDrawShapeCtrl::DoPropExchange(CPropExchange* pPX)
 	PX_Color(pPX, _T("OriginColor"), m_pDrawManager->m_info.originColor, DEFAULT_ORIGIN_COLOR);
 	PX_Long(pPX, _T("OriginSize"), m_pDrawManager->m_info.originSize, DEFAULT_ORIGIN_SIZE);
 	PX_Color(pPX, _T("AxisColor"), m_pDrawManager->m_info.axisColor, DEFAULT_AXIS_COLOR);
-	PX_Double(pPX, _T("AxisScale"), m_pDrawManager->m_info.axisScale, DEFAULT_AXIS_SIZE);
+	PX_Double(pPX, _T("AxisScale"), m_pDrawManager->m_info.axisScale, DEFAULT_AXIS_SCALE);
 	PX_Bool(pPX, _T("IsDrawGrid"), m_pDrawManager->m_info.isDrawGrid, DEFAULT_IS_DRAW_GRID);
 	PX_Bool(pPX, _T("IsDrawOrigin"), m_pDrawManager->m_info.isDrawOrigin, DEFAULT_IS_DRAW_ORIGIN);
 	PX_Bool(pPX, _T("IsDrawAxis"), m_pDrawManager->m_info.isDrawAxis, DEFAULT_IS_DRAW_AXIS);

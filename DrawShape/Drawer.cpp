@@ -108,26 +108,31 @@ void Canvas::DrawOrigin(const Coord<double>& base, long size) const
 
 	// 中央の矩形を描画
 	std::array<POINT, 4> points = {
-		// 左上, 右上, 右下, 左下
-		POINT{ctrlBase.x - ORIGIN_CENTER_SIZE, ctrlBase.y - ORIGIN_CENTER_SIZE},
+		// 左上, 右上, 右下, 左下 (下で線の太さを2pixelにするため、1pixel調整)
+		POINT{ctrlBase.x - ORIGIN_CENTER_SIZE - 1, ctrlBase.y - ORIGIN_CENTER_SIZE},
 		POINT{ctrlBase.x + ORIGIN_CENTER_SIZE, ctrlBase.y - ORIGIN_CENTER_SIZE},
-		POINT{ctrlBase.x + ORIGIN_CENTER_SIZE, ctrlBase.y + ORIGIN_CENTER_SIZE},
-		POINT{ctrlBase.x - ORIGIN_CENTER_SIZE, ctrlBase.y + ORIGIN_CENTER_SIZE}
+		POINT{ctrlBase.x + ORIGIN_CENTER_SIZE, ctrlBase.y + ORIGIN_CENTER_SIZE + 1},
+		POINT{ctrlBase.x - ORIGIN_CENTER_SIZE - 1, ctrlBase.y + ORIGIN_CENTER_SIZE + 1}
 	};
 	GetDC()->Polygon(points.data(), points.size());
 
-	// X軸方向の矢印
+	// X軸方向の矢印(2pixel)
 	GetDC()->MoveTo(ctrlBase.x, ctrlBase.y);
 	GetDC()->LineTo(ctrlBase.x + size, ctrlBase.y);
+	GetDC()->MoveTo(ctrlBase.x, ctrlBase.y + 1);
+	GetDC()->LineTo(ctrlBase.x + size, ctrlBase.y + 1);
 	// 矢印先端を描画
 	DrawArrowHead(
 		Coords<double, 2>{
 			base,
 			ControlToCanvas(Coord<long>(ctrlBase.x + size, ctrlBase.y))
-		}
+		},
+		FillType::Fill
 	);
 
-	// Y軸方向の矢印
+	// Y軸方向の矢印(2pixel)
+	GetDC()->MoveTo(ctrlBase.x - 1, ctrlBase.y);
+	GetDC()->LineTo(ctrlBase.x - 1, ctrlBase.y - size);
 	GetDC()->MoveTo(ctrlBase.x, ctrlBase.y);
 	GetDC()->LineTo(ctrlBase.x, ctrlBase.y - size);
 	// 矢印先端を描画
@@ -135,7 +140,8 @@ void Canvas::DrawOrigin(const Coord<double>& base, long size) const
 		Coords<double, 2>{
 			base,
 			ControlToCanvas(Coord<long>(ctrlBase.x, ctrlBase.y - size))
-		}
+		},
+		FillType::Fill
 	);
 }
 
@@ -267,7 +273,7 @@ void Canvas::DrawLargePoint(const Coord<double>& point) const
 }
 
 // 矢印先端描画
-void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment) const
+void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment, FillType fillType/*=FillType::NoFill*/) const
 {
 	// 現在のペンを実線に変更
 	LOGPEN logPen;
@@ -277,8 +283,14 @@ void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment) const
 	// ペンを変更
 	PenBrushChanger pc(GetDC(), logPen);
 
-	// 先端のコントロール座標を算出
+	// 線分のコントロール座標を算出
 	Coords_v<long> ctrlBaseSegment = CanvasToControl(Coords_v<double>(baseSegment.begin(), baseSegment.end()));
+
+	// 矢印先端のコントロール座標(頂点→羽1→羽2)
+	std::array<POINT, 3> ctrlArrowHead;
+	// 頂点を格納
+	ctrlArrowHead[0].x = ctrlBaseSegment[END].x;
+	ctrlArrowHead[0].y = ctrlBaseSegment[END].y;
 
 	// 線分の長さ
 	double length = ctrlBaseSegment[START].Length(ctrlBaseSegment[END]);
@@ -289,7 +301,7 @@ void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment) const
 
 	// 両側の羽
 	double angle = PI - ARROW_WING_ANGLE;
-	for (int i = 0; i < 2; i++) {
+	for (int i = 1; i <= 2; i++) {
 		// 回転
 		Coord<double> wing;
 		wing.x = vec.x * cos(angle) - vec.y * sin(angle);
@@ -299,11 +311,23 @@ void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment) const
 		wing.x += ctrlBaseSegment[END].x;
 		wing.y += ctrlBaseSegment[END].y;
 
-		// 描画
-		GetDC()->MoveTo(ctrlBaseSegment[END].x, ctrlBaseSegment[END].y);
-		GetDC()->LineTo(static_cast<long>(wing.x), static_cast<long>(wing.y));
+		// 羽を格納
+		ctrlArrowHead[i].x = static_cast<long>(wing.x);
+		ctrlArrowHead[i].y = static_cast<long>(wing.y);
 
 		angle += ARROW_WING_ANGLE * 2;
+	}
+
+	// 塗りつぶし無しの描画
+	if(fillType == FillType::NoFill) {
+		GetDC()->MoveTo(ctrlArrowHead[0].x, ctrlArrowHead[0].y);
+		GetDC()->LineTo(ctrlArrowHead[1].x, ctrlArrowHead[1].y);
+		GetDC()->MoveTo(ctrlArrowHead[0].x, ctrlArrowHead[0].y);
+		GetDC()->LineTo(ctrlArrowHead[2].x, ctrlArrowHead[2].y);
+	}
+	// 塗りつぶしありの描画
+	else {
+		GetDC()->Polygon(ctrlArrowHead.data(), ctrlArrowHead.size());
 	}
 }
 

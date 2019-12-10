@@ -167,15 +167,15 @@ private:
 	static constexpr double ZOOM_DOWN_RATIO = (4.0 / 5.0);
 	// プロパティの初期値
 	static constexpr COLORREF DEFAULT_BACK_COLOR = RGB(0, 0, 0);
-	static constexpr COLORREF DEFAULT_GRID_COLOR = RGB(0, 255, 0);
+	static constexpr COLORREF DEFAULT_GRID_COLOR = RGB(128, 128, 128);
 	static constexpr double DEFAULT_GRID_SIZE = 10.0;
 	static constexpr COLORREF DEFAULT_ORIGIN_COLOR = RGB(255, 255, 0);
-	static constexpr long DEFAULT_ORIGIN_SIZE = 20;
-	static constexpr COLORREF DEFAULT_AXIS_COLOR = RGB(255, 255, 255);
-	static constexpr double DEFAULT_AXIS_SIZE = 50.0;
+	static constexpr long DEFAULT_ORIGIN_SIZE = 30;
+	static constexpr COLORREF DEFAULT_AXIS_COLOR = RGB(128, 128, 128);
+	static constexpr double DEFAULT_AXIS_SCALE = 50.0;
 	static constexpr bool DEFAULT_IS_DRAW_GRID = true;
 	static constexpr bool DEFAULT_IS_DRAW_ORIGIN = true;
-	static constexpr bool DEFAULT_IS_DRAW_AXIS = false;
+	static constexpr bool DEFAULT_IS_DRAW_AXIS = true;
 	static constexpr bool DEFAULT_IS_DRAW_ARROW = false;
 	static constexpr bool DEFAULT_IS_DRAW_CENTER = false;
 	static constexpr bool DEFAULT_IS_MOUSE_DRAG_PAN = true;
