@@ -77,6 +77,7 @@ END_DISPATCH_MAP()
 // イベント マップ
 
 BEGIN_EVENT_MAP(CDrawShapeCtrl, COleControl)
+	EVENT_STOCK_MOUSEMOVE()
 END_EVENT_MAP()
 
 // プロパティ ページ
@@ -667,8 +668,7 @@ LONG CDrawShapeCtrl::GetLayerCount()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->GetLayerCount();
-	return 0;
+	return m_pDrawManager->GetLayerCount();
 }
 
 

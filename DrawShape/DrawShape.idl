@@ -77,6 +77,7 @@ library DrawShapeLib
 			//  イベント インターフェイスにプロパティがありません。
 
 		methods:
+			[id(DISPID_MOUSEMOVE)] void MouseMove(short Button, short Shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
 	};
 
 	//  CDrawShapeCtrl のクラス情報
