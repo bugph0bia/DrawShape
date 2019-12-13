@@ -19,23 +19,8 @@ namespace DrawShapeTest
  
         private void formMain_Load(object sender, EventArgs e)
         {
-            // パン・ズームを表示
-            cbPan.Checked = axDrawShape.CanMouseDragPan;
-            cbZoom.Checked = axDrawShape.CanMouseWheelZoom;
-            // レイヤーリストを表示
-            UpdateLayerList();
-            // 描画エリアのマウス移動イベントハンドラを設定
-            axDrawShape.MouseMoveEvent += new AxDrawShapeLib._DDrawShapeEvents_MouseMoveEventHandler(formMain_axDrawShapeMouseMoveEvent);
-            // ピクチャーボックスに色を表示
-            SetColorPictureBox(pbGridColor, axDrawShape.GridColor);
-            SetColorPictureBox(pbAxisColor, axDrawShape.AxisColor);
-            SetColorPictureBox(pbOriginColor, axDrawShape.OriginColor);
-            SetColorPictureBox(pbBackColor, axDrawShape.CtlBackColor);
-            PenColor = Color.White;
-            SetColorPictureBox(pbPenColor, PenColor);
-            BrushColor = Color.White;
-            SetColorPictureBox(pbBrushColor, BrushColor);
-            nudPenWidth.Value = 1;
+            // 初期設定
+            Initialize();
         }
 
         private void btFit_Click(object sender, EventArgs e)
@@ -100,6 +85,14 @@ namespace DrawShapeTest
                 // レイヤーリストを更新
                 UpdateLayerList();
             }
+        }
+
+        private void btClearLayer_Click(object sender, EventArgs e)
+        {
+            // レイヤーをクリア
+            axDrawShape.ClearCurrentLayer();
+            // 再描画
+            axDrawShape.Redraw();
         }
 
         private void btDeleteLayer_Click(object sender, EventArgs e)
@@ -257,6 +250,244 @@ namespace DrawShapeTest
             }
         }
 
+        private void cbFunc_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // 関数
+            int func = cbFunc.SelectedIndex;
+
+            // 有効状態
+            lbPointType.Enabled = drawFuncInfos[func].usePointType;
+            cbPointType.Enabled = drawFuncInfos[func].usePointType;
+            lbArcDirection.Enabled = drawFuncInfos[func].useArcDirection;
+            cbArcDirection.Enabled = drawFuncInfos[func].useArcDirection;
+            lbFillType.Enabled = drawFuncInfos[func].useFillType;
+            cbFillType.Enabled = drawFuncInfos[func].useFillType;
+            lbRadius.Enabled = drawFuncInfos[func].useRadius;
+            tbRadius.Enabled = drawFuncInfos[func].useRadius;
+
+            // グリッドの行数
+            if(drawFuncInfos[func].pointCount != 0)
+            {
+                nudPointsCount.Minimum = 1;
+                nudPointsCount.Value = drawFuncInfos[func].pointCount;
+                nudPointsCount.Enabled = false;
+            }
+            else
+            {
+                nudPointsCount.Minimum = 3;
+                nudPointsCount.Value = 3;
+                nudPointsCount.Enabled = true;
+            }
+            dgvPoints.RowCount = (int)nudPointsCount.Value;
+        }
+
+        private void nudPointsCount_ValueChanged(object sender, EventArgs e)
+        {
+            dgvPoints.RowCount = (int)nudPointsCount.Value;
+        }
+
+        private void btRunFunc_Click(object sender, EventArgs e)
+        {
+            // 種類
+            int pointType = cbPointType.SelectedIndex;
+            int arcDirection = cbArcDirection.SelectedIndex;
+            int fillType = cbFillType.SelectedIndex;
+            // 半径
+            double radius = 0.0;
+            double.TryParse(tbRadius.Text, out radius);
+            // 点群
+            Point[] points = new Point[(int)nudPointsCount.Value];
+            for(int row = 0; row < points.Length; row++)
+            {
+                int x, y;
+                int.TryParse(dgvPoints[0, row].Value.ToString(), out x);
+                int.TryParse(dgvPoints[1, row].Value.ToString(), out y);
+                points[row].X = x;
+                points[row].Y = y;
+            }
+
+            // 関数
+            int func = cbFunc.SelectedIndex;
+            switch (func)
+            {
+            case 0:
+                break;
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+            case 5:
+                break;
+            case 6:
+                break;
+            case 7:
+                break;
+            case 8:
+                break;
+            case 9:
+                break;
+            default:
+                break;
+            }
+        }
+
+        /// <summary>
+        /// 描画関数の情報
+        /// </summary>
+        public struct DrawFuncInfo
+        {
+            // 名称
+            public string name { get; set; }
+            // PointType使用可否
+            public Boolean usePointType { get; set; }
+            // ArcDirection使用可否
+            public Boolean useArcDirection { get; set; }
+            // FillType使用可否
+            public Boolean useFillType { get; set; }
+            // 半径の使用可否
+            public Boolean useRadius { get; set; }
+            // 点群の使用数
+            public int pointCount { get; set; }
+        }
+
+        /// <summary>
+        /// 関数情報配列
+        /// </summary>
+        private DrawFuncInfo[] drawFuncInfos = new DrawFuncInfo[]
+        {
+            new DrawFuncInfo {
+                name = "AddLine",
+                usePointType = false,
+                useArcDirection = false,
+                useFillType = false,
+                useRadius = false,
+                pointCount = 2
+            },
+            new DrawFuncInfo {
+                name = "AddInfiniteLine2Point",
+                usePointType = false,
+                useArcDirection = false,
+                useFillType = false,
+                useRadius = false,
+                pointCount = 2
+            },
+            new DrawFuncInfo {
+                name = "AddPoint",
+                usePointType = true,
+                useArcDirection = false,
+                useFillType = false,
+                useRadius = false,
+                pointCount = 1
+            },
+            new DrawFuncInfo {
+                name = "AddArc",
+                usePointType = false,
+                useArcDirection = true,
+                useFillType = false,
+                useRadius = false,
+                pointCount = 3
+            },
+            new DrawFuncInfo {
+                name = "AddCircle",
+                usePointType = false,
+                useArcDirection = false,
+                useFillType = true,
+                useRadius = true,
+                pointCount = 1
+            },
+            new DrawFuncInfo {
+                name = "AddPolygon",
+                usePointType = false,
+                useArcDirection = false,
+                useFillType = true,
+                useRadius = false,
+                pointCount = 0
+            },
+            new DrawFuncInfo {
+                name = "AddSector",
+                usePointType = false,
+                useArcDirection = true,
+                useFillType = true,
+                useRadius = true,
+                pointCount = 3
+            },
+            new DrawFuncInfo {
+                name = "AddOrigin",
+                usePointType = false,
+                useArcDirection = false,
+                useFillType = false,
+                useRadius = false,
+                pointCount = 1
+            },
+            new DrawFuncInfo {
+                name = "AddAxis",
+                usePointType = false,
+                useArcDirection = false,
+                useFillType = false,
+                useRadius = false,
+                pointCount = 1
+            },
+        };
+
+        /// <summary>
+        /// 初期設定
+        /// </summary>
+        void Initialize()
+        {
+            // パン・ズームを表示
+            cbPan.Checked = axDrawShape.CanMouseDragPan;
+            cbZoom.Checked = axDrawShape.CanMouseWheelZoom;
+            // レイヤーリストを表示
+            UpdateLayerList();
+            // 描画エリアのマウス移動イベントハンドラを設定
+            axDrawShape.MouseMoveEvent += new AxDrawShapeLib._DDrawShapeEvents_MouseMoveEventHandler(formMain_axDrawShapeMouseMoveEvent);
+            // ピクチャーボックスに色を表示
+            SetColorPictureBox(pbGridColor, axDrawShape.GridColor);
+            SetColorPictureBox(pbAxisColor, axDrawShape.AxisColor);
+            SetColorPictureBox(pbOriginColor, axDrawShape.OriginColor);
+            SetColorPictureBox(pbBackColor, axDrawShape.CtlBackColor);
+            PenColor = Color.White;
+            SetColorPictureBox(pbPenColor, PenColor);
+            BrushColor = Color.White;
+            SetColorPictureBox(pbBrushColor, BrushColor);
+            // ペン幅
+            nudPenWidth.Value = 1;
+            // 関数リスト
+            foreach (var f in drawFuncInfos)
+            {
+                cbFunc.Items.Add(f.name);
+            }
+            cbFunc.SelectedIndex = 0;
+
+            // 上下選択
+            cbPointType.Items.Add("Pixel");
+            cbPointType.Items.Add("Large");
+            cbPointType.Items.Add("Triangle");
+            cbPointType.SelectedIndex = 0;
+            cbArcDirection.Items.Add("Left");
+            cbArcDirection.Items.Add("Right");
+            cbArcDirection.SelectedIndex = 0;
+            cbFillType.Items.Add("NoFill");
+            cbFillType.Items.Add("Fill");
+            cbFillType.SelectedIndex = 0;
+
+            // 点設定グリッド
+            dgvPoints.AllowUserToAddRows = false;
+            dgvPoints.RowHeadersVisible = false;
+            dgvPoints.AllowUserToResizeColumns = false;
+            dgvPoints.AllowUserToResizeRows = false;
+            dgvPoints.ColumnCount = 2;
+            dgvPoints.Columns[0].HeaderText = "X";
+            dgvPoints.Columns[1].HeaderText = "Y";
+            dgvPoints.Columns[0].Width = dgvPoints.Width / 2 - 10;
+            dgvPoints.Columns[1].Width = dgvPoints.Width / 2 - 10;
+            dgvPoints.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
+            dgvPoints.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
+        }
         /// <summary>
         /// レイヤーリストを更新
         /// </summary>
@@ -286,6 +517,7 @@ namespace DrawShapeTest
         /// <summary>
         /// ピクチャーボックスに色を設定
         /// </summary>
+        /// <param name="pb"></param>
         /// <param name="color"></param>
         private void SetColorPictureBox(PictureBox pb, Color color)
         {
