@@ -44,6 +44,9 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "IsDrawCenter", dispidIsDrawCenter, GetIsDrawCenter, SetIsDrawCenter, VT_BOOL)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentLayerNo", dispidCurrentLayerNo, GetCurrentLayerNo, SetCurrentLayerNo, VT_I4)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "LayerCount", dispidLayerCount, GetLayerCount, SetNotSupported, VT_I4)
+	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentPenColor", dispidCurrentPenColor, GetCurrentPenColor, SetCurrentPenColor, VT_COLOR)
+	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentPenWidth", dispidCurrentPenWidth, GetCurrentPenWidth, SetCurrentPenWidth, VT_I4)
+	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentBrushColor", dispidCurrentBrushColor, GetCurrentBrushColor, SetCurrentBrushColor, VT_COLOR)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CanMouseDragPan", dispidCanMouseDragPan, GetCanMouseDragPan, SetCanMouseDragPan, VT_BOOL)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CanMouseWheelZoom", dispidCanMouseWheelZoom, GetCanMouseWheelZoom, SetCanMouseWheelZoom, VT_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Redraw", dispidRedraw, Redraw, VT_EMPTY, VTS_NONE)
@@ -60,8 +63,6 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Zoom", dispidZoom, Zoom, VT_BOOL, VTS_R8 VTS_I4 VTS_I4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Pan", dispidPan, Pan, VT_BOOL, VTS_I4 VTS_I4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Fit", dispidFit, Fit, VT_EMPTY, VTS_R8)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "ChangePen", dispidChangePen, ChangePen, VT_EMPTY, VTS_I4 VTS_I4 VTS_COLOR)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "ChangeBrush", dispidChangeBrush, ChangeBrush, VT_EMPTY, VTS_I4 VTS_COLOR VTS_I4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddLine", dispidAddLine, AddLine, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddInfiniteLine2Point", dispidAddInfiniteLine2Point, AddInfiniteLine2Point, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddInfiniteLine1PointAngle", dispidAddInfiniteLine1PointAngle, AddInfiniteLine1PointAngle, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8)
@@ -77,7 +78,8 @@ END_DISPATCH_MAP()
 // イベント マップ
 
 BEGIN_EVENT_MAP(CDrawShapeCtrl, COleControl)
-	EVENT_STOCK_MOUSEMOVE()
+	EVENT_CUSTOM("CursorMove", FireCursorMove, VTS_I4 VTS_I4 VTS_R8 VTS_R8)
+	EVENT_CUSTOM("LeftClick", FireLeftClick, VTS_I4 VTS_I4 VTS_R8 VTS_R8)
 END_EVENT_MAP()
 
 // プロパティ ページ
@@ -205,6 +207,9 @@ void CDrawShapeCtrl::DoPropExchange(CPropExchange* pPX)
 	PX_Bool(pPX, _T("IsDrawAxis"), m_pDrawManager->m_info.isDrawAxis, DEFAULT_IS_DRAW_AXIS);
 	PX_Bool(pPX, _T("IsDrawArrow"), m_pDrawManager->m_info.isDrawArrow, DEFAULT_IS_DRAW_ARROW);
 	PX_Bool(pPX, _T("IsDrawCenter"), m_pDrawManager->m_info.isDrawCenter, DEFAULT_IS_DRAW_CENTER);
+	PX_Color(pPX, _T("CurrentPenColor"), m_pDrawManager->m_currentPen.lopnColor, Drawer::Manager::DEFAULT_PEN.lopnColor);
+	PX_Long(pPX, _T("CurrentPenWidth"), m_pDrawManager->m_currentPen.lopnWidth.x, Drawer::Manager::DEFAULT_PEN.lopnWidth.x);
+	PX_Color(pPX, _T("CurrentBrushColor"), m_pDrawManager->m_currentBrush.lbColor, Drawer::Manager::DEFAULT_BRUSH.lbColor);
 	PX_Bool(pPX, _T("CanMouseDragPan"), m_CanMouseDragPan, DEFAULT_IS_MOUSE_DRAG_PAN);
 	PX_Bool(pPX, _T("CanMouseWheelZoom"), m_CanMouseWheelZoom, DEFAULT_IS_MOUSE_WHEEL_ZOOM);
 }
@@ -324,6 +329,10 @@ void CDrawShapeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 			// マウスカーソルの移動範囲の制限を解除
 			::ClipCursor(NULL);
 		}
+
+		// LeftClickイベント発生
+		auto canvasCoord = m_pDrawManager->ControlToCanvas(Drawer::Coord<long>(point.x, point.y));
+		FireLeftClick(point.x, point.y, canvasCoord.x, canvasCoord.y);
 	}
 
 	COleControl::OnLButtonUp(nFlags, point);
@@ -351,6 +360,10 @@ void CDrawShapeCtrl::OnMouseMove(UINT nFlags, CPoint point)
 				m_pntDraggingBasePos = point;
 			}
 		}
+
+		// CursorMoveイベント発生
+		auto canvasCoord = m_pDrawManager->ControlToCanvas(Drawer::Coord<long>(point.x, point.y));
+		FireCursorMove(point.x, point.y, canvasCoord.x, canvasCoord.y);
 	}
 
 	COleControl::OnMouseMove(nFlags, point);
@@ -672,6 +685,69 @@ LONG CDrawShapeCtrl::GetLayerCount()
 }
 
 
+OLE_COLOR CDrawShapeCtrl::GetCurrentPenColor()
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	return m_pDrawManager->m_currentPen.lopnColor;
+}
+
+
+void CDrawShapeCtrl::SetCurrentPenColor(OLE_COLOR newVal)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにプロパティ ハンドラー コードを追加します
+
+	m_pDrawManager->m_currentPen.lopnColor = newVal;
+	SetModifiedFlag();
+}
+
+
+LONG CDrawShapeCtrl::GetCurrentPenWidth()
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	return m_pDrawManager->m_currentPen.lopnWidth.x;
+}
+
+
+void CDrawShapeCtrl::SetCurrentPenWidth(LONG newVal)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにプロパティ ハンドラー コードを追加します
+
+	m_pDrawManager->m_currentPen.lopnWidth.x = newVal;
+	SetModifiedFlag();
+}
+
+
+OLE_COLOR CDrawShapeCtrl::GetCurrentBrushColor()
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	return m_pDrawManager->m_currentBrush.lbColor;
+}
+
+
+void CDrawShapeCtrl::SetCurrentBrushColor(OLE_COLOR newVal)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにプロパティ ハンドラー コードを追加します
+
+	m_pDrawManager->m_currentBrush.lbColor = newVal;
+	SetModifiedFlag();
+}
+
+
 VARIANT_BOOL CDrawShapeCtrl::GetCanMouseDragPan()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -865,26 +941,6 @@ void CDrawShapeCtrl::Fit(DOUBLE shapeOccupancy)
 
 	m_pDrawManager->Fit(shapeOccupancy);
 	Redraw();
-}
-
-
-void CDrawShapeCtrl::ChangePen(LONG style, LONG width, OLE_COLOR color)
-{
-	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
-	// TODO: ここにディスパッチ ハンドラー コードを追加します
-
-	m_pDrawManager->SetCurrentPen(LOGPEN{ static_cast<UINT>(style), { width, 0 }, color });
-}
-
-
-void CDrawShapeCtrl::ChangeBrush(LONG style, OLE_COLOR color, LONG hatch)
-{
-	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
-	// TODO: ここにディスパッチ ハンドラー コードを追加します
-
-	m_pDrawManager->SetCurrentBrush(LOGBRUSH{ static_cast<UINT>(style), color, static_cast<ULONG_PTR>(hatch) });
 }
 
 

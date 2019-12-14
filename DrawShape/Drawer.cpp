@@ -550,8 +550,8 @@ bool Canvas::CopyImage(CWnd* pOwner) const
 Node::Node(Manager* pManager) :
 	m_info(pManager->m_info),
 	m_canvas(pManager->GetCanvas()),
-	m_pen(pManager->GetCurrentPen()),
-	m_brush(pManager->GetCurrentBrush())
+	m_pen(pManager->m_currentPen),
+	m_brush(pManager->m_currentBrush)
 {
 }
 
