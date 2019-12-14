@@ -51,7 +51,9 @@
             this.gbPenBrush = new System.Windows.Forms.GroupBox();
             this.lbBrush = new System.Windows.Forms.Label();
             this.lbPen = new System.Windows.Forms.Label();
+            this.lbPenStyle = new System.Windows.Forms.Label();
             this.lbPenWidth = new System.Windows.Forms.Label();
+            this.nudPenStyle = new System.Windows.Forms.NumericUpDown();
             this.nudPenWidth = new System.Windows.Forms.NumericUpDown();
             this.cbFunc = new System.Windows.Forms.ComboBox();
             this.gbFunc = new System.Windows.Forms.GroupBox();
@@ -75,6 +77,9 @@
             this.cbPan = new System.Windows.Forms.CheckBox();
             this.cbZoom = new System.Windows.Forms.CheckBox();
             this.axDrawShape = new AxDrawShapeLib.AxDrawShape();
+            this.tbLastClick = new System.Windows.Forms.TextBox();
+            this.lbLastClick = new System.Windows.Forms.Label();
+            this.lbCursor = new System.Windows.Forms.Label();
             this.gbLayer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbBackColor)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbGridColor)).BeginInit();
@@ -84,6 +89,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pbBrushColor)).BeginInit();
             this.gbBasicSetting.SuspendLayout();
             this.gbPenBrush.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudPenStyle)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudPenWidth)).BeginInit();
             this.gbFunc.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudPointsCount)).BeginInit();
@@ -94,7 +100,7 @@
             // btInsertLayer
             // 
             this.btInsertLayer.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btInsertLayer.Location = new System.Drawing.Point(19, 261);
+            this.btInsertLayer.Location = new System.Drawing.Point(19, 240);
             this.btInsertLayer.Name = "btInsertLayer";
             this.btInsertLayer.Size = new System.Drawing.Size(131, 23);
             this.btInsertLayer.TabIndex = 1;
@@ -105,7 +111,7 @@
             // btDeleteLayer
             // 
             this.btDeleteLayer.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btDeleteLayer.Location = new System.Drawing.Point(19, 319);
+            this.btDeleteLayer.Location = new System.Drawing.Point(19, 298);
             this.btDeleteLayer.Name = "btDeleteLayer";
             this.btDeleteLayer.Size = new System.Drawing.Size(131, 23);
             this.btDeleteLayer.TabIndex = 3;
@@ -123,8 +129,8 @@
             this.gbLayer.Controls.Add(this.btInsertLayer);
             this.gbLayer.Location = new System.Drawing.Point(711, 12);
             this.gbLayer.Name = "gbLayer";
-            this.gbLayer.Size = new System.Drawing.Size(169, 357);
-            this.gbLayer.TabIndex = 7;
+            this.gbLayer.Size = new System.Drawing.Size(169, 336);
+            this.gbLayer.TabIndex = 8;
             this.gbLayer.TabStop = false;
             this.gbLayer.Text = "layers";
             // 
@@ -136,7 +142,7 @@
             this.clbLayer.FormattingEnabled = true;
             this.clbLayer.Location = new System.Drawing.Point(19, 26);
             this.clbLayer.Name = "clbLayer";
-            this.clbLayer.Size = new System.Drawing.Size(131, 228);
+            this.clbLayer.Size = new System.Drawing.Size(131, 200);
             this.clbLayer.TabIndex = 0;
             this.clbLayer.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.clbLayer_ItemCheck);
             this.clbLayer.SelectedIndexChanged += new System.EventHandler(this.clbLayer_SelectedIndexChanged);
@@ -144,7 +150,7 @@
             // btClearLayer
             // 
             this.btClearLayer.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btClearLayer.Location = new System.Drawing.Point(19, 290);
+            this.btClearLayer.Location = new System.Drawing.Point(19, 269);
             this.btClearLayer.Name = "btClearLayer";
             this.btClearLayer.Size = new System.Drawing.Size(131, 23);
             this.btClearLayer.TabIndex = 2;
@@ -195,7 +201,7 @@
             // pbPenColor
             // 
             this.pbPenColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pbPenColor.Location = new System.Drawing.Point(78, 18);
+            this.pbPenColor.Location = new System.Drawing.Point(68, 18);
             this.pbPenColor.Name = "pbPenColor";
             this.pbPenColor.Size = new System.Drawing.Size(30, 23);
             this.pbPenColor.TabIndex = 4;
@@ -205,7 +211,7 @@
             // pbBrushColor
             // 
             this.pbBrushColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pbBrushColor.Location = new System.Drawing.Point(78, 47);
+            this.pbBrushColor.Location = new System.Drawing.Point(197, 18);
             this.pbBrushColor.Name = "pbBrushColor";
             this.pbBrushColor.Size = new System.Drawing.Size(30, 23);
             this.pbBrushColor.TabIndex = 4;
@@ -280,10 +286,10 @@
             this.gbBasicSetting.Controls.Add(this.pbGridColor);
             this.gbBasicSetting.Controls.Add(this.pbAxisColor);
             this.gbBasicSetting.Controls.Add(this.pbOriginColor);
-            this.gbBasicSetting.Location = new System.Drawing.Point(12, 409);
+            this.gbBasicSetting.Location = new System.Drawing.Point(12, 388);
             this.gbBasicSetting.Name = "gbBasicSetting";
             this.gbBasicSetting.Size = new System.Drawing.Size(247, 140);
-            this.gbBasicSetting.TabIndex = 8;
+            this.gbBasicSetting.TabIndex = 9;
             this.gbBasicSetting.TabStop = false;
             this.gbBasicSetting.Text = "basic setting";
             // 
@@ -301,47 +307,76 @@
             this.gbPenBrush.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.gbPenBrush.Controls.Add(this.lbBrush);
             this.gbPenBrush.Controls.Add(this.lbPen);
+            this.gbPenBrush.Controls.Add(this.lbPenStyle);
             this.gbPenBrush.Controls.Add(this.lbPenWidth);
+            this.gbPenBrush.Controls.Add(this.nudPenStyle);
             this.gbPenBrush.Controls.Add(this.nudPenWidth);
             this.gbPenBrush.Controls.Add(this.pbBrushColor);
             this.gbPenBrush.Controls.Add(this.pbPenColor);
-            this.gbPenBrush.Location = new System.Drawing.Point(12, 557);
+            this.gbPenBrush.Location = new System.Drawing.Point(12, 536);
             this.gbPenBrush.Name = "gbPenBrush";
-            this.gbPenBrush.Size = new System.Drawing.Size(247, 83);
-            this.gbPenBrush.TabIndex = 9;
+            this.gbPenBrush.Size = new System.Drawing.Size(247, 106);
+            this.gbPenBrush.TabIndex = 10;
             this.gbPenBrush.TabStop = false;
             this.gbPenBrush.Text = "pen and brush";
             // 
             // lbBrush
             // 
             this.lbBrush.AutoSize = true;
-            this.lbBrush.Location = new System.Drawing.Point(29, 52);
+            this.lbBrush.Location = new System.Drawing.Point(139, 23);
             this.lbBrush.Name = "lbBrush";
             this.lbBrush.Size = new System.Drawing.Size(33, 12);
-            this.lbBrush.TabIndex = 3;
+            this.lbBrush.TabIndex = 5;
             this.lbBrush.Text = "brush";
             // 
             // lbPen
             // 
             this.lbPen.AutoSize = true;
-            this.lbPen.Location = new System.Drawing.Point(28, 23);
+            this.lbPen.Location = new System.Drawing.Point(13, 23);
             this.lbPen.Name = "lbPen";
             this.lbPen.Size = new System.Drawing.Size(23, 12);
             this.lbPen.TabIndex = 0;
             this.lbPen.Text = "pen";
             // 
+            // lbPenStyle
+            // 
+            this.lbPenStyle.AutoSize = true;
+            this.lbPenStyle.Location = new System.Drawing.Point(12, 74);
+            this.lbPenStyle.Name = "lbPenStyle";
+            this.lbPenStyle.Size = new System.Drawing.Size(30, 12);
+            this.lbPenStyle.TabIndex = 3;
+            this.lbPenStyle.Text = "style";
+            // 
             // lbPenWidth
             // 
             this.lbPenWidth.AutoSize = true;
-            this.lbPenWidth.Location = new System.Drawing.Point(147, 23);
+            this.lbPenWidth.Location = new System.Drawing.Point(12, 49);
             this.lbPenWidth.Name = "lbPenWidth";
             this.lbPenWidth.Size = new System.Drawing.Size(32, 12);
             this.lbPenWidth.TabIndex = 1;
             this.lbPenWidth.Text = "width";
             // 
+            // nudPenStyle
+            // 
+            this.nudPenStyle.Location = new System.Drawing.Point(68, 72);
+            this.nudPenStyle.Maximum = new decimal(new int[] {
+            8,
+            0,
+            0,
+            0});
+            this.nudPenStyle.Name = "nudPenStyle";
+            this.nudPenStyle.Size = new System.Drawing.Size(40, 19);
+            this.nudPenStyle.TabIndex = 4;
+            this.nudPenStyle.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.nudPenStyle.ValueChanged += new System.EventHandler(this.nudPenStyle_ValueChanged);
+            // 
             // nudPenWidth
             // 
-            this.nudPenWidth.Location = new System.Drawing.Point(185, 21);
+            this.nudPenWidth.Location = new System.Drawing.Point(68, 47);
             this.nudPenWidth.Maximum = new decimal(new int[] {
             5,
             0,
@@ -366,7 +401,7 @@
             // 
             this.cbFunc.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbFunc.FormattingEnabled = true;
-            this.cbFunc.Location = new System.Drawing.Point(19, 22);
+            this.cbFunc.Location = new System.Drawing.Point(19, 29);
             this.cbFunc.Name = "cbFunc";
             this.cbFunc.Size = new System.Drawing.Size(165, 20);
             this.cbFunc.TabIndex = 0;
@@ -388,16 +423,16 @@
             this.gbFunc.Controls.Add(this.cbArcDirection);
             this.gbFunc.Controls.Add(this.cbPointType);
             this.gbFunc.Controls.Add(this.cbFunc);
-            this.gbFunc.Location = new System.Drawing.Point(274, 409);
+            this.gbFunc.Location = new System.Drawing.Point(275, 388);
             this.gbFunc.Name = "gbFunc";
-            this.gbFunc.Size = new System.Drawing.Size(417, 231);
-            this.gbFunc.TabIndex = 10;
+            this.gbFunc.Size = new System.Drawing.Size(417, 254);
+            this.gbFunc.TabIndex = 11;
             this.gbFunc.TabStop = false;
             this.gbFunc.Text = "draw functions";
             // 
             // tbRadius
             // 
-            this.tbRadius.Location = new System.Drawing.Point(90, 145);
+            this.tbRadius.Location = new System.Drawing.Point(90, 152);
             this.tbRadius.Name = "tbRadius";
             this.tbRadius.Size = new System.Drawing.Size(82, 19);
             this.tbRadius.TabIndex = 8;
@@ -405,7 +440,7 @@
             // lbPoint
             // 
             this.lbPoint.AutoSize = true;
-            this.lbPoint.Location = new System.Drawing.Point(206, 18);
+            this.lbPoint.Location = new System.Drawing.Point(206, 25);
             this.lbPoint.Name = "lbPoint";
             this.lbPoint.Size = new System.Drawing.Size(36, 12);
             this.lbPoint.TabIndex = 10;
@@ -413,7 +448,7 @@
             // 
             // nudPointsCount
             // 
-            this.nudPointsCount.Location = new System.Drawing.Point(358, 15);
+            this.nudPointsCount.Location = new System.Drawing.Point(358, 22);
             this.nudPointsCount.Minimum = new decimal(new int[] {
             3,
             0,
@@ -432,7 +467,7 @@
             // btRunFunc
             // 
             this.btRunFunc.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btRunFunc.Location = new System.Drawing.Point(19, 189);
+            this.btRunFunc.Location = new System.Drawing.Point(22, 220);
             this.btRunFunc.Name = "btRunFunc";
             this.btRunFunc.Size = new System.Drawing.Size(153, 23);
             this.btRunFunc.TabIndex = 9;
@@ -443,7 +478,7 @@
             // lbRadius
             // 
             this.lbRadius.AutoSize = true;
-            this.lbRadius.Location = new System.Drawing.Point(20, 148);
+            this.lbRadius.Location = new System.Drawing.Point(20, 155);
             this.lbRadius.Name = "lbRadius";
             this.lbRadius.Size = new System.Drawing.Size(36, 12);
             this.lbRadius.TabIndex = 7;
@@ -452,7 +487,7 @@
             // lbFillType
             // 
             this.lbFillType.AutoSize = true;
-            this.lbFillType.Location = new System.Drawing.Point(20, 118);
+            this.lbFillType.Location = new System.Drawing.Point(20, 125);
             this.lbFillType.Name = "lbFillType";
             this.lbFillType.Size = new System.Drawing.Size(44, 12);
             this.lbFillType.TabIndex = 5;
@@ -461,7 +496,7 @@
             // lbArcDirection
             // 
             this.lbArcDirection.AutoSize = true;
-            this.lbArcDirection.Location = new System.Drawing.Point(20, 91);
+            this.lbArcDirection.Location = new System.Drawing.Point(20, 98);
             this.lbArcDirection.Name = "lbArcDirection";
             this.lbArcDirection.Size = new System.Drawing.Size(49, 12);
             this.lbArcDirection.TabIndex = 3;
@@ -470,18 +505,18 @@
             // dgvPoints
             // 
             this.dgvPoints.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvPoints.Location = new System.Drawing.Point(208, 40);
+            this.dgvPoints.Location = new System.Drawing.Point(208, 47);
             this.dgvPoints.MultiSelect = false;
             this.dgvPoints.Name = "dgvPoints";
             this.dgvPoints.RowTemplate.Height = 21;
             this.dgvPoints.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvPoints.Size = new System.Drawing.Size(190, 172);
+            this.dgvPoints.Size = new System.Drawing.Size(190, 196);
             this.dgvPoints.TabIndex = 12;
             // 
             // lbPointType
             // 
             this.lbPointType.AutoSize = true;
-            this.lbPointType.Location = new System.Drawing.Point(20, 63);
+            this.lbPointType.Location = new System.Drawing.Point(20, 70);
             this.lbPointType.Name = "lbPointType";
             this.lbPointType.Size = new System.Drawing.Size(56, 12);
             this.lbPointType.TabIndex = 1;
@@ -491,7 +526,7 @@
             // 
             this.cbFillType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbFillType.FormattingEnabled = true;
-            this.cbFillType.Location = new System.Drawing.Point(90, 115);
+            this.cbFillType.Location = new System.Drawing.Point(90, 122);
             this.cbFillType.Name = "cbFillType";
             this.cbFillType.Size = new System.Drawing.Size(94, 20);
             this.cbFillType.TabIndex = 0;
@@ -500,7 +535,7 @@
             // 
             this.cbArcDirection.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbArcDirection.FormattingEnabled = true;
-            this.cbArcDirection.Location = new System.Drawing.Point(90, 88);
+            this.cbArcDirection.Location = new System.Drawing.Point(90, 95);
             this.cbArcDirection.Name = "cbArcDirection";
             this.cbArcDirection.Size = new System.Drawing.Size(94, 20);
             this.cbArcDirection.TabIndex = 0;
@@ -509,7 +544,7 @@
             // 
             this.cbPointType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbPointType.FormattingEnabled = true;
-            this.cbPointType.Location = new System.Drawing.Point(90, 60);
+            this.cbPointType.Location = new System.Drawing.Point(90, 67);
             this.cbPointType.Name = "cbPointType";
             this.cbPointType.Size = new System.Drawing.Size(94, 20);
             this.cbPointType.TabIndex = 0;
@@ -517,17 +552,17 @@
             // tbPosition
             // 
             this.tbPosition.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbPosition.Location = new System.Drawing.Point(548, 377);
+            this.tbPosition.Location = new System.Drawing.Point(321, 358);
             this.tbPosition.Name = "tbPosition";
             this.tbPosition.ReadOnly = true;
             this.tbPosition.Size = new System.Drawing.Size(144, 19);
-            this.tbPosition.TabIndex = 6;
+            this.tbPosition.TabIndex = 5;
             this.tbPosition.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // btFit
             // 
             this.btFit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btFit.Location = new System.Drawing.Point(12, 375);
+            this.btFit.Location = new System.Drawing.Point(12, 354);
             this.btFit.Name = "btFit";
             this.btFit.Size = new System.Drawing.Size(131, 23);
             this.btFit.TabIndex = 1;
@@ -538,10 +573,10 @@
             // btCopyImage
             // 
             this.btCopyImage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btCopyImage.Location = new System.Drawing.Point(411, 375);
+            this.btCopyImage.Location = new System.Drawing.Point(730, 604);
             this.btCopyImage.Name = "btCopyImage";
             this.btCopyImage.Size = new System.Drawing.Size(131, 23);
-            this.btCopyImage.TabIndex = 5;
+            this.btCopyImage.TabIndex = 13;
             this.btCopyImage.Text = "copy image";
             this.btCopyImage.UseVisualStyleBackColor = true;
             this.btCopyImage.Click += new System.EventHandler(this.btCopyImage_Click);
@@ -549,10 +584,10 @@
             // btSaveImage
             // 
             this.btSaveImage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btSaveImage.Location = new System.Drawing.Point(274, 375);
+            this.btSaveImage.Location = new System.Drawing.Point(730, 575);
             this.btSaveImage.Name = "btSaveImage";
             this.btSaveImage.Size = new System.Drawing.Size(131, 23);
-            this.btSaveImage.TabIndex = 4;
+            this.btSaveImage.TabIndex = 12;
             this.btSaveImage.Text = "save image";
             this.btSaveImage.UseVisualStyleBackColor = true;
             this.btSaveImage.Click += new System.EventHandler(this.btSaveImage_Click);
@@ -561,7 +596,7 @@
             // 
             this.cbPan.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbPan.AutoSize = true;
-            this.cbPan.Location = new System.Drawing.Point(161, 379);
+            this.cbPan.Location = new System.Drawing.Point(161, 358);
             this.cbPan.Name = "cbPan";
             this.cbPan.Size = new System.Drawing.Size(42, 16);
             this.cbPan.TabIndex = 2;
@@ -573,7 +608,7 @@
             // 
             this.cbZoom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbZoom.AutoSize = true;
-            this.cbZoom.Location = new System.Drawing.Point(209, 379);
+            this.cbZoom.Location = new System.Drawing.Point(209, 358);
             this.cbZoom.Name = "cbZoom";
             this.cbZoom.Size = new System.Drawing.Size(50, 16);
             this.cbZoom.TabIndex = 3;
@@ -590,8 +625,38 @@
             this.axDrawShape.Location = new System.Drawing.Point(12, 12);
             this.axDrawShape.Name = "axDrawShape";
             this.axDrawShape.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axDrawShape.OcxState")));
-            this.axDrawShape.Size = new System.Drawing.Size(680, 357);
+            this.axDrawShape.Size = new System.Drawing.Size(680, 336);
             this.axDrawShape.TabIndex = 0;
+            // 
+            // tbLastClick
+            // 
+            this.tbLastClick.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.tbLastClick.Location = new System.Drawing.Point(548, 358);
+            this.tbLastClick.Name = "tbLastClick";
+            this.tbLastClick.ReadOnly = true;
+            this.tbLastClick.Size = new System.Drawing.Size(144, 19);
+            this.tbLastClick.TabIndex = 7;
+            this.tbLastClick.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // lbLastClick
+            // 
+            this.lbLastClick.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbLastClick.AutoSize = true;
+            this.lbLastClick.Location = new System.Drawing.Point(490, 361);
+            this.lbLastClick.Name = "lbLastClick";
+            this.lbLastClick.Size = new System.Drawing.Size(52, 12);
+            this.lbLastClick.TabIndex = 6;
+            this.lbLastClick.Text = "last click";
+            // 
+            // lbCursor
+            // 
+            this.lbCursor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbCursor.AutoSize = true;
+            this.lbCursor.Location = new System.Drawing.Point(278, 361);
+            this.lbCursor.Name = "lbCursor";
+            this.lbCursor.Size = new System.Drawing.Size(37, 12);
+            this.lbCursor.TabIndex = 4;
+            this.lbCursor.Text = "cursor";
             // 
             // formMain
             // 
@@ -599,12 +664,15 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(896, 651);
             this.Controls.Add(this.axDrawShape);
+            this.Controls.Add(this.tbLastClick);
             this.Controls.Add(this.tbPosition);
             this.Controls.Add(this.gbFunc);
             this.Controls.Add(this.btSaveImage);
             this.Controls.Add(this.btCopyImage);
             this.Controls.Add(this.btFit);
             this.Controls.Add(this.gbPenBrush);
+            this.Controls.Add(this.lbCursor);
+            this.Controls.Add(this.lbLastClick);
             this.Controls.Add(this.gbBasicSetting);
             this.Controls.Add(this.gbLayer);
             this.Controls.Add(this.cbZoom);
@@ -623,6 +691,7 @@
             this.gbBasicSetting.PerformLayout();
             this.gbPenBrush.ResumeLayout(false);
             this.gbPenBrush.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudPenStyle)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudPenWidth)).EndInit();
             this.gbFunc.ResumeLayout(false);
             this.gbFunc.PerformLayout();
@@ -681,6 +750,11 @@
         private System.Windows.Forms.ComboBox cbArcDirection;
         private System.Windows.Forms.ComboBox cbPointType;
         private AxDrawShapeLib.AxDrawShape axDrawShape;
+        private System.Windows.Forms.Label lbPenStyle;
+        private System.Windows.Forms.NumericUpDown nudPenStyle;
+        private System.Windows.Forms.TextBox tbLastClick;
+        private System.Windows.Forms.Label lbLastClick;
+        private System.Windows.Forms.Label lbCursor;
     }
 }
 

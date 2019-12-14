@@ -294,6 +294,7 @@ void Canvas::DrawArrowHead(const Coords<double, 2>& baseSegment, FillType fillTy
 
 	// 線分の長さ
 	double length = ctrlBaseSegment[START].Length(ctrlBaseSegment[END]);
+
 	// 線分の単位ベクトルを算出(計算誤差のためにdouble型とする)
 	Coord<double> vec;
 	vec.x = (static_cast<double>(ctrlBaseSegment[END].x) - ctrlBaseSegment[START].x) / length;
@@ -550,14 +551,14 @@ bool Canvas::CopyImage(CWnd* pOwner) const
 Node::Node(Manager* pManager) :
 	m_info(pManager->m_info),
 	m_canvas(pManager->GetCanvas()),
-	m_pen(pManager->m_currentPen),
-	m_brush(pManager->m_currentBrush)
+	m_pen(pManager->GetCurrentPen()),
+	m_brush(pManager->GetCurrentBrush())
 {
 }
 
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodeGrid::CalcBoundingBox() const
+BoundingBox<double> NodeGrid::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// グリッドの場合は最小包含箱は無い
 	return BoundingBox<double>();
@@ -579,7 +580,7 @@ void NodeGrid::DrawContent()
 
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodeOrigin::CalcBoundingBox() const
+BoundingBox<double> NodeOrigin::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 原点のサイズ
 	double size = m_canvas.ControlToCanvas(m_info.gridSize);
@@ -602,7 +603,7 @@ void NodeOrigin::DrawContent()
 
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodeAxis::CalcBoundingBox() const
+BoundingBox<double> NodeAxis::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 軸の場合は最小包含箱を原点とする
 	return BoundingBox<double>(m_point);
@@ -617,7 +618,7 @@ void NodeAxis::DrawContent()
 
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodePoint::CalcBoundingBox() const
+BoundingBox<double> NodePoint::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 最小包含箱を点とする
 	return BoundingBox<double>(m_point);
@@ -679,8 +680,11 @@ Coords<double, 2> NodeLine::Segment() const
 }
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodeLine::CalcBoundingBox() const
+BoundingBox<double> NodeLine::CalcBoundingBox(bool forFit/*=false*/) const
 {
+	// Fitのために呼び出された場合は無限直線を除外する
+	if (forFit && m_lineLimitType == LineLimitType::Infinite) return BoundingBox<double>();
+
 	// TODO:
 	// 線分を単純に最小包含箱として採用しているが
 	// 実際には描画領域に含まれないのに最小包含箱が重なってしまう場合がある
@@ -708,14 +712,18 @@ void NodeLine::DrawContent()
 
 	// 線分の場合、先端の矢印描画
 	if (m_lineLimitType == LineLimitType::Finite && m_info.isDrawArrow) {
-		// 矢印を描画
-		m_canvas.DrawArrowHead(points);
+		// 線分が矢印の羽の80%の長さより短くなるほど縮小されている場合は描画しない
+		double length = points[START].Length(points[END]);
+		if (m_canvas.CanvasToControl(length) >= m_canvas.ARROW_WING_LENGTH * 0.8) {
+			// 矢印を描画
+			m_canvas.DrawArrowHead(points);
+		}
 	}
 }
 
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodeArc::CalcBoundingBox() const
+BoundingBox<double> NodeArc::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// ベジエ曲線による座標値配列を取得
 	Coords_v<double> bezierPoints = m_canvas.CalcBezierArc(m_points, m_arcDirectionType);
@@ -737,34 +745,39 @@ void NodeArc::DrawContent()
 	// ベジエ曲線で円弧を描画
 	m_canvas.DrawBezierArc(m_points, m_arcDirectionType);
 
-	// 円弧の先端の矢印描画
-	if (m_info.isDrawArrow) {
-		// 矢印を描くための軸
-		Coords<double, 2> arrowAxis;
+	// 半径が矢印の羽の80%の長さより短くなるほど縮小されている場合は描画しない
+	// 円弧中心点の描画条件も同じとする
+	double radius = m_points[CENTER].Length(m_points[START]);
+	if (m_canvas.CanvasToControl(radius) >= m_canvas.ARROW_WING_LENGTH * 0.8) {
+		// 円弧の先端の矢印描画
+		if (m_info.isDrawArrow) {
+			// 矢印を描くための軸
+			Coords<double, 2> arrowAxis;
 
-		// 回転角度を決定
-		//   円弧方向が左：+90度
-		//   円弧方向が右：-90度
-		double angle = m_arcDirectionType == ArcDirectionType::Left ? PI : -PI;
+			// 回転角度を決定
+			//   円弧方向が左：+90度
+			//   円弧方向が右：-90度
+			double angle = m_arcDirectionType == ArcDirectionType::Left ? PI : -PI;
 
-		// 終点を基準に、中心点を上で決めた回転角度だけ回転して
-		// 矢印を描くための軸の始点を算出
-		arrowAxis[START] = m_points[END].Rotate(m_points[CENTER], angle);
-		// 矢印を描くための軸の終点は円弧の終点
-		arrowAxis[END] = m_points[END];
+			// 終点を基準に、中心点を上で決めた回転角度だけ回転して
+			// 矢印を描くための軸の始点を算出
+			arrowAxis[START] = m_points[END].Rotate(m_points[CENTER], angle);
+			// 矢印を描くための軸の終点は円弧の終点
+			arrowAxis[END] = m_points[END];
 
-		// 矢印を描画
-		m_canvas.DrawArrowHead(arrowAxis);
-	}
+			// 矢印を描画
+			m_canvas.DrawArrowHead(arrowAxis);
+		}
 
-	// 円弧の中心点を描画
-	if (m_info.isDrawCenter) {
-		m_canvas.DrawTrianglePoint(m_points[CENTER]);
+		// 円弧の中心点を描画
+		if (m_info.isDrawCenter) {
+			m_canvas.DrawTrianglePoint(m_points[CENTER]);
+		}
 	}
 }
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodeCircle::CalcBoundingBox() const
+BoundingBox<double> NodeCircle::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 円の矩形を計算
 	BoundingBox<double> bbox;
@@ -809,7 +822,7 @@ void NodeCircle::DrawContent()
 
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodePolygon::CalcBoundingBox() const
+BoundingBox<double> NodePolygon::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 形状を構成する座標から最小包含箱を算出
 	BoundingBox<double> bbox;
@@ -839,8 +852,12 @@ void NodePolygon::DrawContent()
 			Coord<double> s = *(m_points.rbegin());
 			// 矢印の軸の終点として座標を順に取得
 			for (const auto& e : m_points) {
-				// 矢印を描画
-				m_canvas.DrawArrowHead(Coords<double, 2>{s, e});
+				// 線分が矢印の羽の80%の長さより短くなるほど縮小されている場合は描画しない
+				double length = s.Length(e);
+				if (m_canvas.CanvasToControl(length) >= m_canvas.ARROW_WING_LENGTH * 0.8) {
+					// 矢印を描画
+					m_canvas.DrawArrowHead(Coords<double, 2>{s, e});
+				}
 				// 次の始点を更新
 				s = e;
 			}
@@ -922,7 +939,7 @@ void NodeSector::CalcSectorRgn(CRgn* sectorRgn) const
 }
 
 // 形状の最小包含箱を算出
-BoundingBox<double> NodeSector::CalcBoundingBox() const
+BoundingBox<double> NodeSector::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 扇形のリージョンから最小包含箱（コントロール座標）を取得
 	CRgn sectorRgn;
@@ -979,14 +996,14 @@ void Layer::Clear()
 }
 
 // 全形状の最小包含箱を算出
-BoundingBox<double> Layer::CalcBoundingBox() const
+BoundingBox<double> Layer::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	BoundingBox<double> bbox;
 	// 描画フラグONなら
 	if (m_enableDraw) {
 		// 全ノードの最小包含箱を合成
 		for (const auto& pNode : m_nodes) {
-			bbox += pNode->CalcBoundingBox();
+			bbox += pNode->CalcBoundingBox(forFit);
 		}
 	}
 	return bbox;
@@ -1009,6 +1026,10 @@ void Layer::Draw()
 Manager::Manager() :
 	m_canvas(),
 	m_currentLayerNo(0),
+	m_penColor(0),
+	m_penWidth(0),
+	m_penStyle(0),
+	m_brushColor(0),
 	m_info({ 0 })
 {
 	// 初期化
@@ -1016,14 +1037,14 @@ Manager::Manager() :
 }
 
 // 全形状の最小包含箱を算出
-BoundingBox<double> Manager::CalcBoundingBox() const
+BoundingBox<double> Manager::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// ベースレイヤーの内容は含めない
 
 	BoundingBox<double> bbox;
 	// 全レイヤーの最小包含箱を合成
 	for (const auto& pLayer : m_layers) {
-		bbox += pLayer->CalcBoundingBox();
+		bbox += pLayer->CalcBoundingBox(forFit);
 	}
 	return bbox;
 }
@@ -1065,8 +1086,8 @@ std::size_t Manager::DeleteCurrentLayer()
 void Manager::Clear()
 {
 	// ペンとブラシを初期化
-	m_currentPen = DEFAULT_PEN;
-	m_currentBrush = DEFAULT_BRUSH;
+	SetCurrentPen(DEFAULT_PEN);
+	SetCurrentBrush(DEFAULT_BRUSH);
 
 	// レイヤーコレクションをクリア
 	m_layers.clear();
@@ -1081,8 +1102,8 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 	// デザインモード用に描画情報をバックアップ
 	double bkRatio = m_canvas.GetRatio();
 	Coord<double> bkOffset = m_canvas.GetOffset();
-	LOGPEN bkPen = m_currentPen;
-	LOGBRUSH bkBrush = m_currentBrush;
+	LOGPEN bkPen = GetCurrentPen();
+	LOGBRUSH bkBrush = GetCurrentBrush();
 
 	// デザインモード用の描画
 	if (isDesignMode) {
@@ -1140,8 +1161,6 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 
 	// 通常の描画
 	if (!isDesignMode) {
-	}
-	else {
 		// 全レイヤーを描画
 		for (const auto& pLayer : m_layers) {
 			pLayer->Draw();
@@ -1151,8 +1170,8 @@ void Manager::Draw(bool isDesignMode/*=false*/)
 	// デザインモード用に描画情報をリストア
 	m_canvas.SetRatio(bkRatio);
 	m_canvas.SetOffset(bkOffset);
-	m_currentPen = bkPen;
-	m_currentBrush = bkBrush;
+	SetCurrentPen(bkPen);
+	SetCurrentBrush(bkBrush);
 }
 
 // 拡大縮小
@@ -1205,28 +1224,23 @@ bool Manager::Pan(const Coord<long>& move)
 // フィット
 void Manager::Fit(double shapeOccupancy)
 {
-	// 描画する全形状の最小包含箱を取得
-	BoundingBox<double> bbox = CalcBoundingBox();
+	// 描画する全形状の最小包含箱を取得(Fit用)
+	BoundingBox<double> shapeBox = CalcBoundingBox(true);
 
-	// 拡大縮小率
-	double ratio;
-	// オフセット
-	Coord<double> offset;
+	// 拡大縮小率(初期値)
+	double ratio = Canvas::DEFAULT_RATIO;
+	// オフセット(初期値)
+	Coord<double> offset = Coord<double>(
+		m_canvas.GetRect()->CenterPoint().x,
+		m_canvas.GetRect()->CenterPoint().y
+	);
 
-	// 最小包含箱取得失敗
-	if (!bbox.Verify()) {
-		// 初期値とする
-		ratio = Canvas::DEFAULT_RATIO;
-		offset = Coord<double>(
-			static_cast<double>(m_canvas.GetRect()->CenterPoint().x),
-			static_cast<double>(m_canvas.GetRect()->CenterPoint().y)
-		);
-	}
-	else {
+	// 最小包含箱取得成功
+	if (shapeBox.Verify()) {
 		// 形状の縦横比を算出
 		double shapeAspect = std::numeric_limits<double>::max();
-		if (bbox.GetWidth() != 0.0) {
-			shapeAspect = bbox.GetHeight() / bbox.GetWidth();
+		if (shapeBox.GetWidth() != 0.0) {
+			shapeAspect = shapeBox.GetHeight() / shapeBox.GetWidth();
 		}
 
 		// 描画領域の縦横比
@@ -1237,19 +1251,21 @@ void Manager::Fit(double shapeOccupancy)
 
 		// 拡大縮小率を算出
 		// 描画領域に対して形状が縦長なら縦方向を基準とする
-		if (bbox.GetWidth() == 0.0 || shapeAspect > cnvsAspect) {
+		if (shapeAspect > cnvsAspect) {
 			// (描画領域サイズ / 形状サイズ) * 形状の占有率
-			ratio = (m_canvas.GetRect()->Height() / bbox.GetHeight()) * shapeOccupancy;
+			if(shapeBox.GetHeight() != 0.0)
+				ratio = (m_canvas.GetRect()->Height() / shapeBox.GetHeight()) * shapeOccupancy;
 		}
 		// 描画領域に対して形状が横長なら横方向を基準とする
 		else {
 			// (描画領域サイズ / 形状サイズ) * 形状の占有率
-			ratio = (m_canvas.GetRect()->Width() / bbox.GetWidth()) * shapeOccupancy;
+			if (shapeBox.GetWidth() != 0.0)
+				ratio = (m_canvas.GetRect()->Width() / shapeBox.GetWidth()) * shapeOccupancy;
 		}
 
 		// オフセットを算出
-		offset.x = (m_canvas.GetRect()->Width() - bbox.GetWidth()) * ratio / 2.0 - bbox.min.x * ratio;
-		double y = (m_canvas.GetRect()->Height() - bbox.GetHeight()) * ratio / 2.0 - bbox.min.y * ratio;
+		offset.x = ((m_canvas.GetRect()->Width() - shapeBox.GetWidth() * ratio) / 2.0) - shapeBox.min.x * ratio;
+		double y = ((m_canvas.GetRect()->Height() - shapeBox.GetHeight() * ratio) / 2.0) - shapeBox.min.y * ratio;
 		offset.y = m_canvas.GetRect()->Height() - y;	// Y軸反転
 	}
 

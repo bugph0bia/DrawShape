@@ -353,8 +353,8 @@ public:
 	static constexpr long TRIANGLE_POINT_SIZE = 3;
 	// 点の強調時のサイズ
 	static constexpr long LARGE_POINT_SIZE = 3;
-	// 矢印の羽の軸からの角度(20°)
-	static constexpr double ARROW_WING_ANGLE = 24.0 * PI / 180.0;
+	// 矢印の羽の軸からの角度
+	static constexpr double ARROW_WING_ANGLE = 26.0 * PI / 180.0;
 	// 矢印の羽の長さ(コントロール座標)
 	static constexpr long ARROW_WING_LENGTH = 10;
 
@@ -534,7 +534,7 @@ public:
 
 	// 形状の最小包含箱を算出
 	//   ※形状ごとにオーバーライドする
-	virtual BoundingBox<double> CalcBoundingBox() const { return BoundingBox<double>(); }
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const { return BoundingBox<double>(); }
 
 	// 描画
 	void Draw() {
@@ -565,7 +565,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -587,7 +587,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -609,7 +609,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -634,7 +634,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -694,7 +694,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -719,7 +719,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -747,7 +747,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -772,7 +772,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -809,7 +809,7 @@ public:
 	}
 
 	// 形状の最小包含箱を算出
-	virtual BoundingBox<double> CalcBoundingBox() const override;
+	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 };
@@ -836,7 +836,7 @@ public:
 	void AddNode(Node* pNode) { m_nodes.push_back(std::unique_ptr<Node>(pNode)); }
 
 	// 全形状の最小包含箱を算出
-	BoundingBox<double> CalcBoundingBox() const;
+	BoundingBox<double> CalcBoundingBox(bool forFit = false) const;
 
 	// 描画フラグ
 	void SetEnableDraw(bool val) { m_enableDraw = val; }
@@ -861,7 +861,7 @@ private:
 	std::size_t m_currentLayerNo;
 
 	// 全形状の最小包含箱を算出
-	BoundingBox<double> CalcBoundingBox() const;
+	BoundingBox<double> CalcBoundingBox(bool forFit = false) const;
 
 public:
 	// 定数
@@ -879,10 +879,11 @@ public:
 	// 設定情報
 	SettingInfo m_info;
 
-	// カレントペン
-	LOGPEN m_currentPen;
-	// カレントブラシ
-	LOGBRUSH m_currentBrush;
+	// カレントペン・ブラシ情報
+	COLORREF m_penColor;
+	long m_penWidth;
+	long m_penStyle;
+	COLORREF m_brushColor;
 
 	// コンストラクタ
 	Manager();
@@ -894,6 +895,18 @@ public:
 
 	// キャンバスオブジェクト
 	const Canvas& GetCanvas() const { return m_canvas; }
+
+	// カレントペン
+	void SetCurrentPen(LOGPEN lp)
+	{
+		m_penColor = lp.lopnColor;
+		m_penWidth = lp.lopnWidth.x;
+		m_penStyle = lp.lopnStyle;
+	}
+	LOGPEN GetCurrentPen() { return LOGPEN{ (UINT)m_penStyle, POINT { m_penWidth, 0 }, m_penColor }; }
+	// カレントブラシ
+	void SetCurrentBrush(LOGBRUSH lb) { m_brushColor = lb.lbColor; }
+	LOGBRUSH GetCurrentBrush() { return LOGBRUSH{ (UINT)0, m_brushColor, (ULONG_PTR)0 }; }
 
 	// カレントレイヤー番号
 	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; }

@@ -75,6 +75,8 @@ namespace DrawShapeTest
             axDrawShape.SetEnableCurrentLayer(e.NewValue == CheckState.Checked);
             // カレントレイヤーNoをもとに戻す
             axDrawShape.CurrentLayerNo = currentLayerNo;
+            // 再描画
+            axDrawShape.Redraw();
         }
 
         private void btInsertLayer_Click(object sender, EventArgs e)
@@ -111,7 +113,13 @@ namespace DrawShapeTest
             //double x = 0, y = 0;
             //axDrawShape.ControlToCanvas(cursor.X, cursor.Y, ref x, ref y);
             // 表示
-            tbPosition.Text = e.canvasX.ToString("#####.000") + " , " + e.canvasY.ToString("#####.000");
+            tbPosition.Text = e.canvasX.ToString("0.000") + " , " + e.canvasY.ToString("0.000");
+        }
+
+        private void formMain_axDrawShapeLeftClickEvent(object sender, AxDrawShapeLib._DDrawShapeEvents_LeftClickEvent e)
+        {
+            // 表示
+            tbLastClick.Text = e.canvasX.ToString("0.000") + " , " + e.canvasY.ToString("0.000");
         }
 
         private void cbDrawGrid_CheckedChanged(object sender, EventArgs e)
@@ -214,16 +222,14 @@ namespace DrawShapeTest
             }
         }
 
-        private Color PenColor { get; set; }
         private void pbPenColor_Click(object sender, EventArgs e)
         {
             // 現在の色
-            colorDlg.Color = PenColor;
+            colorDlg.Color = axDrawShape.CurrentPenColor;
             // 色選択ダイアログ表示
             if (colorDlg.ShowDialog() == DialogResult.OK)
             {
                 // 色変更
-                PenColor = colorDlg.Color;
                 axDrawShape.CurrentPenColor = colorDlg.Color;
                 SetColorPictureBox(pbPenColor, colorDlg.Color);
             }
@@ -235,16 +241,20 @@ namespace DrawShapeTest
             axDrawShape.CurrentPenWidth = (int)nudPenWidth.Value;
         }
 
-        private Color BrushColor { get; set; }
+        private void nudPenStyle_ValueChanged(object sender, EventArgs e)
+        {
+            // ペンスタイル変更
+            axDrawShape.CurrentPenStyle = (int)nudPenStyle.Value;
+        }
+
         private void pbBrushColor_Click(object sender, EventArgs e)
         {
             // 現在の色
-            colorDlg.Color = BrushColor;
+            colorDlg.Color = axDrawShape.CurrentBrushColor;
             // 色選択ダイアログ表示
             if (colorDlg.ShowDialog() == DialogResult.OK)
             {
                 // 色変更
-                BrushColor = colorDlg.Color;
                 axDrawShape.CurrentBrushColor = colorDlg.Color;
                 SetColorPictureBox(pbBrushColor, colorDlg.Color);
             }
@@ -252,7 +262,7 @@ namespace DrawShapeTest
 
         private void cbFunc_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // 関数
+            // 関数に関するコントロールを更新
             int func = cbFunc.SelectedIndex;
 
             // 有効状態
@@ -266,7 +276,7 @@ namespace DrawShapeTest
             tbRadius.Enabled = drawFuncInfos[func].useRadius;
 
             // グリッドの行数
-            if(drawFuncInfos[func].pointCount != 0)
+            if (drawFuncInfos[func].pointCount != 0)
             {
                 nudPointsCount.Minimum = 1;
                 nudPointsCount.Value = drawFuncInfos[func].pointCount;
@@ -286,24 +296,30 @@ namespace DrawShapeTest
             dgvPoints.RowCount = (int)nudPointsCount.Value;
         }
 
+        private struct DPoint
+        {
+            public double x { get; set; }
+            public double y { get; set; }
+        }
+
         private void btRunFunc_Click(object sender, EventArgs e)
         {
             // 種類
             int pointType = cbPointType.SelectedIndex;
-            int arcDirection = cbArcDirection.SelectedIndex;
-            int fillType = cbFillType.SelectedIndex;
+            bool arcDirection = cbArcDirection.SelectedIndex == 0;
+            bool fillType = cbFillType.SelectedIndex == 1;
             // 半径
             double radius = 0.0;
             double.TryParse(tbRadius.Text, out radius);
             // 点群
-            Point[] points = new Point[(int)nudPointsCount.Value];
+            DPoint[] points = new DPoint[(int)nudPointsCount.Value];
             for(int row = 0; row < points.Length; row++)
             {
-                int x, y;
-                int.TryParse(dgvPoints[0, row].Value.ToString(), out x);
-                int.TryParse(dgvPoints[1, row].Value.ToString(), out y);
-                points[row].X = x;
-                points[row].Y = y;
+                double x, y;
+                double.TryParse(dgvPoints[0, row].Value.ToString(), out x);
+                double.TryParse(dgvPoints[1, row].Value.ToString(), out y);
+                points[row].x = x;
+                points[row].y = y;
             }
 
             // 関数
@@ -311,28 +327,42 @@ namespace DrawShapeTest
             switch (func)
             {
             case 0:
+                axDrawShape.AddLine(points[0].x, points[0].y, points[1].x, points[1].y);
                 break;
             case 1:
+                axDrawShape.AddInfiniteLine2Point(points[0].x, points[0].y, points[1].x, points[1].y);
                 break;
             case 2:
+                axDrawShape.AddPoint(points[0].x, points[0].y, pointType);
                 break;
             case 3:
+                axDrawShape.AddArc(points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, arcDirection);
                 break;
             case 4:
+                axDrawShape.AddCircle(points[0].x, points[0].y, radius, fillType);
                 break;
             case 5:
+                double[] coords = new double[points.Length * 2];
+                for(int i = 0; i<points.Length; i++)
+                {
+                    coords[i * 2 + 0] = points[i].x;
+                    coords[i * 2 + 1] = points[i].y;
+                }
+                axDrawShape.AddPolygon(ref coords[0], points.Length, fillType);
                 break;
             case 6:
+                axDrawShape.AddSector(points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, radius, arcDirection, fillType);
                 break;
             case 7:
+                axDrawShape.AddOrigin(points[0].x, points[0].y);
                 break;
             case 8:
-                break;
-            case 9:
+                axDrawShape.AddAxis(points[0].x, points[0].y);
                 break;
             default:
                 break;
             }
+            axDrawShape.Redraw();
         }
 
         /// <summary>
@@ -445,6 +475,8 @@ namespace DrawShapeTest
             UpdateLayerList();
             // 描画エリアのマウス移動イベントハンドラを設定
             axDrawShape.CursorMove += new AxDrawShapeLib._DDrawShapeEvents_CursorMoveEventHandler(formMain_axDrawShapeCursorMoveEvent);
+            // 描画エリアのマウスクリックイベントハンドラを設定
+            axDrawShape.LeftClick += new AxDrawShapeLib._DDrawShapeEvents_LeftClickEventHandler(formMain_axDrawShapeLeftClickEvent);
             // 描画ON/OFF
             cbDrawGrid.Checked = axDrawShape.IsDrawGrid;
             cbDrawAxis.Checked = axDrawShape.IsDrawAxis;
@@ -456,18 +488,12 @@ namespace DrawShapeTest
             SetColorPictureBox(pbAxisColor, axDrawShape.AxisColor);
             SetColorPictureBox(pbOriginColor, axDrawShape.OriginColor);
             SetColorPictureBox(pbBackColor, axDrawShape.CtlBackColor);
-            PenColor = Color.White;
-            SetColorPictureBox(pbPenColor, PenColor);
-            BrushColor = Color.White;
-            SetColorPictureBox(pbBrushColor, BrushColor);
+            SetColorPictureBox(pbPenColor, axDrawShape.CurrentPenColor);
+            SetColorPictureBox(pbBrushColor, axDrawShape.CurrentBrushColor);
             // ペン幅
-            nudPenWidth.Value = 1;
-            // 関数リスト
-            foreach (var f in drawFuncInfos)
-            {
-                cbFunc.Items.Add(f.name);
-            }
-            cbFunc.SelectedIndex = 0;
+            nudPenWidth.Value = axDrawShape.CurrentPenWidth;
+            // ペンスタイル
+            nudPenStyle.Value = axDrawShape.CurrentPenStyle;
 
             // 上下選択
             cbPointType.Items.Add("Pixel");
@@ -493,7 +519,15 @@ namespace DrawShapeTest
             dgvPoints.Columns[1].Width = dgvPoints.Width / 2 - 10;
             dgvPoints.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
             dgvPoints.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
+
+            // 関数リスト
+            foreach (var f in drawFuncInfos)
+            {
+                cbFunc.Items.Add(f.name);
+            }
+            cbFunc.SelectedIndex = 0;
         }
+
         /// <summary>
         /// レイヤーリストを更新
         /// </summary>

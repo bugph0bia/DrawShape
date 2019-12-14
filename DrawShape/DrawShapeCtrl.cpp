@@ -46,6 +46,7 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "LayerCount", dispidLayerCount, GetLayerCount, SetNotSupported, VT_I4)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentPenColor", dispidCurrentPenColor, GetCurrentPenColor, SetCurrentPenColor, VT_COLOR)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentPenWidth", dispidCurrentPenWidth, GetCurrentPenWidth, SetCurrentPenWidth, VT_I4)
+	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentPenStyle", dispidCurrentPenStyle, GetCurrentPenStyle, SetCurrentPenStyle, VT_I4)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CurrentBrushColor", dispidCurrentBrushColor, GetCurrentBrushColor, SetCurrentBrushColor, VT_COLOR)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CanMouseDragPan", dispidCanMouseDragPan, GetCanMouseDragPan, SetCanMouseDragPan, VT_BOOL)
 	DISP_PROPERTY_EX_ID(CDrawShapeCtrl, "CanMouseWheelZoom", dispidCanMouseWheelZoom, GetCanMouseWheelZoom, SetCanMouseWheelZoom, VT_BOOL)
@@ -207,9 +208,10 @@ void CDrawShapeCtrl::DoPropExchange(CPropExchange* pPX)
 	PX_Bool(pPX, _T("IsDrawAxis"), m_pDrawManager->m_info.isDrawAxis, DEFAULT_IS_DRAW_AXIS);
 	PX_Bool(pPX, _T("IsDrawArrow"), m_pDrawManager->m_info.isDrawArrow, DEFAULT_IS_DRAW_ARROW);
 	PX_Bool(pPX, _T("IsDrawCenter"), m_pDrawManager->m_info.isDrawCenter, DEFAULT_IS_DRAW_CENTER);
-	PX_Color(pPX, _T("CurrentPenColor"), m_pDrawManager->m_currentPen.lopnColor, Drawer::Manager::DEFAULT_PEN.lopnColor);
-	PX_Long(pPX, _T("CurrentPenWidth"), m_pDrawManager->m_currentPen.lopnWidth.x, Drawer::Manager::DEFAULT_PEN.lopnWidth.x);
-	PX_Color(pPX, _T("CurrentBrushColor"), m_pDrawManager->m_currentBrush.lbColor, Drawer::Manager::DEFAULT_BRUSH.lbColor);
+	PX_Color(pPX, _T("CurrentPenColor"), m_pDrawManager->m_penColor, Drawer::Manager::DEFAULT_PEN.lopnColor);
+	PX_Long(pPX, _T("CurrentPenWidth"), m_pDrawManager->m_penWidth, Drawer::Manager::DEFAULT_PEN.lopnWidth.x);
+	PX_Long(pPX, _T("CurrentPenStyle"), m_pDrawManager->m_penStyle, Drawer::Manager::DEFAULT_PEN.lopnStyle);
+	PX_Color(pPX, _T("CurrentBrushColor"), m_pDrawManager->m_brushColor, Drawer::Manager::DEFAULT_BRUSH.lbColor);
 	PX_Bool(pPX, _T("CanMouseDragPan"), m_CanMouseDragPan, DEFAULT_IS_MOUSE_DRAG_PAN);
 	PX_Bool(pPX, _T("CanMouseWheelZoom"), m_CanMouseWheelZoom, DEFAULT_IS_MOUSE_WHEEL_ZOOM);
 }
@@ -691,7 +693,7 @@ OLE_COLOR CDrawShapeCtrl::GetCurrentPenColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->m_currentPen.lopnColor;
+	return m_pDrawManager->m_penColor;
 }
 
 
@@ -701,7 +703,7 @@ void CDrawShapeCtrl::SetCurrentPenColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->m_currentPen.lopnColor = newVal;
+	m_pDrawManager->m_penColor = newVal;
 	SetModifiedFlag();
 }
 
@@ -712,7 +714,7 @@ LONG CDrawShapeCtrl::GetCurrentPenWidth()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->m_currentPen.lopnWidth.x;
+	return m_pDrawManager->m_penWidth;
 }
 
 
@@ -722,7 +724,28 @@ void CDrawShapeCtrl::SetCurrentPenWidth(LONG newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->m_currentPen.lopnWidth.x = newVal;
+	m_pDrawManager->m_penWidth = newVal;
+	SetModifiedFlag();
+}
+
+
+LONG CDrawShapeCtrl::GetCurrentPenStyle()
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	return m_pDrawManager->m_penStyle;
+}
+
+
+void CDrawShapeCtrl::SetCurrentPenStyle(LONG newVal)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにプロパティ ハンドラー コードを追加します
+
+	m_pDrawManager->m_penStyle = newVal;
 	SetModifiedFlag();
 }
 
@@ -733,7 +756,7 @@ OLE_COLOR CDrawShapeCtrl::GetCurrentBrushColor()
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	return m_pDrawManager->m_currentBrush.lbColor;
+	return m_pDrawManager->m_brushColor;
 }
 
 
@@ -743,7 +766,7 @@ void CDrawShapeCtrl::SetCurrentBrushColor(OLE_COLOR newVal)
 
 	// TODO: ここにプロパティ ハンドラー コードを追加します
 
-	m_pDrawManager->m_currentBrush.lbColor = newVal;
+	m_pDrawManager->m_brushColor = newVal;
 	SetModifiedFlag();
 }
 
