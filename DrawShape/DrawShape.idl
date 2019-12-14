@@ -35,35 +35,36 @@ library DrawShapeLib
 			[id(12)] VARIANT_BOOL IsDrawCenter;
 			[id(13), nonbrowsable] LONG CurrentLayerNo;
 			[id(14), nonbrowsable] LONG LayerCount;
-			[id(15)] VARIANT_BOOL CanMouseDragPan;
-			[id(16)] VARIANT_BOOL CanMouseWheelZoom;
-		methods:
-			[id(17)] void Redraw();
-			[id(18)] void Clear();
-			[id(19)] VARIANT_BOOL SaveImage(BSTR filePath);
-			[id(20)] VARIANT_BOOL CopyImage();
-			[id(21)] void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
-			[id(22)] void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
-			[id(23)] VARIANT_BOOL InsertLayer(LONG insertNo);
-			[id(24)] void ClearCurrentLayer();
-			[id(25)] LONG DeleteCurrentLayer();
-			[id(26)] void SetEnableCurrentLayer(VARIANT_BOOL enable);
-			[id(27)] VARIANT_BOOL GetEnableCurrentLayer();
-			[id(28)] VARIANT_BOOL Zoom(DOUBLE coef, LONG ctrlBaseX, LONG ctrlBaseY);
-			[id(29)] VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
-			[id(30)] void Fit(DOUBLE shapeOccupancy);
-			[id(31)] void ChangePen(LONG style, LONG width, OLE_COLOR color);
-			[id(32)] void ChangeBrush(LONG style, OLE_COLOR color, LONG hatch);
-			[id(33)] void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-			[id(34)] void AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-			[id(35)] void AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
-			[id(36)] void AddPoint(DOUBLE x, DOUBLE y, LONG type);
-			[id(37)] void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
-			[id(38)] void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
-			[id(39)] VARIANT_BOOL AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
-			[id(40)] void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
-			[id(41)] void AddOrigin(DOUBLE ox, DOUBLE oy);
-			[id(42)] void AddAxis(DOUBLE ox, DOUBLE oy);
+			[id(15), nonbrowsable] OLE_COLOR CurrentPenColor;
+			[id(16), nonbrowsable] LONG CurrentPenWidth;
+			[id(17), nonbrowsable] OLE_COLOR CurrentBrushColor;
+			[id(18)] VARIANT_BOOL CanMouseDragPan;
+			[id(19)] VARIANT_BOOL CanMouseWheelZoom;
+	methods:
+			[id(20)] void Redraw();
+			[id(21)] void Clear();
+			[id(22)] VARIANT_BOOL SaveImage(BSTR filePath);
+			[id(23)] VARIANT_BOOL CopyImage();
+			[id(24)] void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
+			[id(25)] void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
+			[id(26)] VARIANT_BOOL InsertLayer(LONG insertNo);
+			[id(27)] void ClearCurrentLayer();
+			[id(28)] LONG DeleteCurrentLayer();
+			[id(29)] void SetEnableCurrentLayer(VARIANT_BOOL enable);
+			[id(30)] VARIANT_BOOL GetEnableCurrentLayer();
+			[id(31)] VARIANT_BOOL Zoom(DOUBLE coef, LONG ctrlBaseX, LONG ctrlBaseY);
+			[id(32)] VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
+			[id(33)] void Fit(DOUBLE shapeOccupancy);
+			[id(34)] void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+			[id(35)] void AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+			[id(36)] void AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
+			[id(37)] void AddPoint(DOUBLE x, DOUBLE y, LONG type);
+			[id(38)] void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
+			[id(39)] void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
+			[id(40)] VARIANT_BOOL AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
+			[id(41)] void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
+			[id(42)] void AddOrigin(DOUBLE ox, DOUBLE oy);
+			[id(43)] void AddAxis(DOUBLE ox, DOUBLE oy);
 	};
 
 	//  CDrawShapeCtrl のイベント ディスパッチ インターフェイス
@@ -77,7 +78,8 @@ library DrawShapeLib
 			//  イベント インターフェイスにプロパティがありません。
 
 		methods:
-			[id(DISPID_MOUSEMOVE)] void MouseMove(short Button, short Shift, OLE_XPOS_PIXELS x, OLE_YPOS_PIXELS y);
+			[id(1)] void CursorMove(LONG ctrlX, LONG ctrlY, DOUBLE canvasX, DOUBLE canvasY);
+			[id(2)] void LeftClick(LONG ctrlX, LONG ctrlY, DOUBLE canvasX, DOUBLE canvasY);
 	};
 
 	//  CDrawShapeCtrl のクラス情報

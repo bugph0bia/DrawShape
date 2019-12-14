@@ -103,15 +103,15 @@ namespace DrawShapeTest
             UpdateLayerList();
         }
 
-        private void formMain_axDrawShapeMouseMoveEvent(object sender, AxDrawShapeLib._DDrawShapeEvents_MouseMoveEvent e)
+        private void formMain_axDrawShapeCursorMoveEvent(object sender, AxDrawShapeLib._DDrawShapeEvents_CursorMoveEvent e)
         {
-            // マウスカーソルの描画エリア内のクライアント座標を取得
-            Point cursor = axDrawShape.PointToClient(Control.MousePosition);
-            // キャンバス座標に変換
-            double x = 0, y = 0;
-            axDrawShape.ControlToCanvas(cursor.X, cursor.Y, ref x, ref y);
+            //// マウスカーソルの描画エリア内のクライアント座標を取得
+            //Point cursor = axDrawShape.PointToClient(Control.MousePosition);
+            //// キャンバス座標に変換
+            //double x = 0, y = 0;
+            //axDrawShape.ControlToCanvas(cursor.X, cursor.Y, ref x, ref y);
             // 表示
-            tbPosition.Text = x.ToString("#####.000") + " , " + y.ToString("#####.000");
+            tbPosition.Text = e.canvasX.ToString("#####.000") + " , " + e.canvasY.ToString("#####.000");
         }
 
         private void cbDrawGrid_CheckedChanged(object sender, EventArgs e)
@@ -224,7 +224,7 @@ namespace DrawShapeTest
             {
                 // 色変更
                 PenColor = colorDlg.Color;
-                axDrawShape.ChangePen(0, (int)nudPenWidth.Value, (uint)colorDlg.Color.ToArgb());
+                axDrawShape.CurrentPenColor = colorDlg.Color;
                 SetColorPictureBox(pbPenColor, colorDlg.Color);
             }
         }
@@ -232,7 +232,7 @@ namespace DrawShapeTest
         private void nudPenWidth_ValueChanged(object sender, EventArgs e)
         {
             // ペン幅変更
-            axDrawShape.ChangePen(0, (int)nudPenWidth.Value, (uint)PenColor.ToArgb());
+            axDrawShape.CurrentPenWidth = (int)nudPenWidth.Value;
         }
 
         private Color BrushColor { get; set; }
@@ -245,7 +245,7 @@ namespace DrawShapeTest
             {
                 // 色変更
                 BrushColor = colorDlg.Color;
-                axDrawShape.ChangeBrush(0, (uint)colorDlg.Color.ToArgb(), 0);
+                axDrawShape.CurrentBrushColor = colorDlg.Color;
                 SetColorPictureBox(pbBrushColor, colorDlg.Color);
             }
         }
@@ -444,7 +444,13 @@ namespace DrawShapeTest
             // レイヤーリストを表示
             UpdateLayerList();
             // 描画エリアのマウス移動イベントハンドラを設定
-            axDrawShape.MouseMoveEvent += new AxDrawShapeLib._DDrawShapeEvents_MouseMoveEventHandler(formMain_axDrawShapeMouseMoveEvent);
+            axDrawShape.CursorMove += new AxDrawShapeLib._DDrawShapeEvents_CursorMoveEventHandler(formMain_axDrawShapeCursorMoveEvent);
+            // 描画ON/OFF
+            cbDrawGrid.Checked = axDrawShape.IsDrawGrid;
+            cbDrawAxis.Checked = axDrawShape.IsDrawAxis;
+            cbDrawOrigin.Checked = axDrawShape.IsDrawOrigin;
+            cbDrawArrow.Checked = axDrawShape.IsDrawArrow;
+            cbDrawCenter.Checked = axDrawShape.IsDrawCenter;
             // ピクチャーボックスに色を表示
             SetColorPictureBox(pbGridColor, axDrawShape.GridColor);
             SetColorPictureBox(pbAxisColor, axDrawShape.AxisColor);

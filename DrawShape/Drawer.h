@@ -857,11 +857,6 @@ private:
 	// 描画レイヤーコレクション
 	std::vector<std::unique_ptr<Layer>> m_layers;
 
-	// カレントペン
-	LOGPEN m_currentPen;
-	// カレントブラシ
-	LOGBRUSH m_currentBrush;
-
 	// カレントレイヤー番号
 	std::size_t m_currentLayerNo;
 
@@ -884,6 +879,11 @@ public:
 	// 設定情報
 	SettingInfo m_info;
 
+	// カレントペン
+	LOGPEN m_currentPen;
+	// カレントブラシ
+	LOGBRUSH m_currentBrush;
+
 	// コンストラクタ
 	Manager();
 
@@ -894,13 +894,6 @@ public:
 
 	// キャンバスオブジェクト
 	const Canvas& GetCanvas() const { return m_canvas; }
-
-	// カレントペン
-	void SetCurrentPen(const LOGPEN& val) { m_currentPen = val; }
-	LOGPEN GetCurrentPen() const { return m_currentPen; }
-	// カレントブラシ
-	void SetCurrentBrush(const LOGBRUSH& val) { m_currentBrush = val; }
-	LOGBRUSH GetCurrentBrush() const { return m_currentBrush; }
 
 	// カレントレイヤー番号
 	void SetCurrentLayerNo(int val) { m_currentLayerNo = val; }

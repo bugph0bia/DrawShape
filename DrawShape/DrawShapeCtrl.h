@@ -71,6 +71,12 @@ protected:
 	afx_msg LONG GetCurrentLayerNo();
 	afx_msg void SetCurrentLayerNo(LONG newVal);
 	afx_msg LONG GetLayerCount();
+	afx_msg OLE_COLOR GetCurrentPenColor();
+	afx_msg void SetCurrentPenColor(OLE_COLOR newVal);
+	afx_msg LONG GetCurrentPenWidth();
+	afx_msg void SetCurrentPenWidth(LONG newVal);
+	afx_msg OLE_COLOR GetCurrentBrushColor();
+	afx_msg void SetCurrentBrushColor(OLE_COLOR newVal);
 	afx_msg VARIANT_BOOL GetCanMouseDragPan();
 	afx_msg void SetCanMouseDragPan(VARIANT_BOOL newVal);
 	afx_msg VARIANT_BOOL GetCanMouseWheelZoom();
@@ -90,8 +96,6 @@ protected:
 	afx_msg VARIANT_BOOL Zoom(DOUBLE ratio, LONG ctrlBaseX, LONG ctrlBaseY);
 	afx_msg VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
 	afx_msg void Fit(DOUBLE shapeOccupancy);
-	afx_msg void ChangePen(LONG style, LONG width, OLE_COLOR color);
-	afx_msg void ChangeBrush(LONG style, OLE_COLOR color, LONG hatch);
 	afx_msg void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
 	afx_msg void AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
 	afx_msg void AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
@@ -105,39 +109,44 @@ protected:
 	DECLARE_DISPATCH_MAP()
 
 // イベント マップ
+	afx_msg void FireCursorMove(LONG ctrlX, LONG ctrlY, DOUBLE canvasX, DOUBLE canvasY) { FireEvent(eventidCursorMove, EVENT_PARAM(VTS_I4 VTS_I4 VTS_R8 VTS_R8), ctrlX, ctrlY, canvasX, canvasY); }
+	afx_msg void FireLeftClick(LONG ctrlX, LONG ctrlY, DOUBLE canvasX, DOUBLE canvasY) { FireEvent(eventidLeftClick, EVENT_PARAM(VTS_I4 VTS_I4 VTS_R8 VTS_R8), ctrlX, ctrlY, canvasX, canvasY); }
 	DECLARE_EVENT_MAP()
 
 // ディスパッチ と イベント ID
 public:
 	enum {
-		dispidAddAxis = 42L,
-		dispidAddOrigin = 41L,
-		dispidAddSector = 40L,
-		dispidAddPolygon = 39L,
-		dispidAddCircle = 38L,
-		dispidAddArc = 37L,
-		dispidAddPoint = 36L,
-		dispidAddInfiniteLine1PointAngle = 35L,
-		dispidAddInfiniteLine2Point = 34L,
-		dispidAddLine = 33L,
-		dispidChangeBrush = 32L,
-		dispidChangePen = 31L,
-		dispidFit = 30L,
-		dispidPan = 29L,
-		dispidZoom = 28L,
-		dispidGetEnableCurrentLayer = 27L,
-		dispidSetEnableCurrentLayer = 26L,
-		dispidDeleteCurrentLayer = 25L,
-		dispidClearCurrentLayer = 24L,
-		dispidInsertLayer = 23L,
-		dispidControlToCanvas = 22L,
-		dispidCanvasToControl = 21L,
-		dispidCopyImage = 20L,
-		dispidSaveImage = 19L,
-		dispidClear = 18L,
-		dispidRedraw = 17L,
-		dispidCanMouseWheelZoom = 16,
-		dispidCanMouseDragPan = 15,
+		eventidLeftClick = 2L,
+		eventidCursorMove = 1L,
+		dispidAddAxis = 43L,
+		dispidAddOrigin = 42L,
+		dispidAddSector = 41L,
+		dispidAddPolygon = 40L,
+		dispidAddCircle = 39L,
+		dispidAddArc = 38L,
+		dispidAddPoint = 37L,
+		dispidAddInfiniteLine1PointAngle = 36L,
+		dispidAddInfiniteLine2Point = 35L,
+		dispidAddLine = 34L,
+		dispidFit = 33L,
+		dispidPan = 32L,
+		dispidZoom = 31L,
+		dispidGetEnableCurrentLayer = 30L,
+		dispidSetEnableCurrentLayer = 29L,
+		dispidDeleteCurrentLayer = 28L,
+		dispidClearCurrentLayer = 27L,
+		dispidInsertLayer = 26L,
+		dispidControlToCanvas = 25L,
+		dispidCanvasToControl = 24L,
+		dispidCopyImage = 23L,
+		dispidSaveImage = 22L,
+		dispidClear = 21L,
+		dispidRedraw = 20L,
+		dispidCanMouseWheelZoom = 19,
+		dispidCanMouseDragPan = 18,
+		dispidCurrentBrushColor = 17,
+		dispidCurrentPenWidth = 16,
+		dispidCurrentPenColor = 15,
 		dispidLayerCount = 14,
 		dispidCurrentLayerNo = 13,
 		dispidIsDrawCenter = 12,

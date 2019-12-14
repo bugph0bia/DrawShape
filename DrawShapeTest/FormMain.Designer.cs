@@ -33,6 +33,7 @@
             this.btDeleteLayer = new System.Windows.Forms.Button();
             this.gbLayer = new System.Windows.Forms.GroupBox();
             this.clbLayer = new System.Windows.Forms.CheckedListBox();
+            this.btClearLayer = new System.Windows.Forms.Button();
             this.colorDlg = new System.Windows.Forms.ColorDialog();
             this.pbBackColor = new System.Windows.Forms.PictureBox();
             this.pbGridColor = new System.Windows.Forms.PictureBox();
@@ -56,11 +57,16 @@
             this.gbFunc = new System.Windows.Forms.GroupBox();
             this.tbRadius = new System.Windows.Forms.TextBox();
             this.lbPoint = new System.Windows.Forms.Label();
+            this.nudPointsCount = new System.Windows.Forms.NumericUpDown();
+            this.btRunFunc = new System.Windows.Forms.Button();
             this.lbRadius = new System.Windows.Forms.Label();
             this.lbFillType = new System.Windows.Forms.Label();
             this.lbArcDirection = new System.Windows.Forms.Label();
             this.dgvPoints = new System.Windows.Forms.DataGridView();
             this.lbPointType = new System.Windows.Forms.Label();
+            this.cbFillType = new System.Windows.Forms.ComboBox();
+            this.cbArcDirection = new System.Windows.Forms.ComboBox();
+            this.cbPointType = new System.Windows.Forms.ComboBox();
             this.tbPosition = new System.Windows.Forms.TextBox();
             this.btFit = new System.Windows.Forms.Button();
             this.btCopyImage = new System.Windows.Forms.Button();
@@ -69,12 +75,6 @@
             this.cbPan = new System.Windows.Forms.CheckBox();
             this.cbZoom = new System.Windows.Forms.CheckBox();
             this.axDrawShape = new AxDrawShapeLib.AxDrawShape();
-            this.btClearLayer = new System.Windows.Forms.Button();
-            this.btRunFunc = new System.Windows.Forms.Button();
-            this.nudPointsCount = new System.Windows.Forms.NumericUpDown();
-            this.cbPointType = new System.Windows.Forms.ComboBox();
-            this.cbArcDirection = new System.Windows.Forms.ComboBox();
-            this.cbFillType = new System.Windows.Forms.ComboBox();
             this.gbLayer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbBackColor)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbGridColor)).BeginInit();
@@ -86,9 +86,9 @@
             this.gbPenBrush.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudPenWidth)).BeginInit();
             this.gbFunc.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudPointsCount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPoints)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.axDrawShape)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nudPointsCount)).BeginInit();
             this.SuspendLayout();
             // 
             // btInsertLayer
@@ -140,6 +140,17 @@
             this.clbLayer.TabIndex = 0;
             this.clbLayer.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.clbLayer_ItemCheck);
             this.clbLayer.SelectedIndexChanged += new System.EventHandler(this.clbLayer_SelectedIndexChanged);
+            // 
+            // btClearLayer
+            // 
+            this.btClearLayer.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btClearLayer.Location = new System.Drawing.Point(19, 290);
+            this.btClearLayer.Name = "btClearLayer";
+            this.btClearLayer.Size = new System.Drawing.Size(131, 23);
+            this.btClearLayer.TabIndex = 2;
+            this.btClearLayer.Text = "clear layer";
+            this.btClearLayer.UseVisualStyleBackColor = true;
+            this.btClearLayer.Click += new System.EventHandler(this.btClearLayer_Click);
             // 
             // pbBackColor
             // 
@@ -400,6 +411,35 @@
             this.lbPoint.TabIndex = 10;
             this.lbPoint.Text = "points";
             // 
+            // nudPointsCount
+            // 
+            this.nudPointsCount.Location = new System.Drawing.Point(358, 15);
+            this.nudPointsCount.Minimum = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            this.nudPointsCount.Name = "nudPointsCount";
+            this.nudPointsCount.Size = new System.Drawing.Size(40, 19);
+            this.nudPointsCount.TabIndex = 11;
+            this.nudPointsCount.Value = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            this.nudPointsCount.ValueChanged += new System.EventHandler(this.nudPointsCount_ValueChanged);
+            // 
+            // btRunFunc
+            // 
+            this.btRunFunc.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btRunFunc.Location = new System.Drawing.Point(19, 189);
+            this.btRunFunc.Name = "btRunFunc";
+            this.btRunFunc.Size = new System.Drawing.Size(153, 23);
+            this.btRunFunc.TabIndex = 9;
+            this.btRunFunc.Text = "run";
+            this.btRunFunc.UseVisualStyleBackColor = true;
+            this.btRunFunc.Click += new System.EventHandler(this.btRunFunc_Click);
+            // 
             // lbRadius
             // 
             this.lbRadius.AutoSize = true;
@@ -446,6 +486,33 @@
             this.lbPointType.Size = new System.Drawing.Size(56, 12);
             this.lbPointType.TabIndex = 1;
             this.lbPointType.Text = "point type";
+            // 
+            // cbFillType
+            // 
+            this.cbFillType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbFillType.FormattingEnabled = true;
+            this.cbFillType.Location = new System.Drawing.Point(90, 115);
+            this.cbFillType.Name = "cbFillType";
+            this.cbFillType.Size = new System.Drawing.Size(94, 20);
+            this.cbFillType.TabIndex = 0;
+            // 
+            // cbArcDirection
+            // 
+            this.cbArcDirection.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbArcDirection.FormattingEnabled = true;
+            this.cbArcDirection.Location = new System.Drawing.Point(90, 88);
+            this.cbArcDirection.Name = "cbArcDirection";
+            this.cbArcDirection.Size = new System.Drawing.Size(94, 20);
+            this.cbArcDirection.TabIndex = 0;
+            // 
+            // cbPointType
+            // 
+            this.cbPointType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbPointType.FormattingEnabled = true;
+            this.cbPointType.Location = new System.Drawing.Point(90, 60);
+            this.cbPointType.Name = "cbPointType";
+            this.cbPointType.Size = new System.Drawing.Size(94, 20);
+            this.cbPointType.TabIndex = 0;
             // 
             // tbPosition
             // 
@@ -520,78 +587,11 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.axDrawShape.Enabled = true;
-            this.axDrawShape.Location = new System.Drawing.Point(10, 12);
+            this.axDrawShape.Location = new System.Drawing.Point(12, 12);
             this.axDrawShape.Name = "axDrawShape";
             this.axDrawShape.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axDrawShape.OcxState")));
-            this.axDrawShape.Size = new System.Drawing.Size(682, 357);
+            this.axDrawShape.Size = new System.Drawing.Size(680, 357);
             this.axDrawShape.TabIndex = 0;
-            // 
-            // btClearLayer
-            // 
-            this.btClearLayer.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btClearLayer.Location = new System.Drawing.Point(19, 290);
-            this.btClearLayer.Name = "btClearLayer";
-            this.btClearLayer.Size = new System.Drawing.Size(131, 23);
-            this.btClearLayer.TabIndex = 2;
-            this.btClearLayer.Text = "clear layer";
-            this.btClearLayer.UseVisualStyleBackColor = true;
-            this.btClearLayer.Click += new System.EventHandler(this.btClearLayer_Click);
-            // 
-            // btRunFunc
-            // 
-            this.btRunFunc.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btRunFunc.Location = new System.Drawing.Point(19, 189);
-            this.btRunFunc.Name = "btRunFunc";
-            this.btRunFunc.Size = new System.Drawing.Size(153, 23);
-            this.btRunFunc.TabIndex = 9;
-            this.btRunFunc.Text = "run";
-            this.btRunFunc.UseVisualStyleBackColor = true;
-            this.btRunFunc.Click += new System.EventHandler(this.btRunFunc_Click);
-            // 
-            // nudPointsCount
-            // 
-            this.nudPointsCount.Location = new System.Drawing.Point(358, 15);
-            this.nudPointsCount.Minimum = new decimal(new int[] {
-            3,
-            0,
-            0,
-            0});
-            this.nudPointsCount.Name = "nudPointsCount";
-            this.nudPointsCount.Size = new System.Drawing.Size(40, 19);
-            this.nudPointsCount.TabIndex = 11;
-            this.nudPointsCount.Value = new decimal(new int[] {
-            3,
-            0,
-            0,
-            0});
-            this.nudPointsCount.ValueChanged += new System.EventHandler(this.nudPointsCount_ValueChanged);
-            // 
-            // cbPointType
-            // 
-            this.cbPointType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbPointType.FormattingEnabled = true;
-            this.cbPointType.Location = new System.Drawing.Point(90, 60);
-            this.cbPointType.Name = "cbPointType";
-            this.cbPointType.Size = new System.Drawing.Size(94, 20);
-            this.cbPointType.TabIndex = 0;
-            // 
-            // cbArcDirection
-            // 
-            this.cbArcDirection.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbArcDirection.FormattingEnabled = true;
-            this.cbArcDirection.Location = new System.Drawing.Point(90, 88);
-            this.cbArcDirection.Name = "cbArcDirection";
-            this.cbArcDirection.Size = new System.Drawing.Size(94, 20);
-            this.cbArcDirection.TabIndex = 0;
-            // 
-            // cbFillType
-            // 
-            this.cbFillType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbFillType.FormattingEnabled = true;
-            this.cbFillType.Location = new System.Drawing.Point(90, 115);
-            this.cbFillType.Name = "cbFillType";
-            this.cbFillType.Size = new System.Drawing.Size(94, 20);
-            this.cbFillType.TabIndex = 0;
             // 
             // formMain
             // 
@@ -626,9 +626,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudPenWidth)).EndInit();
             this.gbFunc.ResumeLayout(false);
             this.gbFunc.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudPointsCount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPoints)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.axDrawShape)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nudPointsCount)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -671,7 +671,6 @@
         private System.Windows.Forms.SaveFileDialog saveFileDlg;
         private System.Windows.Forms.CheckBox cbPan;
         private System.Windows.Forms.CheckBox cbZoom;
-        private AxDrawShapeLib.AxDrawShape axDrawShape;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label lbBrush;
         private System.Windows.Forms.Label lbPen;
@@ -681,6 +680,7 @@
         private System.Windows.Forms.ComboBox cbFillType;
         private System.Windows.Forms.ComboBox cbArcDirection;
         private System.Windows.Forms.ComboBox cbPointType;
+        private AxDrawShapeLib.AxDrawShape axDrawShape;
     }
 }
 
