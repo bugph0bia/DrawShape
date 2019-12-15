@@ -733,8 +733,10 @@ BoundingBox<double> NodeArc::CalcBoundingBox(bool forFit/*=false*/) const
 
 	// §Œä“_‚ğœ‚¢‚½‰~ŒÊ‚Ìn“_‚ÆI“_‚Ì‚İ‚©‚çÅ¬•ïŠÜ” ‚ğZo
 	BoundingBox<double> bbox;
-	for (auto itr = bezierPoints.cbegin(); itr != bezierPoints.cend(); itr += 3) {
-		bbox += *itr;
+	auto itr = bezierPoints.cbegin();
+	for (int i = 0; i != bezierPoints.size(); i++) {
+		if (i % 3 == 0) bbox += *itr;;
+		itr++;
 	}
 	return bbox;
 }
@@ -745,10 +747,10 @@ void NodeArc::DrawContent()
 	// ƒxƒWƒG‹Èü‚Å‰~ŒÊ‚ğ•`‰æ
 	m_canvas.DrawBezierArc(m_points, m_arcDirectionType);
 
-	// ”¼Œa‚ª–îˆó‚Ì‰H‚Ì80%‚Ì’·‚³‚æ‚è’Z‚­‚È‚é‚Ù‚Çk¬‚³‚ê‚Ä‚¢‚éê‡‚Í•`‰æ‚µ‚È‚¢
+	// ”¼Œa‚ª–îˆó‚Ì‰H‚Ì’·‚³‚æ‚è’Z‚­‚È‚é‚Ù‚Çk¬‚³‚ê‚Ä‚¢‚éê‡‚Í•`‰æ‚µ‚È‚¢
 	// ‰~ŒÊ’†S“_‚Ì•`‰æğŒ‚à“¯‚¶‚Æ‚·‚é
 	double radius = m_points[CENTER].Length(m_points[START]);
-	if (m_canvas.CanvasToControl(radius) >= m_canvas.ARROW_WING_LENGTH * 0.8) {
+	if (m_canvas.CanvasToControl(radius) >= m_canvas.ARROW_WING_LENGTH) {
 		// ‰~ŒÊ‚Ìæ’[‚Ì–îˆó•`‰æ
 		if (m_info.isDrawArrow) {
 			// –îˆó‚ğ•`‚­‚½‚ß‚Ì²
@@ -757,7 +759,7 @@ void NodeArc::DrawContent()
 			// ‰ñ“]Šp“x‚ğŒˆ’è
 			//   ‰~ŒÊ•ûŒü‚ª¶F+90“x
 			//   ‰~ŒÊ•ûŒü‚ª‰EF-90“x
-			double angle = m_arcDirectionType == ArcDirectionType::Left ? PI : -PI;
+			double angle = m_arcDirectionType == ArcDirectionType::Left ? PI / 2 : -PI / 2;
 
 			// I“_‚ğŠî€‚ÉA’†S“_‚ğã‚ÅŒˆ‚ß‚½‰ñ“]Šp“x‚¾‚¯‰ñ“]‚µ‚Ä
 			// –îˆó‚ğ•`‚­‚½‚ß‚Ì²‚Ìn“_‚ğZo
@@ -798,16 +800,18 @@ void NodeCircle::DrawContent()
 		arc[END].x -= m_radius;
 		// ”¼‰~‚ğ•`‰æ
 		m_canvas.DrawBezierArc(arc, ArcDirectionType::Left);
-
-		// 180“x‚©‚ç360“x‚Ì‰~ŒÊ
-		std::swap(arc[START], arc[END]);
 		// ”¼‰~‚ğ•`‰æ
-		m_canvas.DrawBezierArc(arc, ArcDirectionType::Left);
+		m_canvas.DrawBezierArc(arc, ArcDirectionType::Right);
 
-		// ’†S“_‚ğ•`‰æ
-		if (m_info.isDrawCenter) {
-			// OŠpŒ`‚Ì“_‚ğ•`‰æ
-			m_canvas.DrawTrianglePoint(m_point);
+		// ”¼Œa‚ª–îˆó‚Ì‰H‚Ì’·‚³‚æ‚è’Z‚­‚È‚é‚Ù‚Çk¬‚³‚ê‚Ä‚¢‚éê‡‚Í•`‰æ‚µ‚È‚¢
+		// ‰~ŒÊ’†S“_‚Ì•`‰æğŒ‚à“¯‚¶‚Æ‚·‚é
+		double radius = arc[CENTER].Length(arc[START]);
+		if (m_canvas.CanvasToControl(radius) >= m_canvas.ARROW_WING_LENGTH) {
+			// ’†S“_‚ğ•`‰æ
+			if (m_info.isDrawCenter) {
+				// OŠpŒ`‚Ì“_‚ğ•`‰æ
+				m_canvas.DrawTrianglePoint(m_point);
+			}
 		}
 	}
 	// “h‚è‚Â‚Ô‚µ‚ ‚è
