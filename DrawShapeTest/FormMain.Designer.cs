@@ -58,13 +58,10 @@
             this.cbFunc = new System.Windows.Forms.ComboBox();
             this.gbFunc = new System.Windows.Forms.GroupBox();
             this.tbRadius = new System.Windows.Forms.TextBox();
-            this.lbPoint = new System.Windows.Forms.Label();
-            this.nudPointsCount = new System.Windows.Forms.NumericUpDown();
             this.btRunFunc = new System.Windows.Forms.Button();
             this.lbRadius = new System.Windows.Forms.Label();
             this.lbFillType = new System.Windows.Forms.Label();
             this.lbArcDirection = new System.Windows.Forms.Label();
-            this.dgvPoints = new System.Windows.Forms.DataGridView();
             this.lbPointType = new System.Windows.Forms.Label();
             this.cbFillType = new System.Windows.Forms.ComboBox();
             this.cbArcDirection = new System.Windows.Forms.ComboBox();
@@ -80,6 +77,9 @@
             this.tbLastClick = new System.Windows.Forms.TextBox();
             this.lbLastClick = new System.Windows.Forms.Label();
             this.lbCursor = new System.Windows.Forms.Label();
+            this.lbPoint = new System.Windows.Forms.Label();
+            this.nudPointsCount = new System.Windows.Forms.NumericUpDown();
+            this.dgvPoints = new System.Windows.Forms.DataGridView();
             this.gbLayer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbBackColor)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbGridColor)).BeginInit();
@@ -92,9 +92,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudPenStyle)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudPenWidth)).BeginInit();
             this.gbFunc.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.axDrawShape)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudPointsCount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPoints)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.axDrawShape)).BeginInit();
             this.SuspendLayout();
             // 
             // btInsertLayer
@@ -403,7 +403,7 @@
             this.cbFunc.FormattingEnabled = true;
             this.cbFunc.Location = new System.Drawing.Point(19, 29);
             this.cbFunc.Name = "cbFunc";
-            this.cbFunc.Size = new System.Drawing.Size(165, 20);
+            this.cbFunc.Size = new System.Drawing.Size(190, 20);
             this.cbFunc.TabIndex = 0;
             this.cbFunc.SelectedIndexChanged += new System.EventHandler(this.cbFunc_SelectedIndexChanged);
             // 
@@ -432,45 +432,18 @@
             // 
             // tbRadius
             // 
-            this.tbRadius.Location = new System.Drawing.Point(90, 152);
+            this.tbRadius.Location = new System.Drawing.Point(303, 169);
             this.tbRadius.Name = "tbRadius";
             this.tbRadius.Size = new System.Drawing.Size(82, 19);
-            this.tbRadius.TabIndex = 8;
-            // 
-            // lbPoint
-            // 
-            this.lbPoint.AutoSize = true;
-            this.lbPoint.Location = new System.Drawing.Point(206, 25);
-            this.lbPoint.Name = "lbPoint";
-            this.lbPoint.Size = new System.Drawing.Size(36, 12);
-            this.lbPoint.TabIndex = 10;
-            this.lbPoint.Text = "points";
-            // 
-            // nudPointsCount
-            // 
-            this.nudPointsCount.Location = new System.Drawing.Point(358, 22);
-            this.nudPointsCount.Minimum = new decimal(new int[] {
-            3,
-            0,
-            0,
-            0});
-            this.nudPointsCount.Name = "nudPointsCount";
-            this.nudPointsCount.Size = new System.Drawing.Size(40, 19);
-            this.nudPointsCount.TabIndex = 11;
-            this.nudPointsCount.Value = new decimal(new int[] {
-            3,
-            0,
-            0,
-            0});
-            this.nudPointsCount.ValueChanged += new System.EventHandler(this.nudPointsCount_ValueChanged);
+            this.tbRadius.TabIndex = 11;
             // 
             // btRunFunc
             // 
             this.btRunFunc.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btRunFunc.Location = new System.Drawing.Point(22, 220);
+            this.btRunFunc.Location = new System.Drawing.Point(19, 222);
             this.btRunFunc.Name = "btRunFunc";
             this.btRunFunc.Size = new System.Drawing.Size(153, 23);
-            this.btRunFunc.TabIndex = 9;
+            this.btRunFunc.TabIndex = 12;
             this.btRunFunc.Text = "run";
             this.btRunFunc.UseVisualStyleBackColor = true;
             this.btRunFunc.Click += new System.EventHandler(this.btRunFunc_Click);
@@ -478,76 +451,65 @@
             // lbRadius
             // 
             this.lbRadius.AutoSize = true;
-            this.lbRadius.Location = new System.Drawing.Point(20, 155);
+            this.lbRadius.Location = new System.Drawing.Point(233, 172);
             this.lbRadius.Name = "lbRadius";
             this.lbRadius.Size = new System.Drawing.Size(36, 12);
-            this.lbRadius.TabIndex = 7;
+            this.lbRadius.TabIndex = 10;
             this.lbRadius.Text = "radius";
             // 
             // lbFillType
             // 
             this.lbFillType.AutoSize = true;
-            this.lbFillType.Location = new System.Drawing.Point(20, 125);
+            this.lbFillType.Location = new System.Drawing.Point(233, 142);
             this.lbFillType.Name = "lbFillType";
             this.lbFillType.Size = new System.Drawing.Size(44, 12);
-            this.lbFillType.TabIndex = 5;
+            this.lbFillType.TabIndex = 8;
             this.lbFillType.Text = "fill type";
             // 
             // lbArcDirection
             // 
             this.lbArcDirection.AutoSize = true;
-            this.lbArcDirection.Location = new System.Drawing.Point(20, 98);
+            this.lbArcDirection.Location = new System.Drawing.Point(233, 115);
             this.lbArcDirection.Name = "lbArcDirection";
             this.lbArcDirection.Size = new System.Drawing.Size(49, 12);
-            this.lbArcDirection.TabIndex = 3;
+            this.lbArcDirection.TabIndex = 6;
             this.lbArcDirection.Text = "direction";
-            // 
-            // dgvPoints
-            // 
-            this.dgvPoints.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvPoints.Location = new System.Drawing.Point(208, 47);
-            this.dgvPoints.MultiSelect = false;
-            this.dgvPoints.Name = "dgvPoints";
-            this.dgvPoints.RowTemplate.Height = 21;
-            this.dgvPoints.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvPoints.Size = new System.Drawing.Size(190, 196);
-            this.dgvPoints.TabIndex = 12;
             // 
             // lbPointType
             // 
             this.lbPointType.AutoSize = true;
-            this.lbPointType.Location = new System.Drawing.Point(20, 70);
+            this.lbPointType.Location = new System.Drawing.Point(233, 87);
             this.lbPointType.Name = "lbPointType";
             this.lbPointType.Size = new System.Drawing.Size(56, 12);
-            this.lbPointType.TabIndex = 1;
+            this.lbPointType.TabIndex = 4;
             this.lbPointType.Text = "point type";
             // 
             // cbFillType
             // 
             this.cbFillType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbFillType.FormattingEnabled = true;
-            this.cbFillType.Location = new System.Drawing.Point(90, 122);
+            this.cbFillType.Location = new System.Drawing.Point(303, 139);
             this.cbFillType.Name = "cbFillType";
             this.cbFillType.Size = new System.Drawing.Size(94, 20);
-            this.cbFillType.TabIndex = 0;
+            this.cbFillType.TabIndex = 9;
             // 
             // cbArcDirection
             // 
             this.cbArcDirection.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbArcDirection.FormattingEnabled = true;
-            this.cbArcDirection.Location = new System.Drawing.Point(90, 95);
+            this.cbArcDirection.Location = new System.Drawing.Point(303, 112);
             this.cbArcDirection.Name = "cbArcDirection";
             this.cbArcDirection.Size = new System.Drawing.Size(94, 20);
-            this.cbArcDirection.TabIndex = 0;
+            this.cbArcDirection.TabIndex = 7;
             // 
             // cbPointType
             // 
             this.cbPointType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbPointType.FormattingEnabled = true;
-            this.cbPointType.Location = new System.Drawing.Point(90, 67);
+            this.cbPointType.Location = new System.Drawing.Point(303, 84);
             this.cbPointType.Name = "cbPointType";
             this.cbPointType.Size = new System.Drawing.Size(94, 20);
-            this.cbPointType.TabIndex = 0;
+            this.cbPointType.TabIndex = 5;
             // 
             // tbPosition
             // 
@@ -658,6 +620,44 @@
             this.lbCursor.TabIndex = 4;
             this.lbCursor.Text = "cursor";
             // 
+            // lbPoint
+            // 
+            this.lbPoint.AutoSize = true;
+            this.lbPoint.Location = new System.Drawing.Point(17, 60);
+            this.lbPoint.Name = "lbPoint";
+            this.lbPoint.Size = new System.Drawing.Size(36, 12);
+            this.lbPoint.TabIndex = 1;
+            this.lbPoint.Text = "points";
+            // 
+            // nudPointsCount
+            // 
+            this.nudPointsCount.Location = new System.Drawing.Point(169, 59);
+            this.nudPointsCount.Minimum = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            this.nudPointsCount.Name = "nudPointsCount";
+            this.nudPointsCount.Size = new System.Drawing.Size(40, 19);
+            this.nudPointsCount.TabIndex = 2;
+            this.nudPointsCount.Value = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            this.nudPointsCount.ValueChanged += new System.EventHandler(this.nudPointsCount_ValueChanged);
+            // 
+            // dgvPoints
+            // 
+            this.dgvPoints.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvPoints.Location = new System.Drawing.Point(19, 84);
+            this.dgvPoints.MultiSelect = false;
+            this.dgvPoints.Name = "dgvPoints";
+            this.dgvPoints.RowTemplate.Height = 21;
+            this.dgvPoints.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            this.dgvPoints.Size = new System.Drawing.Size(190, 125);
+            this.dgvPoints.TabIndex = 3;
+            // 
             // formMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -695,9 +695,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudPenWidth)).EndInit();
             this.gbFunc.ResumeLayout(false);
             this.gbFunc.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.axDrawShape)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudPointsCount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPoints)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.axDrawShape)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -727,11 +727,9 @@
         private System.Windows.Forms.GroupBox gbFunc;
         private System.Windows.Forms.CheckedListBox clbLayer;
         private System.Windows.Forms.TextBox tbRadius;
-        private System.Windows.Forms.Label lbPoint;
         private System.Windows.Forms.Label lbRadius;
         private System.Windows.Forms.Label lbFillType;
         private System.Windows.Forms.Label lbArcDirection;
-        private System.Windows.Forms.DataGridView dgvPoints;
         private System.Windows.Forms.Label lbPointType;
         private System.Windows.Forms.TextBox tbPosition;
         private System.Windows.Forms.Button btFit;
@@ -745,7 +743,6 @@
         private System.Windows.Forms.Label lbPen;
         private System.Windows.Forms.Button btClearLayer;
         private System.Windows.Forms.Button btRunFunc;
-        private System.Windows.Forms.NumericUpDown nudPointsCount;
         private System.Windows.Forms.ComboBox cbFillType;
         private System.Windows.Forms.ComboBox cbArcDirection;
         private System.Windows.Forms.ComboBox cbPointType;
@@ -755,6 +752,9 @@
         private System.Windows.Forms.TextBox tbLastClick;
         private System.Windows.Forms.Label lbLastClick;
         private System.Windows.Forms.Label lbCursor;
+        private System.Windows.Forms.Label lbPoint;
+        private System.Windows.Forms.NumericUpDown nudPointsCount;
+        private System.Windows.Forms.DataGridView dgvPoints;
     }
 }
 

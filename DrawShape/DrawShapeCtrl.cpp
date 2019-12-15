@@ -69,7 +69,7 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddInfiniteLine1PointAngle", dispidAddInfiniteLine1PointAngle, AddInfiniteLine1PointAngle, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPoint", dispidAddPoint, AddPoint, VT_EMPTY, VTS_R8 VTS_R8 VTS_I4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddArc", dispidAddArc, AddArc, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddCircle", dispidAddCircle, AddCircle, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddCircle", dispidAddCircle, AddCircle, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPolygon", dispidAddPolygon, AddPolygon, VT_BOOL, VTS_PR8 VTS_I4 VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddSector", dispidAddSector, AddSector, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddOrigin", dispidAddOrigin, AddOrigin, VT_EMPTY, VTS_R8 VTS_R8)
@@ -279,7 +279,7 @@ void CDrawShapeCtrl::OnSize(UINT nType, int cx, int cy)
 		ReleaseDC(pDC);
 
 		// 描画管理オブジェクトを再設定
-		m_pDrawManager->ResetCanvas(&m_memDC, rect);
+		m_pDrawManager->ResetCanvas(&m_memDC, rect, false);
 
 		// 再描画
 		Redraw();

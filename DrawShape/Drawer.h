@@ -101,8 +101,8 @@ public:
 		Coord vec = point - *this;
 		// ベクトルを回転
 		Coord newPoint;
-		newPoint.x = vec.x * cos(angle) - vec.y + sin(angle);
-		newPoint.y = vec.x * sin(angle) + vec.y + cos(angle);
+		newPoint.x = vec.x * cos(angle) - vec.y * sin(angle);
+		newPoint.y = vec.x * sin(angle) + vec.y * cos(angle);
 		// ベクトルと基準点から回転後の座標を算出
 		newPoint += *this;
 		return newPoint;
@@ -369,12 +369,14 @@ public:
 	Coord<double> GetOffset() const { return m_offset; }
 
 	// 描画領域の再設定
-	void Reset(CDC* pDC, const CRect& rect)
+	void Reset(CDC* pDC, const CRect& rect, bool isResetRatioOffset)
 	{
 		m_pDC = pDC;
 		m_rect = rect;
-		m_ratio = DEFAULT_RATIO;
-		m_offset = Coord<double>(rect.CenterPoint().x, rect.CenterPoint().y);
+		if (isResetRatioOffset) {
+			m_ratio = DEFAULT_RATIO;
+			m_offset = Coord<double>(rect.CenterPoint().x, rect.CenterPoint().y);
+		}
 	}
 	// デバイスコンテキストを取得
 	CDC* GetDC() const { return m_pDC; };
@@ -942,7 +944,7 @@ public:
 
 	// 描画領域の情報を再設定
 	// OnSize()等のイベントで呼び出す必要あり
-	void ResetCanvas(CDC* pDC, const CRect& rect) { m_canvas.Reset(pDC, rect); }
+	void ResetCanvas(CDC* pDC, const CRect& rect, bool isResetRatioOffset = true) { m_canvas.Reset(pDC, rect, isResetRatioOffset); }
 
 	// 初期化
 	void Clear();
