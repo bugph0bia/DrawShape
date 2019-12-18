@@ -466,6 +466,9 @@ Coords_v<double> Canvas::CalcBezierArc(Coords<double, 3> arc, ArcDirectionType d
 		bezierPoints.push_back(next);
 	}
 
+	// 円弧方向が右回りなら、左回りで計算された座標を逆転する
+	if (direction == ArcDirectionType::Right) std::reverse(bezierPoints.begin(), bezierPoints.end());
+
 	return bezierPoints;
 }
 
@@ -900,9 +903,44 @@ Coords<double, 3> NodeSector::CalcInnerArc() const
 	return innerArc;
 }
 
-// 扇形のリージョン（コントロール座標）を算出
-void NodeSector::CalcSectorRgn(CRgn* sectorRgn) const
+// 扇形のパスをDCに設定
+void NodeSector::CreateSectorPath() const
 {
+	// 外側と内側の円弧を取得
+	Coords<double, 3> outerArc = m_points;
+	Coords<double, 3> innerArc = CalcInnerArc();
+	// 内側の円弧は方向を逆転しておく
+	std::swap(innerArc[START], innerArc[END]);
+	// コントロール座標に変換
+	Coords_v<long> ctrlOuterArc = m_canvas.CanvasToControl(Coords_v<double>(outerArc.begin(), outerArc.end()));
+	Coords_v<long> ctrlInnerArc = m_canvas.CanvasToControl(Coords_v<double>(innerArc.begin(), innerArc.end()));
+	// 円弧方向
+	ArcDirectionType outerDir = m_arcDirectionType;
+	ArcDirectionType innerDir = (outerDir == ArcDirectionType::Left ? ArcDirectionType::Right : ArcDirectionType::Left);
+
+	// パスをクリア
+	m_canvas.GetDC()->AbortPath();
+	// パスを開始
+	m_canvas.GetDC()->BeginPath();
+
+	// 外側円弧→直線→内側円弧→直線の順に扇形のパスを作成
+	m_canvas.DrawBezierArc(outerArc, outerDir);
+	m_canvas.GetDC()->MoveTo(ctrlOuterArc[END].x, ctrlOuterArc[END].y);
+	m_canvas.GetDC()->LineTo(ctrlInnerArc[START].x, ctrlInnerArc[START].y);
+	m_canvas.DrawBezierArc(innerArc, innerDir);
+	m_canvas.GetDC()->MoveTo(ctrlInnerArc[END].x, ctrlInnerArc[END].y);
+	m_canvas.GetDC()->LineTo(ctrlOuterArc[START].x, ctrlOuterArc[START].y);
+
+	// パスを終了
+	m_canvas.GetDC()->EndPath();
+}
+
+// 扇形のリージョン（コントロール座標）を算出
+void NodeSector::CreateSectorRgn(CRgn* pSectorRgn) const
+{
+	// ※CreateSectorPath(), CreateFromPath() では、
+	//   ベジエ曲線部分と直線部分が別々の閉領域と認識されてしまいうまくいかない
+
 	// 外側の円弧（コントロール座標）
 	Coords_v<long> ctrlOuterArc = m_canvas.CanvasToControl(Coords_v<double>(m_points.begin(), m_points.end()));
 	// 左向きの円弧にしておく
@@ -911,6 +949,8 @@ void NodeSector::CalcSectorRgn(CRgn* sectorRgn) const
 	}
 
 	// DCを利用して外側の扇形のパスを作成
+
+	// パスをクリア
 	m_canvas.GetDC()->AbortPath();
 	// パスを開始
 	m_canvas.GetDC()->BeginPath();
@@ -923,8 +963,7 @@ void NodeSector::CalcSectorRgn(CRgn* sectorRgn) const
 	m_canvas.GetDC()->EndPath();
 
 	// 外側の扇形リージョンを取得
-	CRgn outerPieRgn;
-	outerPieRgn.CreateFromPath(m_canvas.GetDC());
+	pSectorRgn->CreateFromPath(m_canvas.GetDC());
 
 	// 内側円弧の半径をコントロール座標に変換
 	long ctrlInnerRadius = static_cast<long>(m_canvas.CanvasToControl(m_innerRadius));
@@ -939,7 +978,7 @@ void NodeSector::CalcSectorRgn(CRgn* sectorRgn) const
 	);
 
 	// 外側の扇形リージョン - 内側の円形リージョン
-	sectorRgn->CombineRgn(&outerPieRgn, &innerCircleRgn, RGN_DIFF);
+	pSectorRgn->CombineRgn(pSectorRgn, &innerCircleRgn, RGN_DIFF);
 }
 
 // 形状の最小包含箱を算出
@@ -947,7 +986,7 @@ BoundingBox<double> NodeSector::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 扇形のリージョンから最小包含箱（コントロール座標）を取得
 	CRgn sectorRgn;
-	CalcSectorRgn(&sectorRgn);
+	CreateSectorRgn(&sectorRgn);
 	CRect ctrlRect;
 	sectorRgn.GetRgnBox(&ctrlRect);
 
@@ -957,6 +996,7 @@ BoundingBox<double> NodeSector::CalcBoundingBox(bool forFit/*=false*/) const
 	bbox.max = m_canvas.ControlToCanvas(Coord<long>(ctrlRect.right, ctrlRect.top));
 	return bbox;
 }
+
 // 形状を描画
 void NodeSector::DrawContent()
 {
@@ -964,25 +1004,13 @@ void NodeSector::DrawContent()
 	if (m_fillType == FillType::Fill) {
 		// 扇形リージョンを取得して塗りつぶす
 		CRgn sectorRgn;
-		CalcSectorRgn(&sectorRgn);
+		CreateSectorRgn(&sectorRgn);
 		m_canvas.GetDC()->FillRgn(&sectorRgn, m_canvas.GetDC()->GetCurrentBrush());
 	}
 
-	// 外側と内側の円弧
-	Coords<double, 3> outerArc = m_points;
-	Coords<double, 3> innerArc = CalcInnerArc();
-
-	// 円弧部分を描画
-	m_canvas.DrawBezierArc(outerArc, m_arcDirectionType);
-	m_canvas.DrawBezierArc(innerArc, m_arcDirectionType);
-
-	// コントロール座標に変換して直線部分を描画
-	Coords_v<long> ctrlOuterArc = m_canvas.CanvasToControl(Coords_v<double>(outerArc.begin(), outerArc.end()));
-	Coords_v<long> ctrlInnerArc = m_canvas.CanvasToControl(Coords_v<double>(innerArc.begin(), innerArc.end()));
-	m_canvas.GetDC()->MoveTo(ctrlOuterArc[START].x, ctrlOuterArc[START].y);
-	m_canvas.GetDC()->LineTo(ctrlOuterArc[END].x, ctrlOuterArc[END].y);
-	m_canvas.GetDC()->MoveTo(ctrlInnerArc[START].x, ctrlInnerArc[START].y);
-	m_canvas.GetDC()->LineTo(ctrlInnerArc[END].x, ctrlInnerArc[END].y);
+	// 扇形のパスを作成して輪郭線を描画
+	CreateSectorPath();
+	m_canvas.GetDC()->StrokePath();
 }
 
 
