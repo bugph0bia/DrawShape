@@ -586,6 +586,8 @@ public:
 		Node(pManager),
 		m_point(point)
 	{
+		// 原点はブラシの色をペンの色に合わせる
+		m_brush.lbColor = m_pen.lopnColor;
 	}
 
 	// 形状の最小包含箱を算出
@@ -796,8 +798,11 @@ private:
 	// 内側の円弧座標を算出
 	Coords<double, 3> CalcInnerArc() const;
 
+	// 扇形のパスをDCに設定
+	void CreateSectorPath() const;
+
 	// 扇形のリージョン（コントロール座標）を算出
-	void CalcSectorRgn(CRgn* sectorRgn) const;
+	void CreateSectorRgn(CRgn* sectorRgn) const;
 
 public:
 	// コンストラクタ
