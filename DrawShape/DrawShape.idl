@@ -62,7 +62,7 @@ library DrawShapeLib
 			[id(38)] void AddPoint(DOUBLE x, DOUBLE y, LONG type);
 			[id(39)] void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
 			[id(40)] void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
-			[id(41)] VARIANT_BOOL AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
+			[id(41)] VARIANT_BOOL AddPolygon(SAFEARRAY(DOUBLE) pointCoords, LONG pointsCount, VARIANT_BOOL fill);
 			[id(42)] void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
 			[id(43)] void AddOrigin(DOUBLE ox, DOUBLE oy);
 			[id(44)] void AddAxis(DOUBLE ox, DOUBLE oy);

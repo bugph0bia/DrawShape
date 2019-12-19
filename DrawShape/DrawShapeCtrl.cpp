@@ -70,7 +70,7 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPoint", dispidAddPoint, AddPoint, VT_EMPTY, VTS_R8 VTS_R8 VTS_I4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddArc", dispidAddArc, AddArc, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddCircle", dispidAddCircle, AddCircle, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPolygon", dispidAddPolygon, AddPolygon, VT_BOOL, VTS_PR8 VTS_I4 VTS_BOOL)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPolygon", dispidAddPolygon, AddPolygon, VT_BOOL, VTS_VARIANT VTS_I4 VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddSector", dispidAddSector, AddSector, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddOrigin", dispidAddOrigin, AddOrigin, VT_EMPTY, VTS_R8 VTS_R8)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddAxis", dispidAddAxis, AddAxis, VT_EMPTY, VTS_R8 VTS_R8)
@@ -1050,21 +1050,25 @@ void CDrawShapeCtrl::AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL
 }
 
 
-VARIANT_BOOL CDrawShapeCtrl::AddPolygon(DOUBLE* pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill)
+VARIANT_BOOL CDrawShapeCtrl::AddPolygon(VARIANT& pointCoords, LONG pointsCount, VARIANT_BOOL fill)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	// 座標値の数が奇数なら末尾を読み捨てる
-	if (pointCoordsCount % 2 == 1) pointCoordsCount -= 1;
 	// 座標値の数が0なら終了
-	if (pointCoordsCount <= 0) return VARIANT_FALSE;
+	if (pointsCount <= 0) return VARIANT_FALSE;
+	// 配列の型がアンマッチなら終了
+	if ((V_VT(&pointCoords) & (VT_ARRAY | VT_R8)) != (VT_ARRAY | VT_R8)) return VARIANT_FALSE;
+
+	// 配列をSAFEARRAYに変換
+	ATL::CComSafeArray<double> saPointCoords;
+	saPointCoords.CopyFrom(pointCoords.parray);
 
 	// 座標値配列を変換
 	Drawer::Coords_v<double> points;
-	for (int i = 0; i < pointCoordsCount; i += 2) {
-		points.push_back(Drawer::Coord<double>(pointCoords[i + 0], pointCoords[i + 1]));
+	for (int i = 0; i < pointsCount; i++) {
+		points.push_back(Drawer::Coord<double>(saPointCoords[i * 2 + 0], saPointCoords[i * 2 + 1]));
 	}
 
 	m_pDrawManager->AddPolygon(

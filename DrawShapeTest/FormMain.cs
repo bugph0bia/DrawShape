@@ -348,7 +348,7 @@ namespace DrawShapeTest
                     coords[i * 2 + 0] = points[i].x;
                     coords[i * 2 + 1] = points[i].y;
                 }
-                axDrawShape.AddPolygon(ref coords[0], points.Length, fillType);
+                axDrawShape.AddPolygon(coords, points.Length, fillType);
                 break;
             case 6:
                 axDrawShape.AddSector(points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, radius, arcDirection, fillType);

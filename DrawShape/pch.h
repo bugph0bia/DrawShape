@@ -10,4 +10,6 @@
 // プリコンパイルするヘッダーをここに追加します
 #include "framework.h"
 
+#include <atlsafe.h>
+
 #endif //PCH_H
