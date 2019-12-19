@@ -348,16 +348,7 @@ namespace DrawShapeTest
                     coords[i * 2 + 0] = points[i].x;
                     coords[i * 2 + 1] = points[i].y;
                 }
-                //object[] objs = { coords };    // ボックス化
-                //object objs = new System.Runtime.InteropServices.VariantWrapper(coords);
-                Array objs = Array.CreateInstance(typeof(double), points.Length * 2);
-                for (int i = 0; i < points.Length; i++)
-                {
-                    objs.SetValue(points[i].x, i * 2 + 0);
-                    objs.SetValue(points[i].y, i * 2 + 1);
-                }
-
-                axDrawShape.AddPolygon(objs, points.Length, fillType);
+                axDrawShape.AddPolygon(coords, points.Length, fillType);
                 break;
             case 6:
                 axDrawShape.AddSector(points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, radius, arcDirection, fillType);

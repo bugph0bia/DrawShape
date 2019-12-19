@@ -104,7 +104,7 @@ protected:
 	afx_msg void AddPoint(DOUBLE x, DOUBLE y, LONG type);
 	afx_msg void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
 	afx_msg void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
-	afx_msg VARIANT_BOOL AddPolygon(VARIANT pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
+	afx_msg VARIANT_BOOL AddPolygon(VARIANT& pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
 	afx_msg void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
 	afx_msg void AddOrigin(DOUBLE ox, DOUBLE oy);
 	afx_msg void AddAxis(DOUBLE ox, DOUBLE oy);
