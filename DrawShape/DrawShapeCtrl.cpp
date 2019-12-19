@@ -1050,7 +1050,7 @@ void CDrawShapeCtrl::AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL
 }
 
 
-VARIANT_BOOL CDrawShapeCtrl::AddPolygon(VARIANT pointCoords, LONG pointsCount, VARIANT_BOOL fill)
+VARIANT_BOOL CDrawShapeCtrl::AddPolygon(VARIANT& pointCoords, LONG pointsCount, VARIANT_BOOL fill)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -1061,20 +1061,20 @@ VARIANT_BOOL CDrawShapeCtrl::AddPolygon(VARIANT pointCoords, LONG pointsCount, V
 	// 配列の型がアンマッチなら終了
 	if ((V_VT(&pointCoords) & (VT_ARRAY | VT_R8)) != (VT_ARRAY | VT_R8)) return VARIANT_FALSE;
 
-	//// 配列をSAFEARRAYに変換
-	//ATL::CComSafeArray<double> saPointCoords;
-	//saPointCoords.CopyFrom(pointCoords.parray);
+	// 配列をSAFEARRAYに変換
+	ATL::CComSafeArray<double> saPointCoords;
+	saPointCoords.CopyFrom(pointCoords.parray);
 
-	//// 座標値配列を変換
-	//Drawer::Coords_v<double> points;
-	//for (int i = 0; i < pointsCount; i++) {
-	//	points.push_back(Drawer::Coord<double>(saPointCoords[i * 2 + 0], saPointCoords[i * 2 + 1]));
-	//}
+	// 座標値配列を変換
+	Drawer::Coords_v<double> points;
+	for (int i = 0; i < pointsCount; i++) {
+		points.push_back(Drawer::Coord<double>(saPointCoords[i * 2 + 0], saPointCoords[i * 2 + 1]));
+	}
 
-	//m_pDrawManager->AddPolygon(
-	//	points,
-	//	(fill ? Drawer::FillType::Fill : Drawer::FillType::NoFill)
-	//);
+	m_pDrawManager->AddPolygon(
+		points,
+		(fill ? Drawer::FillType::Fill : Drawer::FillType::NoFill)
+	);
 
 	return VARIANT_TRUE;
 }
