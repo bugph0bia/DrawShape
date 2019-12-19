@@ -68,7 +68,7 @@ MIT License
 3. イベントハンドラの追加方法
     1. AxWindowsSightクラス（AxDrawShapeLib名前空間 - AxDrawShapeクラス）に追加されているイベント変数とデリゲート型を利用することでイベントハンドラ関数を追加可能。
 
-[サンプル](/DrawShapeTest)
+[C#サンプルアプリケーション](/DrawShapeTest)
 
 ## リファレンス
 ### プロパティ
