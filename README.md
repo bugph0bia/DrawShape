@@ -63,10 +63,10 @@ MIT License
     4. ツールボックス内に「DrawShape Control」が追加されるのでフォームへ挿入する。
     5. 挿入に失敗する場合は、「プロジェクト」メニューの「参照の追加...」の「COM」ページから「DrawShapeLib」にチェックを付けて「OK」ボタンを押下してから試す。
 2. プロパティ／メソッドの追加方法
-    1. コントロールの挿入を行うことでプロジェクトの参照に AxWindowsSightクラス（AxDrawShapeLib名前空間 - AxDrawShapeクラス）が追加されており、
+    1. コントロールの挿入を行うことでプロジェクトの参照に AxDrawShapeクラス（AxDrawShapeLib名前空間 - AxDrawShapeクラス）が追加されており、
        コントロール変数はそのクラスの型となっている。プロパティとメソッドも追加されているため使用可能な状態となる。
 3. イベントハンドラの追加方法
-    1. AxWindowsSightクラス（AxDrawShapeLib名前空間 - AxDrawShapeクラス）に追加されているイベント変数とデリゲート型を利用することでイベントハンドラ関数を追加可能。
+    1. AxDrawShapeクラス（AxDrawShapeLib名前空間 - AxDrawShapeクラス）に追加されているイベント変数とデリゲート型を利用することでイベントハンドラ関数を追加可能。
 
 [C#サンプルアプリケーション](/DrawShapeTest)
 
