@@ -56,16 +56,16 @@ library DrawShapeLib
 			[id(32)] VARIANT_BOOL Zoom(DOUBLE coef, LONG ctrlBaseX, LONG ctrlBaseY);
 			[id(33)] VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
 			[id(34)] void Fit(DOUBLE shapeOccupancy);
-			[id(35)] void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-			[id(36)] void AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-			[id(37)] void AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
-			[id(38)] void AddPoint(DOUBLE x, DOUBLE y, LONG type);
-			[id(39)] void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
-			[id(40)] void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
+			[id(35)] VARIANT_BOOL AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+			[id(36)] VARIANT_BOOL AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+			[id(37)] VARIANT_BOOL AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
+			[id(38)] VARIANT_BOOL AddPoint(DOUBLE x, DOUBLE y, LONG type);
+			[id(39)] VARIANT_BOOL AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
+			[id(40)] VARIANT_BOOL AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
 			[id(41)] VARIANT_BOOL AddPolygon(SAFEARRAY(DOUBLE) pointCoords, LONG pointsCount, VARIANT_BOOL fill);
-			[id(42)] void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
-			[id(43)] void AddOrigin(DOUBLE ox, DOUBLE oy);
-			[id(44)] void AddAxis(DOUBLE ox, DOUBLE oy);
+			[id(42)] VARIANT_BOOL AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
+			[id(43)] VARIANT_BOOL AddOrigin(DOUBLE ox, DOUBLE oy);
+			[id(44)] VARIANT_BOOL AddAxis(DOUBLE ox, DOUBLE oy);
 	};
 
 	//  CDrawShapeCtrl のイベント ディスパッチ インターフェイス

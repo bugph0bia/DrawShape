@@ -476,6 +476,9 @@ Coords_v<double> Canvas::CalcBezierArc(Coords<double, 3> arc, ArcDirectionType d
 // 始点と終点が一致する円弧で呼び出した場合の動作は未定義（そのようなケースは事前に円と見なすべき）
 void Canvas::DrawBezierArc(Coords<double, 3> arc, ArcDirectionType direction) const
 {
+	// 円弧が不整合なら描画しない
+	if (!Util::VerifyArc(arc)) return;
+
 	// ベジエ曲線の座標値配列を取得
 	Coords_v<double> bezierPoints = CalcBezierArc(arc, direction);
 
@@ -781,6 +784,13 @@ void NodeArc::DrawContent()
 	}
 }
 
+// 形状の整合性チェック
+bool NodeArc::Verify() const
+{
+	return Util::VerifyArc(m_points);
+}
+
+
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeCircle::CalcBoundingBox(bool forFit/*=false*/) const
 {
@@ -900,6 +910,12 @@ Coords<double, 3> NodeSector::CalcInnerArc() const
 	innerArc[END] = vectorCE / outerRadius * m_innerRadius + m_points[CENTER];
 	innerArc[CENTER] = m_points[CENTER];
 
+	// 内側の円弧が微小な場合は中心点の座標とする
+	if (Util::IsSamePoint(innerArc[START], innerArc[CENTER]) ||
+		Util::IsSamePoint(innerArc[END], innerArc[CENTER])) {
+		innerArc[START] = innerArc[END] = innerArc[CENTER];
+	}
+
 	return innerArc;
 }
 
@@ -1011,6 +1027,12 @@ void NodeSector::DrawContent()
 	// 扇形のパスを作成して輪郭線を描画
 	CreateSectorPath();
 	m_canvas.GetDC()->StrokePath();
+}
+
+// 形状の整合性チェック
+bool NodeSector::Verify() const
+{
+	return Util::VerifyArc(m_points);
 }
 
 

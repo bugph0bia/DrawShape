@@ -120,6 +120,25 @@ namespace DrawShapeTest
         {
             // 表示
             tbLastClick.Text = e.canvasX.ToString("0.000") + " , " + e.canvasY.ToString("0.000");
+
+            // グリッドに合わせて座標を丸める
+            double b = axDrawShape.GridSize;    // 基準値
+            int q;      // 商
+            double r;   // 余
+            q = (int)(e.canvasX / b);
+            r = e.canvasX % b;
+            if (r > b / 2.0) q++;
+            double x = b * q;
+            q = (int)(e.canvasY / b);
+            r = e.canvasY % b;
+            if (r > b / 2.0) q++;
+            double y = b * q;
+
+            foreach (DataGridViewCell c in dgvPoints.SelectedCells)
+            {
+                dgvPoints[0, c.RowIndex].Value = x.ToString("0.000");
+                dgvPoints[1, c.RowIndex].Value = y.ToString("0.000");
+            }
         }
 
         private void cbDrawGrid_CheckedChanged(object sender, EventArgs e)
@@ -322,24 +341,26 @@ namespace DrawShapeTest
                 points[row].y = y;
             }
 
+            // 戻り値
+            bool ret = false;
             // 関数
             int func = cbFunc.SelectedIndex;
             switch (func)
             {
             case 0:
-                axDrawShape.AddLine(points[0].x, points[0].y, points[1].x, points[1].y);
+                ret = axDrawShape.AddLine(points[0].x, points[0].y, points[1].x, points[1].y);
                 break;
             case 1:
-                axDrawShape.AddInfiniteLine2Point(points[0].x, points[0].y, points[1].x, points[1].y);
+                ret = axDrawShape.AddInfiniteLine2Point(points[0].x, points[0].y, points[1].x, points[1].y);
                 break;
             case 2:
-                axDrawShape.AddPoint(points[0].x, points[0].y, pointType);
+                ret = axDrawShape.AddPoint(points[0].x, points[0].y, pointType);
                 break;
             case 3:
-                axDrawShape.AddArc(points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, arcDirection);
+                ret = axDrawShape.AddArc(points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, arcDirection);
                 break;
             case 4:
-                axDrawShape.AddCircle(points[0].x, points[0].y, radius, fillType);
+                ret = axDrawShape.AddCircle(points[0].x, points[0].y, radius, fillType);
                 break;
             case 5:
                 double[] coords = new double[points.Length * 2];
@@ -348,20 +369,21 @@ namespace DrawShapeTest
                     coords[i * 2 + 0] = points[i].x;
                     coords[i * 2 + 1] = points[i].y;
                 }
-                axDrawShape.AddPolygon(coords, points.Length, fillType);
+                ret = axDrawShape.AddPolygon(coords, points.Length, fillType);
                 break;
             case 6:
-                axDrawShape.AddSector(points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, radius, arcDirection, fillType);
+                ret = axDrawShape.AddSector(points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, radius, arcDirection, fillType);
                 break;
             case 7:
-                axDrawShape.AddOrigin(points[0].x, points[0].y);
+                ret = axDrawShape.AddOrigin(points[0].x, points[0].y);
                 break;
             case 8:
-                axDrawShape.AddAxis(points[0].x, points[0].y);
+                ret = axDrawShape.AddAxis(points[0].x, points[0].y);
                 break;
             default:
                 break;
             }
+            tbResult.Text = ret.ToString();
             axDrawShape.Redraw();
         }
 

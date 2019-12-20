@@ -98,16 +98,16 @@ protected:
 	afx_msg VARIANT_BOOL Zoom(DOUBLE ratio, LONG ctrlBaseX, LONG ctrlBaseY);
 	afx_msg VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
 	afx_msg void Fit(DOUBLE shapeOccupancy);
-	afx_msg void AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-	afx_msg void AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-	afx_msg void AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
-	afx_msg void AddPoint(DOUBLE x, DOUBLE y, LONG type);
-	afx_msg void AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
-	afx_msg void AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
+	afx_msg VARIANT_BOOL AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+	afx_msg VARIANT_BOOL AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+	afx_msg VARIANT_BOOL AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
+	afx_msg VARIANT_BOOL AddPoint(DOUBLE x, DOUBLE y, LONG type);
+	afx_msg VARIANT_BOOL AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
+	afx_msg VARIANT_BOOL AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
 	afx_msg VARIANT_BOOL AddPolygon(VARIANT& pointCoords, LONG pointCoordsCount, VARIANT_BOOL fill);
-	afx_msg void AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
-	afx_msg void AddOrigin(DOUBLE ox, DOUBLE oy);
-	afx_msg void AddAxis(DOUBLE ox, DOUBLE oy);
+	afx_msg VARIANT_BOOL AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
+	afx_msg VARIANT_BOOL AddOrigin(DOUBLE ox, DOUBLE oy);
+	afx_msg VARIANT_BOOL AddAxis(DOUBLE ox, DOUBLE oy);
 	DECLARE_DISPATCH_MAP()
 
 // イベント マップ
@@ -204,6 +204,8 @@ private:
 
 	// ドラッグフラグ
 	BOOL m_isDragging;
+	// ドラッグ開始点
+	CPoint m_pntDraggingStartPos;
 	// ドラッグ中基準点
 	CPoint m_pntDraggingBasePos;
 
