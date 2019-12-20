@@ -562,6 +562,27 @@ Node::Node(Manager* pManager) :
 {
 }
 
+// JSONデータ取得
+picojson::object Node::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode;
+	// JSON: タイプ
+	jNode.insert(std::make_pair(JSON_KEY_TYPE, picojson::value(m_typeName)));
+	// JSON: ペン
+	picojson::object jPen;
+	jPen.insert(std::make_pair(JSON_KEY_COLOR, picojson::value(static_cast<double>(m_pen.lopnColor))));
+	jPen.insert(std::make_pair(JSON_KEY_WIDTH, picojson::value(static_cast<double>(m_pen.lopnWidth.x))));
+	jPen.insert(std::make_pair(JSON_KEY_STYLE, picojson::value(static_cast<double>(m_pen.lopnStyle))));
+	jNode.insert(std::make_pair(JSON_KEY_PEN, picojson::value(jPen)));
+	// JSON: ブラシ
+	picojson::object jBrush;
+	jBrush.insert(std::make_pair(JSON_KEY_COLOR, picojson::value(static_cast<double>(m_brush.lbColor))));
+	jNode.insert(std::make_pair(JSON_KEY_BRUSH, picojson::value(jBrush)));
+
+	return jNode;
+}
+
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeGrid::CalcBoundingBox(bool forFit/*=false*/) const
@@ -582,6 +603,15 @@ void NodeGrid::DrawContent()
 {
 	// グリッド描画
 	if(m_info.isDrawGrid) m_canvas.DrawGrid(m_info.gridSize);
+}
+
+// JSONデータ取得
+picojson::object NodeGrid::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	return jNode;
 }
 
 
@@ -607,6 +637,23 @@ void NodeOrigin::DrawContent()
 	if (m_info.isDrawOrigin) m_canvas.DrawOrigin(m_point, m_info.originSize);
 }
 
+// JSONデータ取得
+picojson::object NodeOrigin::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	// JSON: 点群
+	picojson::array jPoints;
+	picojson::array jCoords;
+	jCoords.push_back(picojson::value(m_point.x));
+	jCoords.push_back(picojson::value(m_point.y));
+	jPoints.push_back(picojson::value(jCoords));
+	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+
+	return jNode;
+}
+
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeAxis::CalcBoundingBox(bool forFit/*=false*/) const
@@ -620,6 +667,23 @@ void NodeAxis::DrawContent()
 {
 	// 軸描画
 	if (m_info.isDrawAxis) m_canvas.DrawAxis(m_point, m_info.axisScale);
+}
+
+// JSONデータ取得
+picojson::object NodeAxis::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	// JSON: 点群
+	picojson::array jPoints;
+	picojson::array jCoords;
+	jCoords.push_back(picojson::value(m_point.x));
+	jCoords.push_back(picojson::value(m_point.y));
+	jPoints.push_back(picojson::value(jCoords));
+	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+
+	return jNode;
 }
 
 
@@ -648,6 +712,26 @@ void NodePoint::DrawContent()
 		m_canvas.DrawLargePoint(m_point);
 		break;
 	}
+}
+
+// JSONデータ取得
+picojson::object NodePoint::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	// JSON: 点群
+	picojson::array jPoints;
+	picojson::array jCoords;
+	jCoords.push_back(picojson::value(m_point.x));
+	jCoords.push_back(picojson::value(m_point.y));
+	jPoints.push_back(picojson::value(jCoords));
+	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+	
+	// JSON: 点種別
+	jNode.insert(std::make_pair(JSON_KEY_POINT_TYPE , picojson::value(static_cast<double>(m_pointType))));
+
+	return jNode;
 }
 
 
@@ -727,6 +811,28 @@ void NodeLine::DrawContent()
 	}
 }
 
+// JSONデータ取得
+picojson::object NodeLine::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	// JSON: 点群
+	picojson::array jPoints;
+	for (const auto& p : m_points) {
+		picojson::array jCoords;
+		jCoords.push_back(picojson::value(p.x));
+		jCoords.push_back(picojson::value(p.y));
+		jPoints.push_back(picojson::value(jCoords));
+	}
+	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+
+	// JSON: 線種別
+	jNode.insert(std::make_pair(JSON_KEY_LINE_LIMIT_TYPE, picojson::value(static_cast<double>(m_lineLimitType))));
+
+	return jNode;
+}
+
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeArc::CalcBoundingBox(bool forFit/*=false*/) const
@@ -790,6 +896,28 @@ bool NodeArc::Verify() const
 	return Util::VerifyArc(m_points);
 }
 
+// JSONデータ取得
+picojson::object NodeArc::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	// JSON: 点群
+	picojson::array jPoints;
+	for (const auto& p : m_points) {
+		picojson::array jCoords;
+		jCoords.push_back(picojson::value(p.x));
+		jCoords.push_back(picojson::value(p.y));
+		jPoints.push_back(picojson::value(jCoords));
+	}
+	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+
+	// JSON: 円弧方向
+	jNode.insert(std::make_pair(JSON_KEY_ARC_DIRECTION_TYPE, picojson::value(static_cast<double>(m_arcDirectionType))));
+
+	return jNode;
+}
+
 
 // 形状の最小包含箱を算出
 BoundingBox<double> NodeCircle::CalcBoundingBox(bool forFit/*=false*/) const
@@ -835,6 +963,29 @@ void NodeCircle::DrawContent()
 		// 円を描画
 		m_canvas.GetDC()->Ellipse(ctrlLeftUp.x, ctrlLeftUp.y, ctrlRightDown.x, ctrlRightDown.y);
 	}
+}
+
+// JSONデータ取得
+picojson::object NodeCircle::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	// JSON: 点群
+	picojson::array jPoints;
+	picojson::array jCoords;
+	jCoords.push_back(picojson::value(m_point.x));
+	jCoords.push_back(picojson::value(m_point.y));
+	jPoints.push_back(picojson::value(jCoords));
+	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+
+	// JSON: 半径
+	jNode.insert(std::make_pair(JSON_KEY_RADIUS, picojson::value(m_radius)));
+
+	// JSON: 塗りつぶし種別
+	jNode.insert(std::make_pair(JSON_KEY_FILL_TYPE, picojson::value(static_cast<double>(m_fillType))));
+
+	return jNode;
 }
 
 
@@ -891,6 +1042,28 @@ void NodePolygon::DrawContent()
 		// 多角形を描画
 		m_canvas.GetDC()->Polygon(ctrlPoints.data(), ctrlPoints.size());
 	}
+}
+
+// JSONデータ取得
+picojson::object NodePolygon::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	// JSON: 点群
+	picojson::array jPoints;
+	for (const auto& p : m_points) {
+		picojson::array jCoords;
+		jCoords.push_back(picojson::value(p.x));
+		jCoords.push_back(picojson::value(p.y));
+		jPoints.push_back(picojson::value(jCoords));
+	}
+	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+
+	// JSON: 塗りつぶし種別
+	jNode.insert(std::make_pair(JSON_KEY_FILL_TYPE, picojson::value(static_cast<double>(m_fillType))));
+
+	return jNode;
 }
 
 
@@ -1035,6 +1208,34 @@ bool NodeSector::Verify() const
 	return Util::VerifyArc(m_points);
 }
 
+// JSONデータ取得
+picojson::object NodeSector::GetJson() const
+{
+	// JSON: ノード
+	picojson::object jNode = Node::GetJson();
+
+	// JSON: 点群
+	picojson::array jPoints;
+	for (const auto& p : m_points) {
+		picojson::array jCoords;
+		jCoords.push_back(picojson::value(p.x));
+		jCoords.push_back(picojson::value(p.y));
+		jPoints.push_back(picojson::value(jCoords));
+	}
+	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+
+	// JSON: 半径
+	jNode.insert(std::make_pair(JSON_KEY_RADIUS, picojson::value(m_innerRadius)));
+
+	// JSON: 円弧方向
+	jNode.insert(std::make_pair(JSON_KEY_ARC_DIRECTION_TYPE, picojson::value(static_cast<double>(m_arcDirectionType))));
+
+	// JSON: 塗りつぶし種別
+	jNode.insert(std::make_pair(JSON_KEY_FILL_TYPE, picojson::value(static_cast<double>(m_fillType))));
+
+	return jNode;
+}
+
 
 // コンストラクタ
 Layer::Layer() :
@@ -1073,6 +1274,27 @@ void Layer::Draw()
 			pNode->Draw();
 		}
 	}
+}
+
+// JSONデータ取得
+picojson::object Layer::GetJson() const
+{
+	// JSON: レイヤー
+	picojson::object jLayer;
+	// JSON: EnableDraw
+	jLayer.insert(std::make_pair(JSON_KEY_ENABLE_DRAW, picojson::value(m_enableDraw)));
+
+	// JSON: ノード配列
+	picojson::array jNodes;
+	// 全ノードのJSONデータを作成
+	for (const auto& pNode : m_nodes) {
+		picojson::object jNode = pNode->GetJson();
+		jNodes.push_back(picojson::value(jNode));
+	}
+	// セット
+	jLayer.insert(std::make_pair(JSON_KEY_NODES, picojson::value(jNodes)));
+
+	return jLayer;
 }
 
 
@@ -1134,6 +1356,39 @@ std::size_t Manager::DeleteCurrentLayer()
 	}
 	// レイヤー枚数を返す
 	return m_layers.size();
+}
+
+// 描画内容をJsonエクスポート
+bool Manager::SaveJson(const std::tstring& filePath) const
+{
+	// JSON: ルート
+	picojson::object jRoot;
+
+	// JSON: レイヤー配列
+	picojson::array jLayers;
+
+	// 全レイヤーのJSONデータを作成
+	for (const auto& pLayer : m_layers) {
+		picojson::object jLayer = pLayer->GetJson();
+		jLayers.push_back(picojson::value(jLayer));
+	}
+	// ルートにセット
+	jRoot.insert(std::make_pair(JSON_KEY_LAYERS, picojson::value(jLayers)));
+
+	// ファイルオープン
+	std::ofstream ofs(filePath);
+	if (!ofs) return false;
+
+	// JSON出力
+	ofs << picojson::value(jRoot);
+	return true;
+}
+
+// 描画内容をJsonインポート
+bool Manager::LoadJson(const std::tstring& filePath)
+{
+	// TODO
+	return true;
 }
 
 // 初期化

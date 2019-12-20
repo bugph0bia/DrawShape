@@ -7,6 +7,9 @@
 #include <limits>
 #include <stdexcept>
 #include <cmath>
+#include <fstream>
+
+#include "picojson.h"
 
 // std::string/wstringのサンク対応
 #ifdef UNICODE
@@ -41,6 +44,38 @@ static constexpr double ANGLE_TOLERANCE = 0.00001;
 static constexpr double	PI = 3.141592653589793;
 // 線分、円弧の座標コレクションのインデックス値
 enum { START, END, CENTER };
+
+// JSONキー：レイヤー配列
+static const std::string JSON_KEY_LAYERS = "Layers";
+// JSONキー：描画フラグ
+static const std::string JSON_KEY_ENABLE_DRAW = "EnableDraw";
+// JSONキー：ノード配列
+static const std::string JSON_KEY_NODES = "Nodes";
+// JSONキー：ノードタイプ
+static const std::string JSON_KEY_TYPE = "Type";
+// JSONキー：ペン・ブラシ
+static const std::string JSON_KEY_PEN = "Pen";
+static const std::string JSON_KEY_BRUSH = "Brush";
+static const std::string JSON_KEY_COLOR = "Color";
+static const std::string JSON_KEY_WIDTH = "Width";
+static const std::string JSON_KEY_STYLE = "Style";
+// JSONキー: ノード情報
+static const std::string JSON_KEY_POINTS = "Points";
+static const std::string JSON_KEY_POINT_TYPE = "PointType";
+static const std::string JSON_KEY_RADIUS = "Radius";
+static const std::string JSON_KEY_LINE_LIMIT_TYPE = "LineLimitType";
+static const std::string JSON_KEY_ARC_DIRECTION_TYPE = "ArcDirectionType";
+static const std::string JSON_KEY_FILL_TYPE = "FillType";
+// JSON値：ノードタイプ
+static const std::string JSON_VALUE_TYPE_GRID = "Grid";
+static const std::string JSON_VALUE_TYPE_ORIGIN = "Origin";
+static const std::string JSON_VALUE_TYPE_AXIS = "Axis";
+static const std::string JSON_VALUE_TYPE_POINT = "Point";
+static const std::string JSON_VALUE_TYPE_LINE = "Line";
+static const std::string JSON_VALUE_TYPE_ARC = "Arc";
+static const std::string JSON_VALUE_TYPE_CIRCLE = "Circle";
+static const std::string JSON_VALUE_TYPE_POLYGON = "Polygon";
+static const std::string JSON_VALUE_TYPE_SECTOR = "Sector";
 
 
 //////////////// 列挙型 ////////////////
@@ -502,6 +537,8 @@ protected:
 	LOGPEN m_pen;
 	// ブラシ
 	LOGBRUSH m_brush;
+	// JSON: ノードタイプ名称
+	std::string m_typeName;
 
 	// 形状が描画領域に含まれるかチェック
 	//   ※形状ごとに必要に応じてオーバーライドする
@@ -553,6 +590,9 @@ public:
 		// 形状を描画
 		DrawContent();
 	}
+
+	// JSONデータ取得
+	virtual picojson::object GetJson() const;
 };
 
 
@@ -570,10 +610,14 @@ public:
 	NodeGrid(Manager* pManager) :
 		Node(pManager)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_GRID;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -594,12 +638,16 @@ public:
 		Node(pManager),
 		m_point(point)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_ORIGIN;
 		// 原点はブラシの色をペンの色に合わせる
 		m_brush.lbColor = m_pen.lopnColor;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -620,10 +668,14 @@ public:
 		Node(pManager),
 		m_point(point)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_AXIS;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -647,10 +699,14 @@ public:
 		m_point(point),
 		m_pointType(pointType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_POINT;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -665,10 +721,14 @@ private:
 
 	// 無限直線情報
 	struct InfiniteInfo{
-		bool isVertical;		// 鉛直フラグ
-		double coefficientX;	// xの係数 (非鉛直の場合に使用する)
-		double interceptY;		// y切片 (非鉛直の場合に使用する)
-		double interceptX;		// x切片 (鉛直の場合に使用する)
+		// 鉛直フラグ
+		bool isVertical;
+		// xの係数 (非鉛直の場合に使用する)
+		double coefficientX;
+		// y切片 (非鉛直の場合に使用する)
+		double interceptY;
+		// x切片 (鉛直の場合に使用する)
+		double interceptX;
 	} m_infiniteInfo;
 
 	// 線分を取得
@@ -685,6 +745,9 @@ public:
 		m_lineLimitType(lineLimitType),
 		m_infiniteInfo({false, 0.0, 0.0, 0.0})
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_LINE;
+
 		// 有限の線分
 		if (m_lineLimitType == LineLimitType::Finite) {
 			// 座標値データをコピー
@@ -713,6 +776,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -736,12 +801,16 @@ public:
 		m_points(points),
 		m_arcDirectionType(arcDirectionType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_ARC;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状の整合性チェック
 	virtual bool Verify() const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -768,10 +837,14 @@ public:
 		m_radius(radius),
 		m_fillType(fillType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_CIRCLE;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -795,10 +868,14 @@ public:
 		m_points(points),
 		m_fillType(fillType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_POLYGON;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -837,12 +914,16 @@ public:
 		m_arcDirectionType(arcDirectionType),
 		m_fillType(fillType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_SECTOR;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状の整合性チェック
 	virtual bool Verify() const override;
+	// JSONデータ取得
+	virtual picojson::object GetJson() const override;
 };
 
 
@@ -879,6 +960,9 @@ public:
 
 	// 描画
 	void Draw();
+
+	// JSONデータ取得
+	picojson::object GetJson() const;
 };
 
 
@@ -963,6 +1047,11 @@ public:
 	bool SaveImage(const std::tstring& filePath) const { return m_canvas.SaveImage(filePath); }
 	// 描画内容をクリップボードへコピー
 	bool CopyImage(CWnd* pOwner) const { return m_canvas.CopyImage(pOwner); }
+
+	// 描画内容をJsonエクスポート
+	bool SaveJson(const std::tstring& filePath) const;
+	// 描画内容をJsonインポート
+	bool LoadJson(const std::tstring& filePath);
 
 	// 座標系変換：内部キャンバス座標系→コントロール座標系
 	Coord<long> CanvasToControl(Coord<double> canvasCoord) const
