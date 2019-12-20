@@ -538,6 +538,10 @@ public:
 	//   ※形状ごとにオーバーライドする
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const { return BoundingBox<double>(); }
 
+	// 形状の整合性チェック
+	//   ※形状ごとにオーバーライドする
+	virtual bool Verify() const { return true; }
+
 	// 描画
 	void Draw() {
 		// 描画領域に含まれなければ描画しない
@@ -558,6 +562,8 @@ class NodeGrid : public Node
 protected:
 	// 形状が描画領域に含まれるかチェック
 	virtual bool IsIncludeCanvas() const override;
+	// 形状を描画
+	virtual void DrawContent() override;
 
 public:
 	// コンストラクタ
@@ -568,8 +574,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
 };
 
 
@@ -579,6 +583,10 @@ class NodeOrigin : public Node
 private:
 	// 座標データ
 	Coord<double> m_point;
+
+protected:
+	// 形状を描画
+	virtual void DrawContent() override;
 
 public:
 	// コンストラクタ
@@ -592,8 +600,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
 };
 
 
@@ -603,6 +609,10 @@ class NodeAxis : public Node
 private:
 	// 座標データ
 	Coord<double> m_point;
+
+protected:
+	// 形状を描画
+	virtual void DrawContent() override;
 
 public:
 	// コンストラクタ
@@ -614,8 +624,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
 };
 
 
@@ -628,6 +636,10 @@ private:
 	// 点の種類
 	PointType m_pointType;
 
+protected:
+	// 形状を描画
+	virtual void DrawContent() override;
+
 public:
 	// コンストラクタ
 	NodePoint(Manager* pManager, const Coord<double>& point, PointType pointType) :
@@ -639,8 +651,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
 };
 
 
@@ -663,6 +673,10 @@ private:
 
 	// 線分を取得
 	Coords<double, 2> Segment() const;
+
+protected:
+	// 形状を描画
+	virtual void DrawContent() override;
 
 public:
 	// コンストラクタ
@@ -699,8 +713,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
 };
 
 
@@ -713,6 +725,10 @@ private:
 	// 円弧の方向の種類
 	ArcDirectionType m_arcDirectionType;
 
+protected:
+	// 形状を描画
+	virtual void DrawContent() override;
+
 public:
 	// コンストラクタ
 	NodeArc(Manager* pManager, const Coords<double, 3>& points, ArcDirectionType arcDirectionType) :
@@ -724,8 +740,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
+	// 形状の整合性チェック
+	virtual bool Verify() const override;
 };
 
 
@@ -740,6 +756,10 @@ private:
 	// 塗りつぶしの種類
 	FillType m_fillType;
 
+protected:
+	// 形状を描画
+	virtual void DrawContent() override;
+
 public:
 	// コンストラクタ
 	NodeCircle(Manager* pManager, const Coord<double>& point, double radius, FillType fillType) :
@@ -752,8 +772,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
 };
 
 
@@ -766,6 +784,10 @@ private:
 	// 塗りつぶしの種類
 	FillType m_fillType;
 
+protected:
+	// 形状を描画
+	virtual void DrawContent() override;
+
 public:
 	// コンストラクタ
 	NodePolygon(Manager* pManager, const Coords_v<double>& points, FillType fillType) :
@@ -777,8 +799,6 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
 };
 
 
@@ -804,6 +824,10 @@ private:
 	// 扇形のリージョン（コントロール座標）を算出
 	void CreateSectorRgn(CRgn* sectorRgn) const;
 
+protected:
+	// 形状を描画
+	virtual void DrawContent() override;
+
 public:
 	// コンストラクタ
 	NodeSector(Manager* pManager, const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType) :
@@ -817,8 +841,8 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// 形状を描画
-	virtual void DrawContent() override;
+	// 形状の整合性チェック
+	virtual bool Verify() const override;
 };
 
 
@@ -840,7 +864,11 @@ public:
 	void Clear();
 
 	// ノード追加
-	void AddNode(Node* pNode) { m_nodes.push_back(std::unique_ptr<Node>(pNode)); }
+	bool AddNode(Node* pNode) {
+		if (!pNode->Verify()) return false;
+		m_nodes.push_back(std::unique_ptr<Node>(pNode));
+		return true;
+	}
 
 	// 全形状の最小包含箱を算出
 	BoundingBox<double> CalcBoundingBox(bool forFit = false) const;
@@ -965,49 +993,92 @@ public:
 	void Fit(double shapeOccupancy);
 
 	// グリッド追加
-	void AddGrid()
+	bool AddGrid()
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeGrid(this));
+		return m_layers[m_currentLayerNo]->AddNode(new NodeGrid(this));
 	}
 	// 原点追加
-	void AddOrigin(const Coord<double>& point)
+	bool AddOrigin(const Coord<double>& point)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeOrigin(this, point));
+		return m_layers[m_currentLayerNo]->AddNode(new NodeOrigin(this, point));
 	}
 	// 軸追加
-	void AddAxis(const Coord<double>& point)
+	bool AddAxis(const Coord<double>& point)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeAxis(this, point));
+		return m_layers[m_currentLayerNo]->AddNode(new NodeAxis(this, point));
 	}
 	// 点追加
-	void AddPoint(const Coord<double>& point, PointType pointType)
+	bool AddPoint(const Coord<double>& point, PointType pointType)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodePoint(this, point, pointType));
+		return m_layers[m_currentLayerNo]->AddNode(new NodePoint(this, point, pointType));
 	}
 	// 線追加
-	void AddLine(const Coords<double, 2>& points, LineLimitType lineLimitType)
+	bool AddLine(const Coords<double, 2>& points, LineLimitType lineLimitType)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeLine(this, points, lineLimitType));
+		return m_layers[m_currentLayerNo]->AddNode(new NodeLine(this, points, lineLimitType));
 	}
 	// 円弧追加
-	void AddArc(const Coords<double, 3>& points, ArcDirectionType arcDirectionType)
+	bool AddArc(const Coords<double, 3>& points, ArcDirectionType arcDirectionType)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeArc(this, points, arcDirectionType));
+		return m_layers[m_currentLayerNo]->AddNode(new NodeArc(this, points, arcDirectionType));
 	}
 	// 円追加
-	void AddCircle(const Coord<double>& point, double radius, FillType fillType)
+	bool AddCircle(const Coord<double>& point, double radius, FillType fillType)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeCircle(this, point, radius, fillType));
+		return m_layers[m_currentLayerNo]->AddNode(new NodeCircle(this, point, radius, fillType));
 	}
 	// 多角形追加
-	void AddPolygon(const Coords_v<double>& points, FillType fillType)
+	bool AddPolygon(const Coords_v<double>& points, FillType fillType)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodePolygon(this, points, fillType));
+		return m_layers[m_currentLayerNo]->AddNode(new NodePolygon(this, points, fillType));
 	}
 	// 扇形追加
-	void AddSector(const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType)
+	bool AddSector(const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType)
 	{
-		m_layers[m_currentLayerNo]->AddNode(new NodeSector(this, points, innerRadius, arcDirectionType, fillType));
+		return m_layers[m_currentLayerNo]->AddNode(new NodeSector(this, points, innerRadius, arcDirectionType, fillType));
+	}
+};
+
+
+// ユーティリティクラス
+class Util
+{
+public:
+	// 長さ0チェック
+	static bool IsZeroLength(double value) { return std::abs(value) < LENGTH_TOLERANCE; }
+	// 角度0チェック
+	static bool IsZeroAngle(double value) { return std::abs(value) < ANGLE_TOLERANCE; }
+
+	// 2点の同一チェック
+	static bool IsSamePoint(const Coord<double>& p1, const Coord<double>& p2) { return IsZeroLength(p1.Length(p2)); }
+	// 2直線の平行チェック
+	static bool IsParallel(const Coords<double, 2>& l1, const Coords<double, 2>& l2)
+	{
+		// 単位ベクトル算出
+		Coord<double> v1 = (l1[END] - l1[START]) / l1[START].Length(l1[END]);
+		Coord<double> v2 = (l2[END] - l2[START]) / l2[START].Length(l2[END]);
+		// 内積と外積を算出
+		double inner = v1.x * v2.x + v1.y * v2.y;
+		double outer = v1.x * v2.y - v2.x * v1.y;
+		// 角度が0なら平行
+		return IsZeroAngle(std::atan2(outer, inner));
+	}
+
+	// 円弧の整合性チェック
+	static bool VerifyArc(const Coords<double, 3>& arc)
+	{
+		// 始点と終点が一致
+		if (Util::IsSamePoint(arc[START], arc[END])) return false;
+		// 始点と中心点が一致
+		if (Util::IsSamePoint(arc[START], arc[CENTER])) return false;
+		// 終点と中心点が一致
+		if (Util::IsSamePoint(arc[START], arc[CENTER])) return false;
+		// 半径が不一致
+		if (!Util::IsZeroLength(
+			arc[START].Length(arc[CENTER]) - arc[END].Length(arc[CENTER])
+		)) return false;
+
+		return true;
 	}
 };
 

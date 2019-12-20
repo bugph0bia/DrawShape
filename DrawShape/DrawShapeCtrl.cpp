@@ -64,16 +64,16 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Zoom", dispidZoom, Zoom, VT_BOOL, VTS_R8 VTS_I4 VTS_I4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Pan", dispidPan, Pan, VT_BOOL, VTS_I4 VTS_I4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Fit", dispidFit, Fit, VT_EMPTY, VTS_R8)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddLine", dispidAddLine, AddLine, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddInfiniteLine2Point", dispidAddInfiniteLine2Point, AddInfiniteLine2Point, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddInfiniteLine1PointAngle", dispidAddInfiniteLine1PointAngle, AddInfiniteLine1PointAngle, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPoint", dispidAddPoint, AddPoint, VT_EMPTY, VTS_R8 VTS_R8 VTS_I4)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddArc", dispidAddArc, AddArc, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddCircle", dispidAddCircle, AddCircle, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddLine", dispidAddLine, AddLine, VT_BOOL, VTS_R8 VTS_R8 VTS_R8 VTS_R8)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddInfiniteLine2Point", dispidAddInfiniteLine2Point, AddInfiniteLine2Point, VT_BOOL, VTS_R8 VTS_R8 VTS_R8 VTS_R8)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddInfiniteLine1PointAngle", dispidAddInfiniteLine1PointAngle, AddInfiniteLine1PointAngle, VT_BOOL, VTS_R8 VTS_R8 VTS_R8)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPoint", dispidAddPoint, AddPoint, VT_BOOL, VTS_R8 VTS_R8 VTS_I4)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddArc", dispidAddArc, AddArc, VT_BOOL, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddCircle", dispidAddCircle, AddCircle, VT_BOOL, VTS_R8 VTS_R8 VTS_R8 VTS_BOOL)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddPolygon", dispidAddPolygon, AddPolygon, VT_BOOL, VTS_VARIANT VTS_I4 VTS_BOOL)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddSector", dispidAddSector, AddSector, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL VTS_BOOL)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddOrigin", dispidAddOrigin, AddOrigin, VT_EMPTY, VTS_R8 VTS_R8)
-	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddAxis", dispidAddAxis, AddAxis, VT_EMPTY, VTS_R8 VTS_R8)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddSector", dispidAddSector, AddSector, VT_BOOL, VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_R8 VTS_BOOL VTS_BOOL)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddOrigin", dispidAddOrigin, AddOrigin, VT_BOOL, VTS_R8 VTS_R8)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "AddAxis", dispidAddAxis, AddAxis, VT_BOOL, VTS_R8 VTS_R8)
 END_DISPATCH_MAP()
 
 // イベント マップ
@@ -297,6 +297,7 @@ void CDrawShapeCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 		if (m_CanMouseDragPan) {
 			// ドラッグ中であることを覚える
 			m_isDragging = TRUE;
+			m_pntDraggingStartPos = point;
 			m_pntDraggingBasePos = point;
 
 			// ドラッグ中カーソル：全方向矢印
@@ -319,10 +320,15 @@ void CDrawShapeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 
 	// 実行モード
 	if (AmbientUserMode()) {
+		BOOL isDraged = FALSE;
 		// ドラッグによるパンを許可している場合
 		if (m_CanMouseDragPan) {
+			// ドラッグ中にマウスが移動したか
+			if (m_pntDraggingStartPos.x != point.x || m_pntDraggingStartPos.y != point.y) isDraged = TRUE;
+
 			// ドラッグ終了とする
 			m_isDragging = FALSE;
+			m_pntDraggingStartPos = POINT{ 0, 0 };
 			m_pntDraggingBasePos = POINT{ 0, 0 };
 
 			// カーソルを戻す：十字
@@ -332,9 +338,12 @@ void CDrawShapeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 			::ClipCursor(NULL);
 		}
 
-		// LeftClickイベント発生
-		auto canvasCoord = m_pDrawManager->ControlToCanvas(Drawer::Coord<long>(point.x, point.y));
-		FireLeftClick(point.x, point.y, canvasCoord.x, canvasCoord.y);
+		// ドラッグされなかった場合
+		if (!isDraged) {
+			// LeftClickイベント発生
+			auto canvasCoord = m_pDrawManager->ControlToCanvas(Drawer::Coord<long>(point.x, point.y));
+			FireLeftClick(point.x, point.y, canvasCoord.x, canvasCoord.y);
+		}
 	}
 
 	COleControl::OnLButtonUp(nFlags, point);
@@ -967,33 +976,33 @@ void CDrawShapeCtrl::Fit(DOUBLE shapeOccupancy)
 }
 
 
-void CDrawShapeCtrl::AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey)
+VARIANT_BOOL CDrawShapeCtrl::AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->AddLine(
+	return m_pDrawManager->AddLine(
 		Drawer::Coords<double, 2>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey) },
 		Drawer::LineLimitType::Finite
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey)
+VARIANT_BOOL CDrawShapeCtrl::AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->AddLine(
+	return m_pDrawManager->AddLine(
 		Drawer::Coords<double, 2>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey) },
 		Drawer::LineLimitType::Infinite
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle)
+VARIANT_BOOL CDrawShapeCtrl::AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -1003,50 +1012,50 @@ void CDrawShapeCtrl::AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle
 	double ex = x + cos(angle);
 	double ey = x + sin(angle);
 
-	m_pDrawManager->AddLine(
+	return m_pDrawManager->AddLine(
 		Drawer::Coords<double, 2>{ Drawer::Coord<double>(x, y), Drawer::Coord<double>(ex, ey) },
 		Drawer::LineLimitType::Infinite
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::AddPoint(DOUBLE x, DOUBLE y, LONG type)
+VARIANT_BOOL CDrawShapeCtrl::AddPoint(DOUBLE x, DOUBLE y, LONG type)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->AddPoint(
+	return m_pDrawManager->AddPoint(
 		Drawer::Coord<double>(x, y),
 		static_cast<Drawer::PointType>(type)
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left)
+VARIANT_BOOL CDrawShapeCtrl::AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->AddArc(
+	return m_pDrawManager->AddArc(
 		Drawer::Coords<double, 3>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey), Drawer::Coord<double>(cx, cy) },
 		(left ? Drawer::ArcDirectionType::Left : Drawer::ArcDirectionType::Right)
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill)
+VARIANT_BOOL CDrawShapeCtrl::AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->AddCircle(
+	return m_pDrawManager->AddCircle(
 		Drawer::Coord<double>(cx, cy),
 		radius,
 		(fill ? Drawer::FillType::Fill : Drawer::FillType::NoFill)
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -1071,51 +1080,49 @@ VARIANT_BOOL CDrawShapeCtrl::AddPolygon(VARIANT& pointCoords, LONG pointsCount, 
 		points.push_back(Drawer::Coord<double>(saPointCoords[i * 2 + 0], saPointCoords[i * 2 + 1]));
 	}
 
-	m_pDrawManager->AddPolygon(
+	return m_pDrawManager->AddPolygon(
 		points,
 		(fill ? Drawer::FillType::Fill : Drawer::FillType::NoFill)
-	);
-
-	return VARIANT_TRUE;
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill)
+VARIANT_BOOL CDrawShapeCtrl::AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->AddSector(
+	return m_pDrawManager->AddSector(
 		Drawer::Coords<double, 3>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey), Drawer::Coord<double>(cx, cy) },
 		innerRadius,
 		(left ? Drawer::ArcDirectionType::Left : Drawer::ArcDirectionType::Right),
 		(fill ? Drawer::FillType::Fill : Drawer::FillType::NoFill)
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::AddOrigin(DOUBLE ox, DOUBLE oy)
+VARIANT_BOOL CDrawShapeCtrl::AddOrigin(DOUBLE ox, DOUBLE oy)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->AddOrigin(
+	return m_pDrawManager->AddOrigin(
 		Drawer::Coord<double>(ox, oy)
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
-void CDrawShapeCtrl::AddAxis(DOUBLE ox, DOUBLE oy)
+VARIANT_BOOL CDrawShapeCtrl::AddAxis(DOUBLE ox, DOUBLE oy)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
-	m_pDrawManager->AddAxis(
+	return m_pDrawManager->AddAxis(
 		Drawer::Coord<double>(ox, oy)
-	);
+	) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 
@@ -1124,6 +1131,7 @@ void CDrawShapeCtrl::Initialize()
 {
 	// ドラッグ状態をクリア
 	m_isDragging = FALSE;
+	m_pntDraggingStartPos = POINT{ 0, 0 };
 	m_pntDraggingBasePos = POINT{ 0, 0 };
 
 	// コントロールの矩形領域
