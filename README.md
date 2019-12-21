@@ -19,6 +19,9 @@ Visual Studio 2019
 ## ライセンス
 MIT License
 
+## 利用しているOSS
+- [PicoJSON](https://github.com/kazuho/picojson)
+
 ## インストール／アンインストール
 ### インストール方法
 - Windows (x86) の場合

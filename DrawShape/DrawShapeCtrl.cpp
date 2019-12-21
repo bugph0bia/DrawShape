@@ -54,6 +54,8 @@ BEGIN_DISPATCH_MAP(CDrawShapeCtrl, COleControl)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "Clear", dispidClear, Clear, VT_EMPTY, VTS_NONE)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "SaveImage", dispidSaveImage, SaveImage, VT_BOOL, VTS_BSTR)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "CopyImage", dispidCopyImage, CopyImage, VT_BOOL, VTS_NONE)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "SaveContents", dispidSaveContents, SaveContents, VT_BOOL, VTS_BSTR)
+	DISP_FUNCTION_ID(CDrawShapeCtrl, "LoadContents", dispidLoadContents, LoadContents, VT_BOOL, VTS_BSTR)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "CanvasToControl", dispidCanvasToControl, CanvasToControl, VT_EMPTY, VTS_R8 VTS_R8 VTS_PI4 VTS_PI4)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "ControlToCanvas", dispidControlToCanvas, ControlToCanvas, VT_EMPTY, VTS_I4 VTS_I4 VTS_PR8 VTS_PR8)
 	DISP_FUNCTION_ID(CDrawShapeCtrl, "InsertLayer", dispidInsertLayer, InsertLayer, VT_BOOL, VTS_I4)
@@ -864,6 +866,26 @@ VARIANT_BOOL CDrawShapeCtrl::CopyImage()
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
 	return m_pDrawManager->CopyImage(this) ? VARIANT_TRUE : VARIANT_FALSE;
+}
+
+
+VARIANT_BOOL CDrawShapeCtrl::SaveContents(LPCTSTR filePath)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	return m_pDrawManager->SaveContents(filePath) ? VARIANT_TRUE : VARIANT_FALSE;
+}
+
+
+VARIANT_BOOL CDrawShapeCtrl::LoadContents(LPCTSTR filePath)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// TODO: ここにディスパッチ ハンドラー コードを追加します
+
+	return m_pDrawManager->LoadContents(filePath) ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 

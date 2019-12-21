@@ -20,7 +20,7 @@ library DrawShapeLib
 	]
 	dispinterface _DDrawShape
 	{
-		properties:
+	properties:
 			[id(1)] OLE_COLOR BackColor;
 			[id(2)] OLE_COLOR GridColor;
 			[id(3)] DOUBLE GridSize;
@@ -46,26 +46,28 @@ library DrawShapeLib
 			[id(22)] void Clear();
 			[id(23)] VARIANT_BOOL SaveImage(BSTR filePath);
 			[id(24)] VARIANT_BOOL CopyImage();
-			[id(25)] void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
-			[id(26)] void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
-			[id(27)] VARIANT_BOOL InsertLayer(LONG insertNo);
-			[id(28)] void ClearCurrentLayer();
-			[id(29)] LONG DeleteCurrentLayer();
-			[id(30)] void SetEnableCurrentLayer(VARIANT_BOOL enable);
-			[id(31)] VARIANT_BOOL GetEnableCurrentLayer();
-			[id(32)] VARIANT_BOOL Zoom(DOUBLE coef, LONG ctrlBaseX, LONG ctrlBaseY);
-			[id(33)] VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
-			[id(34)] void Fit(DOUBLE shapeOccupancy);
-			[id(35)] VARIANT_BOOL AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-			[id(36)] VARIANT_BOOL AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
-			[id(37)] VARIANT_BOOL AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
-			[id(38)] VARIANT_BOOL AddPoint(DOUBLE x, DOUBLE y, LONG type);
-			[id(39)] VARIANT_BOOL AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
-			[id(40)] VARIANT_BOOL AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
-			[id(41)] VARIANT_BOOL AddPolygon(SAFEARRAY(DOUBLE) pointCoords, LONG pointsCount, VARIANT_BOOL fill);
-			[id(42)] VARIANT_BOOL AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
-			[id(43)] VARIANT_BOOL AddOrigin(DOUBLE ox, DOUBLE oy);
-			[id(44)] VARIANT_BOOL AddAxis(DOUBLE ox, DOUBLE oy);
+			[id(25)] VARIANT_BOOL SaveContents(BSTR filePath);
+			[id(26)] VARIANT_BOOL LoadContents(BSTR filePath);
+			[id(27)] void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
+			[id(28)] void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
+			[id(29)] VARIANT_BOOL InsertLayer(LONG insertNo);
+			[id(30)] void ClearCurrentLayer();
+			[id(31)] LONG DeleteCurrentLayer();
+			[id(32)] void SetEnableCurrentLayer(VARIANT_BOOL enable);
+			[id(33)] VARIANT_BOOL GetEnableCurrentLayer();
+			[id(34)] VARIANT_BOOL Zoom(DOUBLE coef, LONG ctrlBaseX, LONG ctrlBaseY);
+			[id(35)] VARIANT_BOOL Pan(LONG ctrlMoveX, LONG ctrlMoveY);
+			[id(36)] void Fit(DOUBLE shapeOccupancy);
+			[id(37)] VARIANT_BOOL AddLine(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+			[id(38)] VARIANT_BOOL AddInfiniteLine2Point(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey);
+			[id(39)] VARIANT_BOOL AddInfiniteLine1PointAngle(DOUBLE x, DOUBLE y, DOUBLE angle);
+			[id(40)] VARIANT_BOOL AddPoint(DOUBLE x, DOUBLE y, LONG type);
+			[id(41)] VARIANT_BOOL AddArc(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, VARIANT_BOOL left);
+			[id(42)] VARIANT_BOOL AddCircle(DOUBLE cx, DOUBLE cy, DOUBLE radius, VARIANT_BOOL fill);
+			[id(43)] VARIANT_BOOL AddPolygon(SAFEARRAY(DOUBLE) pointCoords, LONG pointsCount, VARIANT_BOOL fill);
+			[id(44)] VARIANT_BOOL AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE ey, DOUBLE cx, DOUBLE cy, DOUBLE innerRadius, VARIANT_BOOL left, VARIANT_BOOL fill);
+			[id(45)] VARIANT_BOOL AddOrigin(DOUBLE ox, DOUBLE oy);
+			[id(46)] VARIANT_BOOL AddAxis(DOUBLE ox, DOUBLE oy);
 	};
 
 	//  CDrawShapeCtrl のイベント ディスパッチ インターフェイス
