@@ -88,6 +88,8 @@ protected:
 	afx_msg void Clear();
 	afx_msg VARIANT_BOOL SaveImage(LPCTSTR filePath);
 	afx_msg VARIANT_BOOL CopyImage();
+	afx_msg VARIANT_BOOL SaveContents(LPCTSTR filePath);
+	afx_msg VARIANT_BOOL LoadContents(LPCTSTR filePath);
 	afx_msg void CanvasToControl(DOUBLE canvasX, DOUBLE canvasY, LONG* pCtrlX, LONG* pCtrlY);
 	afx_msg void ControlToCanvas(LONG ctrlX, LONG ctrlY, DOUBLE* pCanvasX, DOUBLE* pCanvasY);
 	afx_msg VARIANT_BOOL InsertLayer(LONG insertNo);
@@ -120,26 +122,28 @@ public:
 	enum {
 		eventidLeftClick = 2L,
 		eventidCursorMove = 1L,
-		dispidAddAxis = 44L,
-		dispidAddOrigin = 43L,
-		dispidAddSector = 42L,
-		dispidAddPolygon = 41L,
-		dispidAddCircle = 40L,
-		dispidAddArc = 39L,
-		dispidAddPoint = 38L,
-		dispidAddInfiniteLine1PointAngle = 37L,
-		dispidAddInfiniteLine2Point = 36L,
-		dispidAddLine = 35L,
-		dispidFit = 34L,
-		dispidPan = 33L,
-		dispidZoom = 32L,
-		dispidGetEnableCurrentLayer = 31L,
-		dispidSetEnableCurrentLayer = 30L,
-		dispidDeleteCurrentLayer = 29L,
-		dispidClearCurrentLayer = 28L,
-		dispidInsertLayer = 27L,
-		dispidControlToCanvas = 26L,
-		dispidCanvasToControl = 25L,
+		dispidAddAxis = 46L,
+		dispidAddOrigin = 45L,
+		dispidAddSector = 44L,
+		dispidAddPolygon = 43L,
+		dispidAddCircle = 42L,
+		dispidAddArc = 41L,
+		dispidAddPoint = 40L,
+		dispidAddInfiniteLine1PointAngle = 39L,
+		dispidAddInfiniteLine2Point = 38L,
+		dispidAddLine = 37L,
+		dispidFit = 36L,
+		dispidPan = 35L,
+		dispidZoom = 34L,
+		dispidGetEnableCurrentLayer = 33L,
+		dispidSetEnableCurrentLayer = 32L,
+		dispidDeleteCurrentLayer = 31L,
+		dispidClearCurrentLayer = 30L,
+		dispidInsertLayer = 29L,
+		dispidControlToCanvas = 28L,
+		dispidCanvasToControl = 27L,
+		dispidLoadContents = 26L,
+		dispidSaveContents = 25L,
 		dispidCopyImage = 24L,
 		dispidSaveImage = 23L,
 		dispidClear = 22L,
