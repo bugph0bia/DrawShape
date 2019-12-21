@@ -82,6 +82,9 @@
             this.tbLastClick = new System.Windows.Forms.TextBox();
             this.lbLastClick = new System.Windows.Forms.Label();
             this.lbCursor = new System.Windows.Forms.Label();
+            this.btLoadJson = new System.Windows.Forms.Button();
+            this.btSaveJson = new System.Windows.Forms.Button();
+            this.openFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.gbLayer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbBackColor)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbGridColor)).BeginInit();
@@ -594,7 +597,7 @@
             // btCopyImage
             // 
             this.btCopyImage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btCopyImage.Location = new System.Drawing.Point(730, 604);
+            this.btCopyImage.Location = new System.Drawing.Point(730, 539);
             this.btCopyImage.Name = "btCopyImage";
             this.btCopyImage.Size = new System.Drawing.Size(131, 23);
             this.btCopyImage.TabIndex = 13;
@@ -605,7 +608,7 @@
             // btSaveImage
             // 
             this.btSaveImage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btSaveImage.Location = new System.Drawing.Point(730, 575);
+            this.btSaveImage.Location = new System.Drawing.Point(730, 510);
             this.btSaveImage.Name = "btSaveImage";
             this.btSaveImage.Size = new System.Drawing.Size(131, 23);
             this.btSaveImage.TabIndex = 12;
@@ -679,6 +682,32 @@
             this.lbCursor.TabIndex = 4;
             this.lbCursor.Text = "cursor";
             // 
+            // btLoadJson
+            // 
+            this.btLoadJson.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btLoadJson.Location = new System.Drawing.Point(730, 612);
+            this.btLoadJson.Name = "btLoadJson";
+            this.btLoadJson.Size = new System.Drawing.Size(131, 23);
+            this.btLoadJson.TabIndex = 15;
+            this.btLoadJson.Text = "load obj from json";
+            this.btLoadJson.UseVisualStyleBackColor = true;
+            this.btLoadJson.Click += new System.EventHandler(this.btLoadJson_Click);
+            // 
+            // btSaveJson
+            // 
+            this.btSaveJson.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btSaveJson.Location = new System.Drawing.Point(730, 583);
+            this.btSaveJson.Name = "btSaveJson";
+            this.btSaveJson.Size = new System.Drawing.Size(131, 23);
+            this.btSaveJson.TabIndex = 14;
+            this.btSaveJson.Text = "save obj to json";
+            this.btSaveJson.UseVisualStyleBackColor = true;
+            this.btSaveJson.Click += new System.EventHandler(this.btSaveJson_Click);
+            // 
+            // openFileDlg
+            // 
+            this.openFileDlg.FileName = "openFileDialog1";
+            // 
             // formMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -688,6 +717,8 @@
             this.Controls.Add(this.tbLastClick);
             this.Controls.Add(this.tbPosition);
             this.Controls.Add(this.gbFunc);
+            this.Controls.Add(this.btSaveJson);
+            this.Controls.Add(this.btLoadJson);
             this.Controls.Add(this.btSaveImage);
             this.Controls.Add(this.btCopyImage);
             this.Controls.Add(this.btFit);
@@ -778,6 +809,9 @@
         private System.Windows.Forms.DataGridView dgvPoints;
         private System.Windows.Forms.TextBox tbResult;
         private System.Windows.Forms.Label lbResult;
+        private System.Windows.Forms.Button btLoadJson;
+        private System.Windows.Forms.Button btSaveJson;
+        private System.Windows.Forms.OpenFileDialog openFileDlg;
     }
 }
 

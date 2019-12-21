@@ -7,6 +7,9 @@
 #include <limits>
 #include <stdexcept>
 #include <cmath>
+#include <fstream>
+
+#include "picojson.h"
 
 // std::string/wstringのサンク対応
 #ifdef UNICODE
@@ -41,6 +44,38 @@ static constexpr double ANGLE_TOLERANCE = 0.00001;
 static constexpr double	PI = 3.141592653589793;
 // 線分、円弧の座標コレクションのインデックス値
 enum { START, END, CENTER };
+
+// JSONキー：レイヤー配列
+static const std::string JSON_KEY_LAYERS = "Layers";
+// JSONキー：描画フラグ
+static const std::string JSON_KEY_ENABLE_DRAW = "EnableDraw";
+// JSONキー：ノード配列
+static const std::string JSON_KEY_NODES = "Nodes";
+// JSONキー：ノードタイプ
+static const std::string JSON_KEY_TYPE = "Type";
+// JSONキー：ペン・ブラシ
+static const std::string JSON_KEY_PEN = "Pen";
+static const std::string JSON_KEY_BRUSH = "Brush";
+static const std::string JSON_KEY_COLOR = "Color";
+static const std::string JSON_KEY_WIDTH = "Width";
+static const std::string JSON_KEY_STYLE = "Style";
+// JSONキー: ノード情報
+static const std::string JSON_KEY_POINTS = "Points";
+static const std::string JSON_KEY_POINT_TYPE = "PointType";
+static const std::string JSON_KEY_RADIUS = "Radius";
+static const std::string JSON_KEY_LINE_LIMIT_TYPE = "LineLimitType";
+static const std::string JSON_KEY_ARC_DIRECTION_TYPE = "ArcDirectionType";
+static const std::string JSON_KEY_FILL_TYPE = "FillType";
+// JSON値：ノードタイプ
+static const std::string JSON_VALUE_TYPE_GRID = "Grid";
+static const std::string JSON_VALUE_TYPE_ORIGIN = "Origin";
+static const std::string JSON_VALUE_TYPE_AXIS = "Axis";
+static const std::string JSON_VALUE_TYPE_POINT = "Point";
+static const std::string JSON_VALUE_TYPE_LINE = "Line";
+static const std::string JSON_VALUE_TYPE_ARC = "Arc";
+static const std::string JSON_VALUE_TYPE_CIRCLE = "Circle";
+static const std::string JSON_VALUE_TYPE_POLYGON = "Polygon";
+static const std::string JSON_VALUE_TYPE_SECTOR = "Sector";
 
 
 //////////////// 列挙型 ////////////////
@@ -502,6 +537,8 @@ protected:
 	LOGPEN m_pen;
 	// ブラシ
 	LOGBRUSH m_brush;
+	// JSON: ノードタイプ名称
+	std::string m_typeName;
 
 	// 形状が描画領域に含まれるかチェック
 	//   ※形状ごとに必要に応じてオーバーライドする
@@ -553,6 +590,14 @@ public:
 		// 形状を描画
 		DrawContent();
 	}
+
+	// JSONデータ取得
+	virtual picojson::object GetContents() const;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode);
+
+	// タイプ名に応じたノードを作成
+	static Node* FromTypeName(const std::string& typeName, Manager* pManager);
 };
 
 
@@ -570,10 +615,16 @@ public:
 	NodeGrid(Manager* pManager) :
 		Node(pManager)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_GRID;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -590,16 +641,26 @@ protected:
 
 public:
 	// コンストラクタ
+	NodeOrigin(Manager* pManager) :
+		NodeOrigin(pManager, Coord<double>()) { }
+
+	// コンストラクタ
 	NodeOrigin(Manager* pManager, const Coord<double>& point) :
 		Node(pManager),
 		m_point(point)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_ORIGIN;
 		// 原点はブラシの色をペンの色に合わせる
 		m_brush.lbColor = m_pen.lopnColor;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -616,14 +677,24 @@ protected:
 
 public:
 	// コンストラクタ
+	NodeAxis(Manager* pManager) :
+		NodeAxis(pManager, Coord<double>()) { }
+
+	// コンストラクタ
 	NodeAxis(Manager* pManager, const Coord<double>& point) :
 		Node(pManager),
 		m_point(point)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_AXIS;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -642,15 +713,25 @@ protected:
 
 public:
 	// コンストラクタ
+	NodePoint(Manager* pManager) :
+		NodePoint(pManager, Coord<double>(), PointType::Pixel) { }
+
+	// コンストラクタ
 	NodePoint(Manager* pManager, const Coord<double>& point, PointType pointType) :
 		Node(pManager),
 		m_point(point),
 		m_pointType(pointType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_POINT;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -665,10 +746,14 @@ private:
 
 	// 無限直線情報
 	struct InfiniteInfo{
-		bool isVertical;		// 鉛直フラグ
-		double coefficientX;	// xの係数 (非鉛直の場合に使用する)
-		double interceptY;		// y切片 (非鉛直の場合に使用する)
-		double interceptX;		// x切片 (鉛直の場合に使用する)
+		// 鉛直フラグ
+		bool isVertical;
+		// xの係数 (非鉛直の場合に使用する)
+		double coefficientX;
+		// y切片 (非鉛直の場合に使用する)
+		double interceptY;
+		// x切片 (鉛直の場合に使用する)
+		double interceptX;
 	} m_infiniteInfo;
 
 	// 線分を取得
@@ -680,11 +765,18 @@ protected:
 
 public:
 	// コンストラクタ
+	NodeLine(Manager* pManager) :
+		NodeLine(pManager, Coords<double, 2>(), LineLimitType::Finite) { }
+
+	// コンストラクタ
 	NodeLine(Manager* pManager, const Coords<double, 2>& points, LineLimitType lineLimitType) :
 		Node(pManager),
 		m_lineLimitType(lineLimitType),
 		m_infiniteInfo({false, 0.0, 0.0, 0.0})
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_LINE;
+
 		// 有限の線分
 		if (m_lineLimitType == LineLimitType::Finite) {
 			// 座標値データをコピー
@@ -713,6 +805,10 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -731,17 +827,27 @@ protected:
 
 public:
 	// コンストラクタ
+	NodeArc(Manager* pManager) :
+		NodeArc(pManager, Coords<double, 3>(), ArcDirectionType::Left) { }
+
+	// コンストラクタ
 	NodeArc(Manager* pManager, const Coords<double, 3>& points, ArcDirectionType arcDirectionType) :
 		Node(pManager),
 		m_points(points),
 		m_arcDirectionType(arcDirectionType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_ARC;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状の整合性チェック
 	virtual bool Verify() const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -762,16 +868,26 @@ protected:
 
 public:
 	// コンストラクタ
+	NodeCircle(Manager* pManager) :
+		NodeCircle(pManager, Coord<double>(), 0, FillType::NoFill) { }
+
+	// コンストラクタ
 	NodeCircle(Manager* pManager, const Coord<double>& point, double radius, FillType fillType) :
 		Node(pManager),
 		m_point(point),
 		m_radius(radius),
 		m_fillType(fillType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_CIRCLE;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -790,15 +906,25 @@ protected:
 
 public:
 	// コンストラクタ
+	NodePolygon(Manager* pManager) :
+		NodePolygon(pManager, Coords_v<double>(), FillType::NoFill) { }
+
+	// コンストラクタ
 	NodePolygon(Manager* pManager, const Coords_v<double>& points, FillType fillType) :
 		Node(pManager),
 		m_points(points),
 		m_fillType(fillType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_POLYGON;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -830,6 +956,10 @@ protected:
 
 public:
 	// コンストラクタ
+	NodeSector(Manager* pManager) :
+		NodeSector(pManager, Coords<double, 3>(), 0, ArcDirectionType::Left, FillType::NoFill) { }
+
+	// コンストラクタ
 	NodeSector(Manager* pManager, const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType) :
 		Node(pManager),
 		m_points(points),
@@ -837,12 +967,18 @@ public:
 		m_arcDirectionType(arcDirectionType),
 		m_fillType(fillType)
 	{
+		// JSON: ノードタイプ名
+		m_typeName = JSON_VALUE_TYPE_SECTOR;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状の整合性チェック
 	virtual bool Verify() const override;
+	// JSONデータ取得
+	virtual picojson::object GetContents() const override;
+	// JSONデータ設定
+	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -879,6 +1015,11 @@ public:
 
 	// 描画
 	void Draw();
+
+	// JSONデータ取得
+	picojson::object GetContents() const;
+	// JSONデータ設定
+	bool SetContents(picojson::object& jLayer, Manager* pManager);
 };
 
 
@@ -952,17 +1093,26 @@ public:
 	// レイヤー枚数を取得
 	std::size_t GetLayerCount() const { return m_layers.size(); }
 	// カレントレイヤーをクリア
-	void ClearCurrentLayer() { m_layers[m_currentLayerNo]->Clear(); }
+	void ClearCurrentLayer() { if (m_layers.size() > m_currentLayerNo) m_layers[m_currentLayerNo]->Clear(); }
 	// カレントレイヤーをクリア
 	std::size_t DeleteCurrentLayer();
 	// カレントレイヤーの描画可否
-	void SetEnableCurrentLayer(bool val) { m_layers[m_currentLayerNo]->SetEnableDraw(val); };
-	bool GetEnableCurrentLayer() const { return m_layers[m_currentLayerNo]->GetEnableDraw(); };
+	void SetEnableCurrentLayer(bool val) { if (m_layers.size() > m_currentLayerNo) m_layers[m_currentLayerNo]->SetEnableDraw(val); }
+	bool GetEnableCurrentLayer() const
+	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
+		return m_layers[m_currentLayerNo]->GetEnableDraw();
+	}
 
 	// 描画内容をファイル保存(BMP/PNG/JPEG/GIF)
 	bool SaveImage(const std::tstring& filePath) const { return m_canvas.SaveImage(filePath); }
 	// 描画内容をクリップボードへコピー
 	bool CopyImage(CWnd* pOwner) const { return m_canvas.CopyImage(pOwner); }
+
+	// 描画内容をJSONファイルへエクスポート
+	bool SaveContents(const std::tstring& filePath) const;
+	// 描画内容をJSONファイルからインポート
+	bool LoadContents(const std::tstring& filePath);
 
 	// 座標系変換：内部キャンバス座標系→コントロール座標系
 	Coord<long> CanvasToControl(Coord<double> canvasCoord) const
@@ -995,46 +1145,55 @@ public:
 	// グリッド追加
 	bool AddGrid()
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodeGrid(this));
 	}
 	// 原点追加
 	bool AddOrigin(const Coord<double>& point)
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodeOrigin(this, point));
 	}
 	// 軸追加
 	bool AddAxis(const Coord<double>& point)
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodeAxis(this, point));
 	}
 	// 点追加
 	bool AddPoint(const Coord<double>& point, PointType pointType)
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodePoint(this, point, pointType));
 	}
 	// 線追加
 	bool AddLine(const Coords<double, 2>& points, LineLimitType lineLimitType)
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodeLine(this, points, lineLimitType));
 	}
 	// 円弧追加
 	bool AddArc(const Coords<double, 3>& points, ArcDirectionType arcDirectionType)
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodeArc(this, points, arcDirectionType));
 	}
 	// 円追加
 	bool AddCircle(const Coord<double>& point, double radius, FillType fillType)
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodeCircle(this, point, radius, fillType));
 	}
 	// 多角形追加
 	bool AddPolygon(const Coords_v<double>& points, FillType fillType)
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodePolygon(this, points, fillType));
 	}
 	// 扇形追加
 	bool AddSector(const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType)
 	{
+		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodeSector(this, points, innerRadius, arcDirectionType, fillType));
 	}
 };
