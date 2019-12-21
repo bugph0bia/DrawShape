@@ -66,6 +66,38 @@ namespace DrawShapeTest
             axDrawShape.CopyImage();
         }
 
+        private void btSaveJson_Click(object sender, EventArgs e)
+        {
+            saveFileDlg.Filter = "Json File(*.json)|*.json|All File(*.*)|*.*";
+            saveFileDlg.FilterIndex = 1;
+            saveFileDlg.RestoreDirectory = true;
+
+            // ファイル保存ダイアログを表示する
+            if (saveFileDlg.ShowDialog() == DialogResult.OK)
+            {
+                // JSONファイルを保存
+                axDrawShape.SaveContents(saveFileDlg.FileName);
+            }
+        }
+
+        private void btLoadJson_Click(object sender, EventArgs e)
+        {
+            openFileDlg.Filter = "Json File(*.json)|*.json|All File(*.*)|*.*";
+            openFileDlg.FilterIndex = 1;
+            openFileDlg.RestoreDirectory = true;
+
+            // ファイルを開くダイアログを表示する
+            if (openFileDlg.ShowDialog() == DialogResult.OK)
+            {
+                // JSONファイルを読み込み
+                axDrawShape.LoadContents(openFileDlg.FileName);
+                // レイヤーリストを更新
+                UpdateLayerList();
+                // 再描画
+                axDrawShape.Redraw();
+            }
+        }
+
         private void clbLayer_ItemCheck(object sender, ItemCheckEventArgs e)
         {
             // 現在のカレントレイヤーNoを退避
