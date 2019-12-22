@@ -583,6 +583,39 @@ picojson::object Node::GetContents() const
 	jBrush.insert(std::make_pair(JSON_KEY_COLOR, picojson::value(static_cast<double>(m_brush.lbColor))));
 	jNode.insert(std::make_pair(JSON_KEY_BRUSH, picojson::value(jBrush)));
 
+	// JSON: 点群
+	if (m_data.points.size() > 0) {
+		picojson::array jPoints;
+		for (const auto& p : m_data.points) {
+			picojson::array jCoords;
+			jCoords.push_back(picojson::value(p.x));
+			jCoords.push_back(picojson::value(p.y));
+			jPoints.push_back(picojson::value(jCoords));
+		}
+		jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
+	}
+
+	// JSON: 半径
+	if (m_data.use_radius) {
+		jNode.insert(std::make_pair(JSON_KEY_RADIUS, picojson::value(m_data.radius)));
+	}
+
+	// JSON: 点種別
+	if (m_data.use_pointType) {
+		jNode.insert(std::make_pair(JSON_KEY_POINT_TYPE, picojson::value(static_cast<double>(m_data.pointType))));
+	}
+	// JSON: 線種別
+	if (m_data.use_lineLimitType) {
+		jNode.insert(std::make_pair(JSON_KEY_LINE_LIMIT_TYPE, picojson::value(static_cast<double>(m_data.lineLimitType))));
+	}
+	// JSON: 円弧方向
+	if (m_data.use_arcDirectionType) {
+		jNode.insert(std::make_pair(JSON_KEY_ARC_DIRECTION_TYPE, picojson::value(static_cast<double>(m_data.arcDirectionType))));
+	}
+	// JSON: 塗りつぶし種別
+	if (m_data.use_fillType) {
+		jNode.insert(std::make_pair(JSON_KEY_FILL_TYPE, picojson::value(static_cast<double>(m_data.fillType))));
+	}
 	return jNode;
 }
 
@@ -604,6 +637,48 @@ bool Node::SetContents(picojson::object& jNode)
 	picojson::object& jBrush = jNode[JSON_KEY_BRUSH].get<picojson::object>();
 	if (jBrush.count(JSON_KEY_COLOR) == 0) return false;
 	m_brush.lbColor = static_cast<COLORREF>(jBrush[JSON_KEY_COLOR].get<double>());
+
+	// JSON: 点群
+	if (m_data.points.size() > 0) {
+		if (jNode.count(JSON_KEY_POINTS) == 0) return false;
+		picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
+		if (jPoints.size() != m_data.points.size()) return false;
+		int i = 0;
+		for (auto& jPoint : jPoints) {
+			picojson::array& jCoords = jPoint.get< picojson::array>();
+			if (jCoords.size() != 2) return false;
+			m_data.points[i].x = jCoords[0].get<double>();
+			m_data.points[i].y = jCoords[1].get<double>();
+			i++;
+		}
+	}
+
+	// JSON: 半径
+	if (m_data.use_radius) {
+		if (jNode.count(JSON_KEY_RADIUS) == 0) return false;
+		m_data.radius = jNode[JSON_KEY_RADIUS].get<double>();
+	}
+
+	// JSON: 点種別
+	if (m_data.use_pointType) {
+		if (jNode.count(JSON_KEY_POINT_TYPE) == 0) return false;
+		m_data.pointType = static_cast<PointType>(static_cast<int>(jNode[JSON_KEY_POINT_TYPE].get<double>()));
+	}
+	// JSON: 線種別
+	if (m_data.use_lineLimitType) {
+		if (jNode.count(JSON_KEY_LINE_LIMIT_TYPE) == 0) return false;
+		m_data.lineLimitType = static_cast<LineLimitType>(static_cast<int>(jNode[JSON_KEY_LINE_LIMIT_TYPE].get<double>()));
+	}
+	// JSON: 円弧方向
+	if (m_data.use_arcDirectionType) {
+		if (jNode.count(JSON_KEY_ARC_DIRECTION_TYPE) == 0) return false;
+		m_data.arcDirectionType = static_cast<ArcDirectionType>(static_cast<int>(jNode[JSON_KEY_ARC_DIRECTION_TYPE].get<double>()));
+	}
+	// JSON: 塗りつぶし種別
+	if (m_data.use_fillType) {
+		if (jNode.count(JSON_KEY_FILL_TYPE) == 0) return false;
+		m_data.fillType = static_cast<FillType>(static_cast<int>(jNode[JSON_KEY_FILL_TYPE].get<double>()));
+	}
 
 	return true;
 }
@@ -635,7 +710,7 @@ BoundingBox<double> NodeGrid::CalcBoundingBox(bool forFit/*=false*/) const
 // 形状が描画領域に含まれるかチェック
 bool NodeGrid::IsIncludeCanvas() const
 {
-	// グリッドは常に含まれる状態
+	// グリッドは常に含まれる状態とする
 	return true;
 }
 
@@ -644,24 +719,6 @@ void NodeGrid::DrawContent()
 {
 	// グリッド描画
 	if(m_info.isDrawGrid) m_canvas.DrawGrid(m_info.gridSize);
-}
-
-// JSONデータ取得
-picojson::object NodeGrid::GetContents() const
-{
-	// JSON: ノード
-	picojson::object jNode = Node::GetContents();
-
-	return jNode;
-}
-
-// JSONデータ設定
-bool NodeGrid::SetContents(picojson::object& jNode)
-{
-	// 共通のデータを設定
-	Node::SetContents(jNode);
-
-	return true;
 }
 
 
@@ -673,54 +730,26 @@ BoundingBox<double> NodeOrigin::CalcBoundingBox(bool forFit/*=false*/) const
 
 	// 原点の矩形を計算
 	BoundingBox<double> bbox;
-	bbox.min.x = m_point.x - size;
-	bbox.min.y = m_point.y - size;
-	bbox.max.x = m_point.x + size;
-	bbox.max.y = m_point.y + size;
+	bbox.min.x = m_data.points[BASE].x - size;
+	bbox.min.y = m_data.points[BASE].y - size;
+	bbox.max.x = m_data.points[BASE].x + size;
+	bbox.max.y = m_data.points[BASE].y + size;
 	return bbox;
+}
+
+// 形状が描画領域に含まれるかチェック
+bool NodeOrigin::IsIncludeCanvas() const
+{
+	// 原点は常に含まれる状態とする
+	// TODO: 厳密には原点の矢印の一部が含まれるかの判定が必要
+	return true;
 }
 
 // 形状を描画
 void NodeOrigin::DrawContent()
 {
 	// 原点描画
-	if (m_info.isDrawOrigin) m_canvas.DrawOrigin(m_point, m_info.originSize);
-}
-
-// JSONデータ取得
-picojson::object NodeOrigin::GetContents() const
-{
-	// JSON: ノード
-	picojson::object jNode = Node::GetContents();
-
-	// JSON: 点群
-	picojson::array jPoints;
-	picojson::array jCoords;
-	jCoords.push_back(picojson::value(m_point.x));
-	jCoords.push_back(picojson::value(m_point.y));
-	jPoints.push_back(picojson::value(jCoords));
-	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
-
-	return jNode;
-}
-
-// JSONデータ設定
-bool NodeOrigin::SetContents(picojson::object& jNode)
-{
-	// 共通のデータを設定
-	Node::SetContents(jNode);
-
-	// JSON: 点群
-	if (jNode.count(JSON_KEY_POINTS) == 0) return false;
-	picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
-
-	if (jPoints.size() != 1) return false;
-	picojson::array& jCoords = jPoints[0].get< picojson::array>();
-	if (jCoords.size() != 2) return false;
-	m_point.x = jCoords[0].get<double>();
-	m_point.y = jCoords[1].get<double>();
-
-	return true;
+	if (m_info.isDrawOrigin) m_canvas.DrawOrigin(m_data.points[BASE], m_info.originSize);
 }
 
 
@@ -728,50 +757,22 @@ bool NodeOrigin::SetContents(picojson::object& jNode)
 BoundingBox<double> NodeAxis::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 軸の場合は最小包含箱を原点とする
-	return BoundingBox<double>(m_point);
+	return BoundingBox<double>(m_data.points[BASE]);
+}
+
+// 形状が描画領域に含まれるかチェック
+bool NodeAxis::IsIncludeCanvas() const
+{
+	// 軸は常に含まれる状態とする
+	// TODO: 厳密には軸の一部が含まれるかの判定が必要
+	return true;
 }
 
 // 形状を描画
 void NodeAxis::DrawContent()
 {
 	// 軸描画
-	if (m_info.isDrawAxis) m_canvas.DrawAxis(m_point, m_info.axisScale);
-}
-
-// JSONデータ取得
-picojson::object NodeAxis::GetContents() const
-{
-	// JSON: ノード
-	picojson::object jNode = Node::GetContents();
-
-	// JSON: 点群
-	picojson::array jPoints;
-	picojson::array jCoords;
-	jCoords.push_back(picojson::value(m_point.x));
-	jCoords.push_back(picojson::value(m_point.y));
-	jPoints.push_back(picojson::value(jCoords));
-	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
-
-	return jNode;
-}
-
-// JSONデータ設定
-bool NodeAxis::SetContents(picojson::object& jNode)
-{
-	// 共通のデータを設定
-	Node::SetContents(jNode);
-
-	// JSON: 点群
-	if (jNode.count(JSON_KEY_POINTS) == 0) return false;
-	picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
-
-	if (jPoints.size() != 1) return false;
-	picojson::array& jCoords = jPoints[0].get< picojson::array>();
-	if (jCoords.size() != 2) return false;
-	m_point.x = jCoords[0].get<double>();
-	m_point.y = jCoords[1].get<double>();
-
-	return true;
+	if (m_info.isDrawAxis) m_canvas.DrawAxis(m_data.points[BASE], m_info.axisScale);
 }
 
 
@@ -779,66 +780,27 @@ bool NodeAxis::SetContents(picojson::object& jNode)
 BoundingBox<double> NodePoint::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 最小包含箱を点とする
-	return BoundingBox<double>(m_point);
+	return BoundingBox<double>(m_data.points[BASE]);
 }
 
 // 形状を描画
 void NodePoint::DrawContent()
 {
 	// 点の種類別に描画
-	switch (m_pointType) {
+	switch (m_data.pointType) {
 	case PointType::Pixel:
 		// ピクセル
-		m_canvas.DrawPixel(m_point);
+		m_canvas.DrawPixel(m_data.points[BASE]);
 		break;
 	case PointType::Triangle:
 		// 三角形
-		m_canvas.DrawTrianglePoint(m_point);
+		m_canvas.DrawTrianglePoint(m_data.points[BASE]);
 		break;
 	case PointType::Large:
 		// 強調
-		m_canvas.DrawLargePoint(m_point);
+		m_canvas.DrawLargePoint(m_data.points[BASE]);
 		break;
 	}
-}
-
-// JSONデータ取得
-picojson::object NodePoint::GetContents() const
-{
-	// JSON: ノード
-	picojson::object jNode = Node::GetContents();
-
-	// JSON: 点群
-	picojson::array jPoints;
-	picojson::array jCoords;
-	jCoords.push_back(picojson::value(m_point.x));
-	jCoords.push_back(picojson::value(m_point.y));
-	jPoints.push_back(picojson::value(jCoords));
-	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
-	
-	// JSON: 点種別
-	jNode.insert(std::make_pair(JSON_KEY_POINT_TYPE , picojson::value(static_cast<double>(m_pointType))));
-
-	return jNode;
-}
-
-// JSONデータ設定
-bool NodePoint::SetContents(picojson::object& jNode)
-{
-	// 共通のデータを設定
-	Node::SetContents(jNode);
-
-	// JSON: 点群
-	if (jNode.count(JSON_KEY_POINTS) == 0) return false;
-	picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
-
-	if (jPoints.size() != 1) return false;
-	picojson::array& jCoords = jPoints[0].get< picojson::array>();
-	if (jCoords.size() != 2) return false;
-	m_point.x = jCoords[0].get<double>();
-	m_point.y = jCoords[1].get<double>();
-
-	return true;
 }
 
 
@@ -848,8 +810,9 @@ Coords<double, 2> NodeLine::Segment() const
 	Coords<double, 2> points;
 
 	// 有限の線分
-	if (m_lineLimitType == LineLimitType::Finite) {
-		points = m_points;
+	if (m_data.lineLimitType == LineLimitType::Finite) {
+		points[START] = m_data.points[START];
+		points[END] = m_data.points[END];
 	}
 	// 無限直線
 	else {
@@ -859,18 +822,18 @@ Coords<double, 2> NodeLine::Segment() const
 		// 鉛直線
 		if (m_infiniteInfo.isVertical) {
 			// x切片と描画領域の上下Y座標の範囲で線分を作成
-			points[0].x = m_infiniteInfo.interceptX;
-			points[0].y = canvas.min.y;
-			points[1].x = m_infiniteInfo.interceptX;
-			points[1].y = canvas.max.y;
+			points[START].x = m_infiniteInfo.interceptX;
+			points[START].y = canvas.min.y;
+			points[END].x = m_infiniteInfo.interceptX;
+			points[END].y = canvas.max.y;
 		}
 		// 非鉛直線
 		else {
 			// 描画領域の左右X座標の範囲で線分を作成 (y = c * x + i)
-			points[0].x = canvas.min.x;
-			points[0].y = m_infiniteInfo.coefficientX * canvas.min.x + m_infiniteInfo.interceptY;
-			points[1].x = canvas.max.x;
-			points[1].y = m_infiniteInfo.coefficientX * canvas.max.x + m_infiniteInfo.interceptY;
+			points[START].x = canvas.min.x;
+			points[START].y = m_infiniteInfo.coefficientX * canvas.min.x + m_infiniteInfo.interceptY;
+			points[END].x = canvas.max.x;
+			points[END].y = m_infiniteInfo.coefficientX * canvas.max.x + m_infiniteInfo.interceptY;
 		}
 	}
 	return points;
@@ -880,7 +843,7 @@ Coords<double, 2> NodeLine::Segment() const
 BoundingBox<double> NodeLine::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// Fitのために呼び出された場合は無限直線を除外する
-	if (forFit && m_lineLimitType == LineLimitType::Infinite) return BoundingBox<double>();
+	if (forFit && m_data.lineLimitType == LineLimitType::Infinite) return BoundingBox<double>();
 
 	// TODO:
 	// 線分を単純に最小包含箱として採用しているが
@@ -904,11 +867,11 @@ void NodeLine::DrawContent()
 	// コントロール座標に変換
 	auto ctrlPoints = m_canvas.CanvasToControl(Coords_v<double>(points.begin(), points.end()));
 	// 描画
-	m_canvas.GetDC()->MoveTo(ctrlPoints[0].x, ctrlPoints[0].y);
-	m_canvas.GetDC()->LineTo(ctrlPoints[1].x, ctrlPoints[1].y);
+	m_canvas.GetDC()->MoveTo(ctrlPoints[START].x, ctrlPoints[START].y);
+	m_canvas.GetDC()->LineTo(ctrlPoints[END].x, ctrlPoints[END].y);
 
 	// 線分の場合、先端の矢印描画
-	if (m_lineLimitType == LineLimitType::Finite && m_info.isDrawArrow) {
+	if (m_data.lineLimitType == LineLimitType::Finite && m_info.isDrawArrow) {
 		// 線分が矢印の羽の80%の長さより短くなるほど縮小されている場合は描画しない
 		double length = points[START].Length(points[END]);
 		if (m_canvas.CanvasToControl(length) >= m_canvas.ARROW_WING_LENGTH * 0.8) {
@@ -921,21 +884,19 @@ void NodeLine::DrawContent()
 // JSONデータ取得
 picojson::object NodeLine::GetContents() const
 {
-	// JSON: ノード
+	// 基底クラスの処理を実施
 	picojson::object jNode = Node::GetContents();
 
-	// JSON: 点群
-	picojson::array jPoints;
-	for (const auto& p : m_points) {
-		picojson::array jCoords;
-		jCoords.push_back(picojson::value(p.x));
-		jCoords.push_back(picojson::value(p.y));
-		jPoints.push_back(picojson::value(jCoords));
+	// 無限直線の場合
+	if (m_data.lineLimitType == LineLimitType::Infinite) {
+		// JSON: 無限直線の情報
+		picojson::object jInfiniteInfo;
+		jInfiniteInfo.insert(std::make_pair(JSON_KEY_IS_VERTICAL, picojson::value(m_infiniteInfo.isVertical)));
+		jInfiniteInfo.insert(std::make_pair(JSON_KEY_COEFFICIENT_X, picojson::value(m_infiniteInfo.coefficientX)));
+		jInfiniteInfo.insert(std::make_pair(JSON_KEY_INTERCEPT_Y, picojson::value(m_infiniteInfo.interceptY)));
+		jInfiniteInfo.insert(std::make_pair(JSON_KEY_INTERCEPT_X, picojson::value(m_infiniteInfo.interceptX)));
+		jNode.insert(std::make_pair(JSON_KEY_INFINITE_INFO, picojson::value(jInfiniteInfo)));
 	}
-	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
-
-	// JSON: 線種別
-	jNode.insert(std::make_pair(JSON_KEY_LINE_LIMIT_TYPE, picojson::value(static_cast<double>(m_lineLimitType))));
 
 	return jNode;
 }
@@ -943,26 +904,24 @@ picojson::object NodeLine::GetContents() const
 // JSONデータ設定
 bool NodeLine::SetContents(picojson::object& jNode)
 {
-	// 共通のデータを設定
-	Node::SetContents(jNode);
+	// 基底クラスの処理を実施
+	if (!Node::SetContents(jNode)) return false;
 
-	// JSON: 点群
-	if (jNode.count(JSON_KEY_POINTS) == 0) return false;
-	picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
+	// 無限直線の場合
+	if (m_data.lineLimitType == LineLimitType::Infinite) {
+		// JSON: 無限直線の情報
+		if (jNode.count(JSON_KEY_INFINITE_INFO) == 0) return false;
+		picojson::object& jInfiniteInfo = jNode[JSON_KEY_INFINITE_INFO].get<picojson::object>();
 
-	if (jPoints.size() != m_points.size()) return false;
-	int i = 0;
-	for (auto& jPoint : jPoints) {
-		picojson::array& jCoords = jPoint.get< picojson::array>();
-		if (jCoords.size() != 2) return false;
-		m_points[i].x = jCoords[0].get<double>();
-		m_points[i].y = jCoords[1].get<double>();
-		i++;
+		if (jInfiniteInfo.count(JSON_KEY_IS_VERTICAL) == 0) return false;
+		if (jInfiniteInfo.count(JSON_KEY_COEFFICIENT_X) == 0) return false;
+		if (jInfiniteInfo.count(JSON_KEY_INTERCEPT_Y) == 0) return false;
+		if (jInfiniteInfo.count(JSON_KEY_INTERCEPT_X) == 0) return false;
+		m_infiniteInfo.isVertical = jInfiniteInfo[JSON_KEY_IS_VERTICAL].get<bool>();
+		m_infiniteInfo.coefficientX = jInfiniteInfo[JSON_KEY_COEFFICIENT_X].get<double>();
+		m_infiniteInfo.interceptY = jInfiniteInfo[JSON_KEY_INTERCEPT_Y].get<double>();
+		m_infiniteInfo.interceptX = jInfiniteInfo[JSON_KEY_INTERCEPT_X].get<double>();
 	}
-
-	// JSON: 線種別
-	if (jNode.count(JSON_KEY_LINE_LIMIT_TYPE) == 0) return false;
-	m_lineLimitType = static_cast<LineLimitType>(static_cast<int>(jNode[JSON_KEY_LINE_LIMIT_TYPE].get<double>()));
 
 	return true;
 }
@@ -972,7 +931,10 @@ bool NodeLine::SetContents(picojson::object& jNode)
 BoundingBox<double> NodeArc::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// ベジエ曲線による座標値配列を取得
-	Coords_v<double> bezierPoints = m_canvas.CalcBezierArc(m_points, m_arcDirectionType);
+	Coords_v<double> bezierPoints = m_canvas.CalcBezierArc(
+		Coords<double, 3> { m_data.points[START], m_data.points[END], m_data.points[CENTER] },
+		m_data.arcDirectionType
+	);
 
 	// 座標値配列は 3n+1 個で構成されている
 	// 円弧を象限分割したときの始点/終点の間に制御点が2つ挟まっている状態
@@ -991,11 +953,14 @@ BoundingBox<double> NodeArc::CalcBoundingBox(bool forFit/*=false*/) const
 void NodeArc::DrawContent()
 {
 	// ベジエ曲線で円弧を描画
-	m_canvas.DrawBezierArc(m_points, m_arcDirectionType);
+	m_canvas.DrawBezierArc(
+		Coords<double, 3> { m_data.points[START], m_data.points[END], m_data.points[CENTER] },
+		m_data.arcDirectionType
+	);
 
 	// 半径が矢印の羽の長さより短くなるほど縮小されている場合は描画しない
 	// 円弧中心点の描画条件も同じとする
-	double radius = m_points[CENTER].Length(m_points[START]);
+	double radius = m_data.points[CENTER].Length(m_data.points[START]);
 	if (m_canvas.CanvasToControl(radius) >= m_canvas.ARROW_WING_LENGTH) {
 		// 円弧の先端の矢印描画
 		if (m_info.isDrawArrow) {
@@ -1005,13 +970,13 @@ void NodeArc::DrawContent()
 			// 回転角度を決定
 			//   円弧方向が左：+90度
 			//   円弧方向が右：-90度
-			double angle = m_arcDirectionType == ArcDirectionType::Left ? PI / 2 : -PI / 2;
+			double angle = m_data.arcDirectionType == ArcDirectionType::Left ? PI / 2 : -PI / 2;
 
 			// 終点を基準に、中心点を上で決めた回転角度だけ回転して
 			// 矢印を描くための軸の始点を算出
-			arrowAxis[START] = m_points[END].Rotate(m_points[CENTER], angle);
+			arrowAxis[START] = m_data.points[END].Rotate(m_data.points[CENTER], angle);
 			// 矢印を描くための軸の終点は円弧の終点
-			arrowAxis[END] = m_points[END];
+			arrowAxis[END] = m_data.points[END];
 
 			// 矢印を描画
 			m_canvas.DrawArrowHead(arrowAxis);
@@ -1019,7 +984,7 @@ void NodeArc::DrawContent()
 
 		// 円弧の中心点を描画
 		if (m_info.isDrawCenter) {
-			m_canvas.DrawTrianglePoint(m_points[CENTER]);
+			m_canvas.DrawTrianglePoint(m_data.points[CENTER]);
 		}
 	}
 }
@@ -1027,56 +992,7 @@ void NodeArc::DrawContent()
 // 形状の整合性チェック
 bool NodeArc::Verify() const
 {
-	return Util::VerifyArc(m_points);
-}
-
-// JSONデータ取得
-picojson::object NodeArc::GetContents() const
-{
-	// JSON: ノード
-	picojson::object jNode = Node::GetContents();
-
-	// JSON: 点群
-	picojson::array jPoints;
-	for (const auto& p : m_points) {
-		picojson::array jCoords;
-		jCoords.push_back(picojson::value(p.x));
-		jCoords.push_back(picojson::value(p.y));
-		jPoints.push_back(picojson::value(jCoords));
-	}
-	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
-
-	// JSON: 円弧方向
-	jNode.insert(std::make_pair(JSON_KEY_ARC_DIRECTION_TYPE, picojson::value(static_cast<double>(m_arcDirectionType))));
-
-	return jNode;
-}
-
-// JSONデータ設定
-bool NodeArc::SetContents(picojson::object& jNode)
-{
-	// 共通のデータを設定
-	Node::SetContents(jNode);
-
-	// JSON: 点群
-	if (jNode.count(JSON_KEY_POINTS) == 0) return false;
-	picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
-
-	if (jPoints.size() != m_points.size()) return false;
-	int i = 0;
-	for (auto& jPoint : jPoints) {
-		picojson::array& jCoords = jPoint.get< picojson::array>();
-		if (jCoords.size() != 2) return false;
-		m_points[i].x = jCoords[0].get<double>();
-		m_points[i].y = jCoords[1].get<double>();
-		i++;
-	}
-
-	// JSON: 円弧方向
-	if (jNode.count(JSON_KEY_ARC_DIRECTION_TYPE) == 0) return false;
-	m_arcDirectionType = static_cast<ArcDirectionType>(static_cast<int>(jNode[JSON_KEY_ARC_DIRECTION_TYPE].get<double>()));
-
-	return true;
+	return Util::VerifyArc(Coords<double, 3> { m_data.points[START], m_data.points[END], m_data.points[CENTER] });
 }
 
 
@@ -1085,21 +1001,22 @@ BoundingBox<double> NodeCircle::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 円の矩形を計算
 	BoundingBox<double> bbox;
-	bbox.min.x = m_point.x - m_radius;
-	bbox.min.y = m_point.y - m_radius;
-	bbox.max.x = m_point.x + m_radius;
-	bbox.max.y = m_point.y + m_radius;
+	bbox.min.x = m_data.points[BASE].x - m_data.radius;
+	bbox.min.y = m_data.points[BASE].y - m_data.radius;
+	bbox.max.x = m_data.points[BASE].x + m_data.radius;
+	bbox.max.y = m_data.points[BASE].y + m_data.radius;
 	return bbox;
 }
 // 形状を描画
 void NodeCircle::DrawContent()
 {
 	// 塗りつぶしなし
-	if (m_fillType == FillType::NoFill) {
+	if (m_data.fillType == FillType::NoFill) {
 		// 0度から180度の円弧
-		Coords<double, 3> arc = { m_point, m_point, m_point };
-		arc[START].x += m_radius;
-		arc[END].x -= m_radius;
+		Coords<double, 3> arc;
+		arc.fill(m_data.points[BASE]);
+		arc[START].x += m_data.radius;
+		arc[END].x -= m_data.radius;
 		// 半円を描画
 		m_canvas.DrawBezierArc(arc, ArcDirectionType::Left);
 		// 半円を描画
@@ -1112,68 +1029,18 @@ void NodeCircle::DrawContent()
 			// 中心点を描画
 			if (m_info.isDrawCenter) {
 				// 三角形の点を描画
-				m_canvas.DrawTrianglePoint(m_point);
+				m_canvas.DrawTrianglePoint(m_data.points[BASE]);
 			}
 		}
 	}
 	// 塗りつぶしあり
 	else {
 		// 円の外接する矩形の左上と右下の点を算出
-		Coord<long> ctrlLeftUp = m_canvas.CanvasToControl(Coord<double>(m_point.x - m_radius, m_point.y + m_radius));
-		Coord<long> ctrlRightDown = m_canvas.CanvasToControl(Coord<double>(m_point.x + m_radius, m_point.y - m_radius));
+		Coord<long> ctrlLeftUp = m_canvas.CanvasToControl(Coord<double>(m_data.points[BASE].x - m_data.radius, m_data.points[BASE].y + m_data.radius));
+		Coord<long> ctrlRightDown = m_canvas.CanvasToControl(Coord<double>(m_data.points[BASE].x + m_data.radius, m_data.points[BASE].y - m_data.radius));
 		// 円を描画
 		m_canvas.GetDC()->Ellipse(ctrlLeftUp.x, ctrlLeftUp.y, ctrlRightDown.x, ctrlRightDown.y);
 	}
-}
-
-// JSONデータ取得
-picojson::object NodeCircle::GetContents() const
-{
-	// JSON: ノード
-	picojson::object jNode = Node::GetContents();
-
-	// JSON: 点群
-	picojson::array jPoints;
-	picojson::array jCoords;
-	jCoords.push_back(picojson::value(m_point.x));
-	jCoords.push_back(picojson::value(m_point.y));
-	jPoints.push_back(picojson::value(jCoords));
-	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
-
-	// JSON: 半径
-	jNode.insert(std::make_pair(JSON_KEY_RADIUS, picojson::value(m_radius)));
-
-	// JSON: 塗りつぶし種別
-	jNode.insert(std::make_pair(JSON_KEY_FILL_TYPE, picojson::value(static_cast<double>(m_fillType))));
-
-	return jNode;
-}
-
-// JSONデータ設定
-bool NodeCircle::SetContents(picojson::object& jNode)
-{
-	// 共通のデータを設定
-	Node::SetContents(jNode);
-
-	// JSON: 点群
-	if (jNode.count(JSON_KEY_POINTS) == 0) return false;
-	picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
-
-	if (jPoints.size() != 1) return false;
-	picojson::array& jCoords = jPoints[0].get< picojson::array>();
-	if (jCoords.size() != 2) return false;
-	m_point.x = jCoords[0].get<double>();
-	m_point.y = jCoords[1].get<double>();
-
-	// JSON: 半径
-	if (jNode.count(JSON_KEY_RADIUS) == 0) return false;
-	m_radius = jNode[JSON_KEY_RADIUS].get<double>();
-
-	// JSON: 塗りつぶし種別
-	if (jNode.count(JSON_KEY_FILL_TYPE) == 0) return false;
-	m_fillType = static_cast<FillType>(static_cast<int>(jNode[JSON_KEY_FILL_TYPE].get<double>()));
-
-	return true;
 }
 
 
@@ -1182,7 +1049,7 @@ BoundingBox<double> NodePolygon::CalcBoundingBox(bool forFit/*=false*/) const
 {
 	// 形状を構成する座標から最小包含箱を算出
 	BoundingBox<double> bbox;
-	for (const auto& p : m_points) {
+	for (const auto& p : m_data.points) {
 		bbox += p;
 	}
 	return bbox;
@@ -1191,9 +1058,9 @@ BoundingBox<double> NodePolygon::CalcBoundingBox(bool forFit/*=false*/) const
 void NodePolygon::DrawContent()
 {
 	// 塗りつぶしなし
-	if (m_fillType == FillType::NoFill) {
+	if (m_data.fillType == FillType::NoFill) {
 		// 形状の座標値をコントロール座標に変換
-		Coords_v<long> ctrlPoints = m_canvas.CanvasToControl(m_points);
+		Coords_v<long> ctrlPoints = m_canvas.CanvasToControl(m_data.points);
 
 		// 最後の点に移動しておく
 		m_canvas.GetDC()->MoveTo(ctrlPoints.rbegin()->x, ctrlPoints.rbegin()->y);
@@ -1205,9 +1072,9 @@ void NodePolygon::DrawContent()
 		// 矢印を描画
 		if (m_info.isDrawArrow) {
 			// 最後の点を矢印の軸の始点とする
-			Coord<double> s = *(m_points.rbegin());
+			Coord<double> s = *(m_data.points.rbegin());
 			// 矢印の軸の終点として座標を順に取得
-			for (const auto& e : m_points) {
+			for (const auto& e : m_data.points) {
 				// 線分が矢印の羽の80%の長さより短くなるほど縮小されている場合は描画しない
 				double length = s.Length(e);
 				if (m_canvas.CanvasToControl(length) >= m_canvas.ARROW_WING_LENGTH * 0.8) {
@@ -1223,7 +1090,7 @@ void NodePolygon::DrawContent()
 	else {
 		// 座標をPOINT型の配列へ変換
 		std::vector<POINT> ctrlPoints;
-		for (const auto& p : m_points) {
+		for (const auto& p : m_data.points) {
 			auto cp = m_canvas.CanvasToControl(p);
 			ctrlPoints.push_back(POINT{ cp.x, cp.y });
 		}
@@ -1232,51 +1099,20 @@ void NodePolygon::DrawContent()
 	}
 }
 
-// JSONデータ取得
-picojson::object NodePolygon::GetContents() const
-{
-	// JSON: ノード
-	picojson::object jNode = Node::GetContents();
-
-	// JSON: 点群
-	picojson::array jPoints;
-	for (const auto& p : m_points) {
-		picojson::array jCoords;
-		jCoords.push_back(picojson::value(p.x));
-		jCoords.push_back(picojson::value(p.y));
-		jPoints.push_back(picojson::value(jCoords));
-	}
-	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
-
-	// JSON: 塗りつぶし種別
-	jNode.insert(std::make_pair(JSON_KEY_FILL_TYPE, picojson::value(static_cast<double>(m_fillType))));
-
-	return jNode;
-}
-
 // JSONデータ設定
 bool NodePolygon::SetContents(picojson::object& jNode)
 {
-	// 共通のデータを設定
-	Node::SetContents(jNode);
+	// 基底クラスの処理を実施
+	if (!Node::SetContents(jNode)) return false;
 
-	// JSON: 点群
+	// NodePolygonの点群は可変のため基底クラスでは設定不可能のためここで設定する
 	if (jNode.count(JSON_KEY_POINTS) == 0) return false;
 	picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
-
-	if (jPoints.size() != m_points.size()) return false;
-	int i = 0;
 	for (auto& jPoint : jPoints) {
 		picojson::array& jCoords = jPoint.get< picojson::array>();
 		if (jCoords.size() != 2) return false;
-		m_points[i].x = jCoords[0].get<double>();
-		m_points[i].y = jCoords[1].get<double>();
-		i++;
+		m_data.points.push_back(Coord<double>(jCoords[0].get<double>(), jCoords[1].get<double>()));
 	}
-
-	// JSON: 塗りつぶし種別
-	if (jNode.count(JSON_KEY_FILL_TYPE) == 0) return false;
-	m_fillType = static_cast<FillType>(static_cast<int>(jNode[JSON_KEY_FILL_TYPE].get<double>()));
 
 	return true;
 }
@@ -1286,17 +1122,17 @@ bool NodePolygon::SetContents(picojson::object& jNode)
 Coords<double, 3> NodeSector::CalcInnerArc() const
 {
 	// 中心点から始点と終点へのベクトルを算出
-	Coord<double> vectorCS = m_points[START] - m_points[CENTER];
-	Coord<double> vectorCE = m_points[END] - m_points[CENTER];
+	Coord<double> vectorCS = m_data.points[START] - m_data.points[CENTER];
+	Coord<double> vectorCE = m_data.points[END] - m_data.points[CENTER];
 
 	// 外側の円弧半径を算出
-	double outerRadius = m_points[CENTER].Length(m_points[START]);
+	double outerRadius = m_data.points[CENTER].Length(m_data.points[START]);
 
 	// 内側の円弧座標を算出（中心点からのベクトルを内側円弧の長さに変換し元の座標へ戻す）
 	Coords<double, 3> innerArc;
-	innerArc[START] = vectorCS / outerRadius * m_innerRadius + m_points[CENTER];
-	innerArc[END] = vectorCE / outerRadius * m_innerRadius + m_points[CENTER];
-	innerArc[CENTER] = m_points[CENTER];
+	innerArc[START] = vectorCS / outerRadius * m_data.radius + m_data.points[CENTER];
+	innerArc[END] = vectorCE / outerRadius * m_data.radius + m_data.points[CENTER];
+	innerArc[CENTER] = m_data.points[CENTER];
 
 	// 内側の円弧が微小な場合は中心点の座標とする
 	if (Util::IsSamePoint(innerArc[START], innerArc[CENTER]) ||
@@ -1311,7 +1147,7 @@ Coords<double, 3> NodeSector::CalcInnerArc() const
 void NodeSector::CreateSectorPath() const
 {
 	// 外側と内側の円弧を取得
-	Coords<double, 3> outerArc = m_points;
+	Coords<double, 3> outerArc { m_data.points[START], m_data.points[END], m_data.points[CENTER] };
 	Coords<double, 3> innerArc = CalcInnerArc();
 	// 内側の円弧は方向を逆転しておく
 	std::swap(innerArc[START], innerArc[END]);
@@ -1319,7 +1155,7 @@ void NodeSector::CreateSectorPath() const
 	Coords_v<long> ctrlOuterArc = m_canvas.CanvasToControl(Coords_v<double>(outerArc.begin(), outerArc.end()));
 	Coords_v<long> ctrlInnerArc = m_canvas.CanvasToControl(Coords_v<double>(innerArc.begin(), innerArc.end()));
 	// 円弧方向
-	ArcDirectionType outerDir = m_arcDirectionType;
+	ArcDirectionType outerDir = m_data.arcDirectionType;
 	ArcDirectionType innerDir = (outerDir == ArcDirectionType::Left ? ArcDirectionType::Right : ArcDirectionType::Left);
 
 	// パスをクリア
@@ -1346,9 +1182,9 @@ void NodeSector::CreateSectorRgn(CRgn* pSectorRgn) const
 	//   ベジエ曲線部分と直線部分が別々の閉領域と認識されてしまいうまくいかない
 
 	// 外側の円弧（コントロール座標）
-	Coords_v<long> ctrlOuterArc = m_canvas.CanvasToControl(Coords_v<double>(m_points.begin(), m_points.end()));
+	Coords_v<long> ctrlOuterArc = m_canvas.CanvasToControl(Coords_v<double>(m_data.points.begin(), m_data.points.end()));
 	// 左向きの円弧にしておく
-	if (m_arcDirectionType == ArcDirectionType::Right) {
+	if (m_data.arcDirectionType == ArcDirectionType::Right) {
 		std::swap(ctrlOuterArc[START], ctrlOuterArc[END]);
 	}
 
@@ -1359,7 +1195,10 @@ void NodeSector::CreateSectorRgn(CRgn* pSectorRgn) const
 	// パスを開始
 	m_canvas.GetDC()->BeginPath();
 	// 円弧部分のパス→円弧終点から中心点へのパス→中心点から円弧始点へのパス
-	m_canvas.DrawBezierArc(m_points, m_arcDirectionType);
+	m_canvas.DrawBezierArc(
+		Coords<double, 3>{ m_data.points[START], m_data.points[END], m_data.points[CENTER] },
+		m_data.arcDirectionType
+	);
 	m_canvas.GetDC()->MoveTo(ctrlOuterArc[END].x, ctrlOuterArc[END].y);
 	m_canvas.GetDC()->LineTo(ctrlOuterArc[CENTER].x, ctrlOuterArc[CENTER].y);
 	m_canvas.GetDC()->LineTo(ctrlOuterArc[START].x, ctrlOuterArc[START].y);
@@ -1370,7 +1209,7 @@ void NodeSector::CreateSectorRgn(CRgn* pSectorRgn) const
 	pSectorRgn->CreateFromPath(m_canvas.GetDC());
 
 	// 内側円弧の半径をコントロール座標に変換
-	long ctrlInnerRadius = static_cast<long>(m_canvas.CanvasToControl(m_innerRadius));
+	long ctrlInnerRadius = static_cast<long>(m_canvas.CanvasToControl(m_data.radius));
 
 	// 内側の円形リージョンを取得
 	CRgn innerCircleRgn;
@@ -1405,7 +1244,7 @@ BoundingBox<double> NodeSector::CalcBoundingBox(bool forFit/*=false*/) const
 void NodeSector::DrawContent()
 {
 	// 塗りつぶしあり
-	if (m_fillType == FillType::Fill) {
+	if (m_data.fillType == FillType::Fill) {
 		// 扇形リージョンを取得して塗りつぶす
 		CRgn sectorRgn;
 		CreateSectorRgn(&sectorRgn);
@@ -1420,66 +1259,9 @@ void NodeSector::DrawContent()
 // 形状の整合性チェック
 bool NodeSector::Verify() const
 {
-	return Util::VerifyArc(m_points);
-}
-
-// JSONデータ取得
-picojson::object NodeSector::GetContents() const
-{
-	// JSON: ノード
-	picojson::object jNode = Node::GetContents();
-
-	// JSON: 点群
-	picojson::array jPoints;
-	for (const auto& p : m_points) {
-		picojson::array jCoords;
-		jCoords.push_back(picojson::value(p.x));
-		jCoords.push_back(picojson::value(p.y));
-		jPoints.push_back(picojson::value(jCoords));
-	}
-	jNode.insert(std::make_pair(JSON_KEY_POINTS, picojson::value(jPoints)));
-
-	// JSON: 半径
-	jNode.insert(std::make_pair(JSON_KEY_RADIUS, picojson::value(m_innerRadius)));
-	// JSON: 円弧方向
-	jNode.insert(std::make_pair(JSON_KEY_ARC_DIRECTION_TYPE, picojson::value(static_cast<double>(m_arcDirectionType))));
-	// JSON: 塗りつぶし種別
-	jNode.insert(std::make_pair(JSON_KEY_FILL_TYPE, picojson::value(static_cast<double>(m_fillType))));
-
-	return jNode;
-}
-
-// JSONデータ設定
-bool NodeSector::SetContents(picojson::object& jNode)
-{
-	// 共通のデータを設定
-	Node::SetContents(jNode);
-
-	// JSON: 点群
-	if (jNode.count(JSON_KEY_POINTS) == 0) return false;
-	picojson::array& jPoints = jNode[JSON_KEY_POINTS].get<picojson::array>();
-
-	if (jPoints.size() != m_points.size()) return false;
-	int i = 0;
-	for (auto& jPoint : jPoints) {
-		picojson::array& jCoords = jPoint.get< picojson::array>();
-		if (jCoords.size() != 2) return false;
-		m_points[i].x = jCoords[0].get<double>();
-		m_points[i].y = jCoords[1].get<double>();
-		i++;
-	}
-
-	// JSON: 半径
-	if (jNode.count(JSON_KEY_RADIUS) == 0) return false;
-	m_innerRadius = jNode[JSON_KEY_RADIUS].get<double>();
-	// JSON: 円弧方向
-	if (jNode.count(JSON_KEY_ARC_DIRECTION_TYPE) == 0) return false;
-	m_arcDirectionType = static_cast<ArcDirectionType>(static_cast<int>(jNode[JSON_KEY_ARC_DIRECTION_TYPE].get<double>()));
-	// JSON: 塗りつぶし種別
-	if (jNode.count(JSON_KEY_FILL_TYPE) == 0) return false;
-	m_fillType = static_cast<FillType>(static_cast<int>(jNode[JSON_KEY_FILL_TYPE].get<double>()));
-
-	return true;
+	return Util::VerifyArc(
+		Coords<double, 3>{ m_data.points[START], m_data.points[END], m_data.points[CENTER] }
+	);
 }
 
 
@@ -1683,14 +1465,14 @@ bool Manager::LoadContents(const std::tstring& filePath)
 	const std::string err = picojson::parse(jData, json);
 	if (!err.empty()) return false;
 
-	// 一時的なレイヤーコレクションを作成して読み込む
-	std::vector<std::unique_ptr<Layer>> tmplayers;
-
 	// JSON: ルートを取得
 	picojson::object& jRoot = jData.get<picojson::object>();
 	// JSON: レイヤーコレクションを取得
 	if (jRoot.count(JSON_KEY_LAYERS) == 0) return false;
 	picojson::array& jLayers = jRoot[JSON_KEY_LAYERS].get<picojson::array>();
+
+	// 一時的なレイヤーコレクションを作成して読み込む
+	std::vector<std::unique_ptr<Layer>> tmplayers;
 
 	// 全レイヤーのJSONデータを作成
 	for (auto& v : jLayers) {
