@@ -43,39 +43,45 @@ static constexpr double ANGLE_TOLERANCE = 0.00001;
 // 円周率
 static constexpr double	PI = 3.141592653589793;
 // 線分、円弧の座標コレクションのインデックス値
-enum { START, END, CENTER };
+enum { START = 0, END = 1, CENTER = 2, BASE=0 };
 
 // JSONキー：レイヤー配列
-static const std::string JSON_KEY_LAYERS = "Layers";
+static const std::tstring JSON_KEY_LAYERS = _T("Layers");
 // JSONキー：描画フラグ
-static const std::string JSON_KEY_ENABLE_DRAW = "EnableDraw";
+static const std::tstring JSON_KEY_ENABLE_DRAW = _T("EnableDraw");
 // JSONキー：ノード配列
-static const std::string JSON_KEY_NODES = "Nodes";
+static const std::tstring JSON_KEY_NODES = _T("Nodes");
 // JSONキー：ノードタイプ
-static const std::string JSON_KEY_TYPE = "Type";
+static const std::tstring JSON_KEY_TYPE = _T("Type");
 // JSONキー：ペン・ブラシ
-static const std::string JSON_KEY_PEN = "Pen";
-static const std::string JSON_KEY_BRUSH = "Brush";
-static const std::string JSON_KEY_COLOR = "Color";
-static const std::string JSON_KEY_WIDTH = "Width";
-static const std::string JSON_KEY_STYLE = "Style";
+static const std::tstring JSON_KEY_PEN = _T("Pen");
+static const std::tstring JSON_KEY_BRUSH = _T("Brush");
+static const std::tstring JSON_KEY_COLOR = _T("Color");
+static const std::tstring JSON_KEY_WIDTH = _T("Width");
+static const std::tstring JSON_KEY_STYLE = _T("Style");
 // JSONキー: ノード情報
-static const std::string JSON_KEY_POINTS = "Points";
-static const std::string JSON_KEY_POINT_TYPE = "PointType";
-static const std::string JSON_KEY_RADIUS = "Radius";
-static const std::string JSON_KEY_LINE_LIMIT_TYPE = "LineLimitType";
-static const std::string JSON_KEY_ARC_DIRECTION_TYPE = "ArcDirectionType";
-static const std::string JSON_KEY_FILL_TYPE = "FillType";
+static const std::tstring JSON_KEY_POINTS = _T("Points");
+static const std::tstring JSON_KEY_POINT_TYPE = _T("PointType");
+static const std::tstring JSON_KEY_RADIUS = _T("Radius");
+static const std::tstring JSON_KEY_LINE_LIMIT_TYPE = _T("LineLimitType");
+static const std::tstring JSON_KEY_ARC_DIRECTION_TYPE = _T("ArcDirectionType");
+static const std::tstring JSON_KEY_FILL_TYPE = _T("FillType");
+// JSONキー: ノード情報（無限直線）
+static const std::tstring JSON_KEY_INFINITE_INFO = _T("InfiniteInfo");
+static const std::tstring JSON_KEY_IS_VERTICAL = _T("IsVertical");
+static const std::tstring JSON_KEY_COEFFICIENT_X = _T("CoefficientX");
+static const std::tstring JSON_KEY_INTERCEPT_Y = _T("InterceptY");
+static const std::tstring JSON_KEY_INTERCEPT_X = _T("InterceptX");
 // JSON値：ノードタイプ
-static const std::string JSON_VALUE_TYPE_GRID = "Grid";
-static const std::string JSON_VALUE_TYPE_ORIGIN = "Origin";
-static const std::string JSON_VALUE_TYPE_AXIS = "Axis";
-static const std::string JSON_VALUE_TYPE_POINT = "Point";
-static const std::string JSON_VALUE_TYPE_LINE = "Line";
-static const std::string JSON_VALUE_TYPE_ARC = "Arc";
-static const std::string JSON_VALUE_TYPE_CIRCLE = "Circle";
-static const std::string JSON_VALUE_TYPE_POLYGON = "Polygon";
-static const std::string JSON_VALUE_TYPE_SECTOR = "Sector";
+static const std::tstring JSON_VALUE_TYPE_GRID = _T("Grid");
+static const std::tstring JSON_VALUE_TYPE_ORIGIN = _T("Origin");
+static const std::tstring JSON_VALUE_TYPE_AXIS = _T("Axis");
+static const std::tstring JSON_VALUE_TYPE_POINT = _T("Point");
+static const std::tstring JSON_VALUE_TYPE_LINE = _T("Line");
+static const std::tstring JSON_VALUE_TYPE_ARC = _T("Arc");
+static const std::tstring JSON_VALUE_TYPE_CIRCLE = _T("Circle");
+static const std::tstring JSON_VALUE_TYPE_POLYGON = _T("Polygon");
+static const std::tstring JSON_VALUE_TYPE_SECTOR = _T("Sector");
 
 
 //////////////// 列挙型 ////////////////
@@ -326,6 +332,49 @@ template<typename T>
 BoundingBox<T> operator*(const BoundingBox<T>& lhs, const BoundingBox<T>& rhs) { return BoundingBox<T>(lhs) *= rhs; }
 
 
+// ユーティリティクラス
+class Util
+{
+public:
+	// 長さ0チェック
+	static bool IsZeroLength(double value) { return std::abs(value) < LENGTH_TOLERANCE; }
+	// 角度0チェック
+	static bool IsZeroAngle(double value) { return std::abs(value) < ANGLE_TOLERANCE; }
+
+	// 2点の同一チェック
+	static bool IsSamePoint(const Coord<double>& p1, const Coord<double>& p2) { return IsZeroLength(p1.Length(p2)); }
+	// 2直線の平行チェック
+	static bool IsParallel(const Coords<double, 2>& l1, const Coords<double, 2>& l2)
+	{
+		// 単位ベクトル算出
+		Coord<double> v1 = (l1[END] - l1[START]) / l1[START].Length(l1[END]);
+		Coord<double> v2 = (l2[END] - l2[START]) / l2[START].Length(l2[END]);
+		// 内積と外積を算出
+		double inner = v1.x * v2.x + v1.y * v2.y;
+		double outer = v1.x * v2.y - v2.x * v1.y;
+		// 角度が0なら平行
+		return IsZeroAngle(std::atan2(outer, inner));
+	}
+
+	// 円弧の整合性チェック
+	static bool VerifyArc(const Coords<double, 3>& arc)
+	{
+		// 始点と終点が一致
+		if (Util::IsSamePoint(arc[START], arc[END])) return false;
+		// 始点と中心点が一致
+		if (Util::IsSamePoint(arc[START], arc[CENTER])) return false;
+		// 終点と中心点が一致
+		if (Util::IsSamePoint(arc[START], arc[CENTER])) return false;
+		// 半径が不一致
+		if (!Util::IsZeroLength(
+			arc[START].Length(arc[CENTER]) - arc[END].Length(arc[CENTER])
+		)) return false;
+
+		return true;
+	}
+};
+
+
 // 設定情報構造体
 struct SettingInfo
 {
@@ -540,6 +589,40 @@ protected:
 	// JSON: ノードタイプ名称
 	std::string m_typeName;
 
+	// コンテンツデータ
+	struct ContentsData {
+		// 座標データ
+		Coords_v<double> points;
+		// 半径
+		double radius;
+		bool use_radius;
+		// 点の種類
+		PointType pointType;
+		bool use_pointType;
+		// 限界値の種類
+		LineLimitType lineLimitType;
+		bool use_lineLimitType;
+		// 円弧の方向の種類
+		ArcDirectionType arcDirectionType;
+		bool use_arcDirectionType;
+		// 塗りつぶしの種類
+		FillType fillType;
+		bool use_fillType;
+
+		// コンストラクタ
+		ContentsData() :
+			radius(0),
+			use_radius(0),
+			pointType(PointType::Pixel),
+			use_pointType(0),
+			lineLimitType(LineLimitType::Finite),
+			use_lineLimitType(0),
+			arcDirectionType(ArcDirectionType::Left),
+			use_arcDirectionType(0),
+			fillType(FillType::NoFill),
+			use_fillType(0) {}
+	} m_data;
+
 	// 形状が描画領域に含まれるかチェック
 	//   ※形状ごとに必要に応じてオーバーライドする
 	virtual bool IsIncludeCanvas() const
@@ -564,9 +647,7 @@ public:
 		m_info(info),
 		m_canvas(canvas),
 		m_pen(pen),
-		m_brush(brush)
-	{
-	}
+		m_brush(brush) {}
 
 	// デストラクタ
 	virtual ~Node() {}
@@ -592,8 +673,10 @@ public:
 	}
 
 	// JSONデータ取得
+	//   ※必要に応じて形状ごとにオーバーライドする
 	virtual picojson::object GetContents() const;
 	// JSONデータ設定
+	//   ※必要に応じて形状ごとにオーバーライドする
 	virtual bool SetContents(picojson::object& jNode);
 
 	// タイプ名に応じたノードを作成
@@ -621,92 +704,82 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// JSONデータ取得
-	virtual picojson::object GetContents() const override;
-	// JSONデータ設定
-	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
 // ノード派生クラス：原点
 class NodeOrigin : public Node
 {
-private:
-	// 座標データ
-	Coord<double> m_point;
-
 protected:
+	// 形状が描画領域に含まれるかチェック
+	virtual bool IsIncludeCanvas() const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 
 public:
 	// コンストラクタ
 	NodeOrigin(Manager* pManager) :
-		NodeOrigin(pManager, Coord<double>()) { }
-
-	// コンストラクタ
-	NodeOrigin(Manager* pManager, const Coord<double>& point) :
-		Node(pManager),
-		m_point(point)
+		Node(pManager)
 	{
 		// JSON: ノードタイプ名
 		m_typeName = JSON_VALUE_TYPE_ORIGIN;
 		// 原点はブラシの色をペンの色に合わせる
 		m_brush.lbColor = m_pen.lopnColor;
+
+		// コンテンツデータを準備
+		m_data.points.resize(1);
+	}
+
+	// コンストラクタ
+	NodeOrigin(Manager* pManager, const Coord<double>& point) :
+		NodeOrigin(pManager)
+	{
+		// 内部データ登録
+		m_data.points[BASE] = point;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// JSONデータ取得
-	virtual picojson::object GetContents() const override;
-	// JSONデータ設定
-	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
 // ノード派生クラス：軸
 class NodeAxis : public Node
 {
-private:
-	// 座標データ
-	Coord<double> m_point;
-
 protected:
+	// 形状が描画領域に含まれるかチェック
+	virtual bool IsIncludeCanvas() const override;
 	// 形状を描画
 	virtual void DrawContent() override;
 
 public:
 	// コンストラクタ
 	NodeAxis(Manager* pManager) :
-		NodeAxis(pManager, Coord<double>()) { }
-
-	// コンストラクタ
-	NodeAxis(Manager* pManager, const Coord<double>& point) :
-		Node(pManager),
-		m_point(point)
+		Node(pManager)
 	{
 		// JSON: ノードタイプ名
 		m_typeName = JSON_VALUE_TYPE_AXIS;
+
+		// コンテンツデータを準備
+		m_data.points.resize(1);
+	}
+
+	// コンストラクタ
+	NodeAxis(Manager* pManager, const Coord<double>& point) :
+		NodeAxis(pManager)
+	{
+		// 内部データ登録
+		m_data.points[BASE] = point;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// JSONデータ取得
-	virtual picojson::object GetContents() const override;
-	// JSONデータ設定
-	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
 // ノード派生クラス：点
 class NodePoint : public Node
 {
-private:
-	// 座標データ
-	Coord<double> m_point;
-	// 点の種類
-	PointType m_pointType;
-
 protected:
 	// 形状を描画
 	virtual void DrawContent() override;
@@ -714,24 +787,27 @@ protected:
 public:
 	// コンストラクタ
 	NodePoint(Manager* pManager) :
-		NodePoint(pManager, Coord<double>(), PointType::Pixel) { }
-
-	// コンストラクタ
-	NodePoint(Manager* pManager, const Coord<double>& point, PointType pointType) :
-		Node(pManager),
-		m_point(point),
-		m_pointType(pointType)
+		Node(pManager)
 	{
 		// JSON: ノードタイプ名
 		m_typeName = JSON_VALUE_TYPE_POINT;
+
+		// コンテンツデータを準備
+		m_data.points.resize(1);
+		m_data.use_pointType = true;
+	}
+
+	// コンストラクタ
+	NodePoint(Manager* pManager, const Coord<double>& point, PointType pointType) :
+		NodePoint(pManager)
+	{
+		// 内部データ登録
+		m_data.points[BASE] = point;
+		m_data.pointType = pointType;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// JSONデータ取得
-	virtual picojson::object GetContents() const override;
-	// JSONデータ設定
-	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -739,11 +815,9 @@ public:
 class NodeLine : public Node
 {
 private:
-	// 線分の座標データ
-	Coords<double, 2> m_points;
-	// 限界値の種類
-	LineLimitType m_lineLimitType;
-
+	// 線分を取得
+	Coords<double, 2> Segment() const;
+		
 	// 無限直線情報
 	struct InfiniteInfo{
 		// 鉛直フラグ
@@ -754,10 +828,14 @@ private:
 		double interceptY;
 		// x切片 (鉛直の場合に使用する)
 		double interceptX;
-	} m_infiniteInfo;
 
-	// 線分を取得
-	Coords<double, 2> Segment() const;
+		// コンストラクタ
+		InfiniteInfo() :
+			isVertical(0),
+			coefficientX(0),
+			interceptY(0),
+			interceptX(0) {}
+	} m_infiniteInfo;
 
 protected:
 	// 形状を描画
@@ -766,29 +844,32 @@ protected:
 public:
 	// コンストラクタ
 	NodeLine(Manager* pManager) :
-		NodeLine(pManager, Coords<double, 2>(), LineLimitType::Finite) { }
-
-	// コンストラクタ
-	NodeLine(Manager* pManager, const Coords<double, 2>& points, LineLimitType lineLimitType) :
-		Node(pManager),
-		m_lineLimitType(lineLimitType),
-		m_infiniteInfo({false, 0.0, 0.0, 0.0})
+		Node(pManager)
 	{
 		// JSON: ノードタイプ名
 		m_typeName = JSON_VALUE_TYPE_LINE;
 
+		// コンテンツデータを準備
+		m_data.points.resize(2);
+		m_data.use_lineLimitType = true;
+	}
+
+	// コンストラクタ
+	NodeLine(Manager* pManager, const Coords<double, 2>& points, LineLimitType lineLimitType) :
+		NodeLine(pManager)
+	{
+		// 内部データ登録
+		m_data.lineLimitType = lineLimitType;
+
 		// 有限の線分
-		if (m_lineLimitType == LineLimitType::Finite) {
+		if (lineLimitType == LineLimitType::Finite) {
 			// 座標値データをコピー
-			m_points = points;
+			m_data.points.assign(points.begin(), points.end());
 		}
 		// 無限直線
 		else {
-			// xyそれぞれの長さを算出
-			Coord<double> length = points[1] - points[0];
-			
 			// x方向が(ほぼ)0であれば鉛直線とする
-			if (fabs(length.x) < LENGTH_TOLERANCE)
+			if (Util::IsZeroLength(points[END].x - points[START].x))
 			{
 				// 無限直線を x切片 で保持する
 				m_infiniteInfo.isVertical = true;
@@ -805,6 +886,7 @@ public:
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
+
 	// JSONデータ取得
 	virtual picojson::object GetContents() const override;
 	// JSONデータ設定
@@ -815,12 +897,6 @@ public:
 // ノード派生クラス：円弧
 class NodeArc : public Node
 {
-private:
-	// 座標データ
-	Coords<double, 3> m_points;
-	// 円弧の方向の種類
-	ArcDirectionType m_arcDirectionType;
-
 protected:
 	// 形状を描画
 	virtual void DrawContent() override;
@@ -828,40 +904,35 @@ protected:
 public:
 	// コンストラクタ
 	NodeArc(Manager* pManager) :
-		NodeArc(pManager, Coords<double, 3>(), ArcDirectionType::Left) { }
-
-	// コンストラクタ
-	NodeArc(Manager* pManager, const Coords<double, 3>& points, ArcDirectionType arcDirectionType) :
-		Node(pManager),
-		m_points(points),
-		m_arcDirectionType(arcDirectionType)
+		Node(pManager)
 	{
 		// JSON: ノードタイプ名
 		m_typeName = JSON_VALUE_TYPE_ARC;
+
+		// コンテンツデータを準備
+		m_data.points.resize(3);
+		m_data.use_arcDirectionType = true;
+	}
+
+	// コンストラクタ
+	NodeArc(Manager* pManager, const Coords<double, 3>& points, ArcDirectionType arcDirectionType) :
+		NodeArc(pManager)
+	{
+		// 内部データ登録
+		m_data.points.assign(points.begin(), points.end());
+		m_data.arcDirectionType = arcDirectionType;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状の整合性チェック
 	virtual bool Verify() const override;
-	// JSONデータ取得
-	virtual picojson::object GetContents() const override;
-	// JSONデータ設定
-	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
 // ノード派生クラス：円
 class NodeCircle : public Node
 {
-private:
-	// 座標データ
-	Coord<double> m_point;
-	// 半径
-	double m_radius;
-	// 塗りつぶしの種類
-	FillType m_fillType;
-
 protected:
 	// 形状を描画
 	virtual void DrawContent() override;
@@ -869,37 +940,35 @@ protected:
 public:
 	// コンストラクタ
 	NodeCircle(Manager* pManager) :
-		NodeCircle(pManager, Coord<double>(), 0, FillType::NoFill) { }
-
-	// コンストラクタ
-	NodeCircle(Manager* pManager, const Coord<double>& point, double radius, FillType fillType) :
-		Node(pManager),
-		m_point(point),
-		m_radius(radius),
-		m_fillType(fillType)
+		Node(pManager)
 	{
 		// JSON: ノードタイプ名
 		m_typeName = JSON_VALUE_TYPE_CIRCLE;
+
+		// コンテンツデータを準備
+		m_data.points.resize(1);
+		m_data.use_radius = true;
+		m_data.use_fillType = true;
+	}
+
+	// コンストラクタ
+	NodeCircle(Manager* pManager, const Coord<double>& point, double radius, FillType fillType) :
+		NodeCircle(pManager)
+	{
+		// 内部データ登録
+		m_data.points[BASE] = point;
+		m_data.radius = radius;
+		m_data.fillType = fillType;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// JSONデータ取得
-	virtual picojson::object GetContents() const override;
-	// JSONデータ設定
-	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
 // ノード派生クラス：多角形
 class NodePolygon : public Node
 {
-private:
-	// 座標データ
-	Coords_v<double> m_points;
-	// 塗りつぶしの種類
-	FillType m_fillType;
-
 protected:
 	// 形状を描画
 	virtual void DrawContent() override;
@@ -907,22 +976,27 @@ protected:
 public:
 	// コンストラクタ
 	NodePolygon(Manager* pManager) :
-		NodePolygon(pManager, Coords_v<double>(), FillType::NoFill) { }
-
-	// コンストラクタ
-	NodePolygon(Manager* pManager, const Coords_v<double>& points, FillType fillType) :
-		Node(pManager),
-		m_points(points),
-		m_fillType(fillType)
+		Node(pManager)
 	{
 		// JSON: ノードタイプ名
 		m_typeName = JSON_VALUE_TYPE_POLYGON;
+
+		// コンテンツデータを準備
+		m_data.use_fillType = true;
+	}
+
+	// コンストラクタ
+	NodePolygon(Manager* pManager, const Coords_v<double>& points, FillType fillType) :
+		NodePolygon(pManager)
+	{
+		// 内部データ登録
+		m_data.points.assign(points.begin(), points.end());
+		m_data.fillType = fillType;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
-	// JSONデータ取得
-	virtual picojson::object GetContents() const override;
+
 	// JSONデータ設定
 	virtual bool SetContents(picojson::object& jNode) override;
 };
@@ -932,21 +1006,10 @@ public:
 class NodeSector : public Node
 {
 private:
-	// 座標データ
-	Coords<double, 3> m_points;
-	// 内側の半径
-	double m_innerRadius;
-	// 円弧の方向の種類
-	ArcDirectionType m_arcDirectionType;
-	// 塗りつぶしの種類
-	FillType m_fillType;
-
 	// 内側の円弧座標を算出
 	Coords<double, 3> CalcInnerArc() const;
-
 	// 扇形のパスをDCに設定
 	void CreateSectorPath() const;
-
 	// 扇形のリージョン（コントロール座標）を算出
 	void CreateSectorRgn(CRgn* sectorRgn) const;
 
@@ -957,28 +1020,33 @@ protected:
 public:
 	// コンストラクタ
 	NodeSector(Manager* pManager) :
-		NodeSector(pManager, Coords<double, 3>(), 0, ArcDirectionType::Left, FillType::NoFill) { }
-
-	// コンストラクタ
-	NodeSector(Manager* pManager, const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType) :
-		Node(pManager),
-		m_points(points),
-		m_innerRadius(innerRadius),
-		m_arcDirectionType(arcDirectionType),
-		m_fillType(fillType)
+		Node(pManager)
 	{
 		// JSON: ノードタイプ名
 		m_typeName = JSON_VALUE_TYPE_SECTOR;
+
+		// コンテンツデータを準備
+		m_data.points.resize(3);
+		m_data.use_radius = true;
+		m_data.use_arcDirectionType = true;
+		m_data.use_fillType = true;
+	}
+
+	// コンストラクタ
+	NodeSector(Manager* pManager, const Coords<double, 3>& points, double innerRadius, ArcDirectionType arcDirectionType, FillType fillType) :
+		NodeSector(pManager)
+	{
+		// 内部データ登録
+		m_data.points.assign(points.begin(), points.end());
+		m_data.radius = innerRadius;
+		m_data.arcDirectionType = arcDirectionType;
+		m_data.fillType = fillType;
 	}
 
 	// 形状の最小包含箱を算出
 	virtual BoundingBox<double> CalcBoundingBox(bool forFit = false) const override;
 	// 形状の整合性チェック
 	virtual bool Verify() const override;
-	// JSONデータ取得
-	virtual picojson::object GetContents() const override;
-	// JSONデータ設定
-	virtual bool SetContents(picojson::object& jNode) override;
 };
 
 
@@ -1195,49 +1263,6 @@ public:
 	{
 		if (m_layers.size() <= m_currentLayerNo) return false;
 		return m_layers[m_currentLayerNo]->AddNode(new NodeSector(this, points, innerRadius, arcDirectionType, fillType));
-	}
-};
-
-
-// ユーティリティクラス
-class Util
-{
-public:
-	// 長さ0チェック
-	static bool IsZeroLength(double value) { return std::abs(value) < LENGTH_TOLERANCE; }
-	// 角度0チェック
-	static bool IsZeroAngle(double value) { return std::abs(value) < ANGLE_TOLERANCE; }
-
-	// 2点の同一チェック
-	static bool IsSamePoint(const Coord<double>& p1, const Coord<double>& p2) { return IsZeroLength(p1.Length(p2)); }
-	// 2直線の平行チェック
-	static bool IsParallel(const Coords<double, 2>& l1, const Coords<double, 2>& l2)
-	{
-		// 単位ベクトル算出
-		Coord<double> v1 = (l1[END] - l1[START]) / l1[START].Length(l1[END]);
-		Coord<double> v2 = (l2[END] - l2[START]) / l2[START].Length(l2[END]);
-		// 内積と外積を算出
-		double inner = v1.x * v2.x + v1.y * v2.y;
-		double outer = v1.x * v2.y - v2.x * v1.y;
-		// 角度が0なら平行
-		return IsZeroAngle(std::atan2(outer, inner));
-	}
-
-	// 円弧の整合性チェック
-	static bool VerifyArc(const Coords<double, 3>& arc)
-	{
-		// 始点と終点が一致
-		if (Util::IsSamePoint(arc[START], arc[END])) return false;
-		// 始点と中心点が一致
-		if (Util::IsSamePoint(arc[START], arc[CENTER])) return false;
-		// 終点と中心点が一致
-		if (Util::IsSamePoint(arc[START], arc[CENTER])) return false;
-		// 半径が不一致
-		if (!Util::IsZeroLength(
-			arc[START].Length(arc[CENTER]) - arc[END].Length(arc[CENTER])
-		)) return false;
-
-		return true;
 	}
 };
 
