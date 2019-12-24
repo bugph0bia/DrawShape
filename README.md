@@ -8,7 +8,8 @@ DrawShape
 ## 概要
 簡単にレイヤーや形状を追加し、描画内容を拡大縮小/移動することができる、簡易CADソフトのような ActiveX コントロール。  
 
-![use](https://user-images.githubusercontent.com/18702413/71182037-ac674f80-22b8-11ea-8676-d9a71077a38e.gif)
+![use1](https://user-images.githubusercontent.com/18702413/71182037-ac674f80-22b8-11ea-8676-d9a71077a38e.gif)
+![use2](https://user-images.githubusercontent.com/18702413/71414988-ecee1100-269c-11ea-895c-096abe43e30e.png)
 
 ## バージョン
 v1.0.0
@@ -19,7 +20,7 @@ Visual Studio 2019
 ## ライセンス
 MIT License
 
-## 利用しているOSS
+## 使用したOSS
 - [PicoJSON](https://github.com/kazuho/picojson)
 
 ## インストール／アンインストール
@@ -74,11 +75,4 @@ MIT License
 [C#サンプルアプリケーション](/DrawShapeTest)
 
 ## リファレンス
-### プロパティ
-WIP
-
-### メソッド
-WIP
-
-### イベント
-WIP
+[リファレンス](REFERENCE.md)
