@@ -1,14 +1,6 @@
 リファレンス
 ===
 
-用語
----
-| 用語             | 説明                                                                                                   |
-|------------------|--------------------------------------------------------------------------------------------------------|
-| コントロール座標 | ウィンドウ（フォーム）のDrawShapeコントロール上の座標のこと。単位はPixel。座標の＋方向はXが右、Yが下。 |
-| キャンバス座標   | DrawShpae内部のコンテンツの座標のこと。実数値。座標の＋方向はXが右、Yが上。                            |
-
-
 機能概要
 ---
 複数の形状を好きな位置に配置して描画することができる。
@@ -47,6 +39,14 @@
     - 追加原点
 
 
+用語
+---
+| 用語             | 説明                                                                                                   |
+|------------------|--------------------------------------------------------------------------------------------------------|
+| コントロール座標 | ウィンドウ（フォーム）のDrawShapeコントロール上の座標のこと。単位はPixel。座標の＋方向はXが右、Yが下。 |
+| キャンバス座標   | DrawShpae内部のコンテンツの座標のこと。実数値。座標の＋方向はXが右、Yが上。                            |
+
+
 プロパティ
 ---
 ### BackColor
@@ -62,6 +62,8 @@ void SetBackColor(COLORREF propVal);
 public Color BackColor { get; set; }
 ```
 
+---
+
 ### GridColor
 グリッドの背景色(RGB)を取得／設定する。
 
@@ -74,6 +76,8 @@ void SetGridColor(COLORREF propVal);
 ```cs
 public Color GridColor { get; set; }
 ```
+
+---
 
 ### GridSize
 グリッドのサイズ(キャンバス座標)を取得／設定する。
@@ -88,6 +92,8 @@ void SetGridSize(double propVal);
 public double GridSize { get; set; }
 ```
 
+---
+
 ### OriginColor
 基準原点の背景色(RGB)を取得／設定する。
 
@@ -100,6 +106,8 @@ void SetOriginColor(COLORREF propVal);
 ```cs
 public Color OriginColor { get; set; }
 ```
+
+---
 
 ### OriginSize
 基準原点のサイズ(コントロール座標)を取得／設定する。
@@ -114,6 +122,8 @@ void SetOriginSize(double propVal);
 public double OriginSize { get; set; }
 ```
 
+---
+
 ### AxisColor
 基準軸の背景色(RGB)を取得／設定する。
 
@@ -126,6 +136,8 @@ void SetAxisColor(COLORREF propVal);
 ```cs
 public Color AxisColor { get; set; }
 ```
+
+---
 
 ### AxisScale
 基準軸のスケール(キャンバス座標)を取得／設定する。
@@ -140,6 +152,8 @@ void SetAxisScale(double propVal);
 public double AxisScale { get; set; }
 ```
 
+---
+
 ### IsDrawGrid
 グリッドの描画可否を取得／設定する。
 
@@ -152,6 +166,8 @@ void SetIsDrawGrid(BOOL propVal);
 ```cs
 public bool IsDrawGrid { get; set; }
 ```
+
+---
 
 ### IsDrawOrigin
 原点の描画可否を取得／設定する。
@@ -169,6 +185,8 @@ public bool IsDrawOrigin { get; set; }
 #### コメント
 基準原点と追加原点の両方に適用される。
 
+---
+
 ### IsDrawAxis
 軸の描画可否を取得／設定する。
 
@@ -184,6 +202,8 @@ public bool IsDrawAxis { get; set; }
 
 #### コメント
 基準軸と追加軸の両方に適用される。
+
+---
 
 ### IsDrawArrow
 形状への矢印の描画可否を取得／設定する。
@@ -203,6 +223,8 @@ public bool IsDrawArrow { get; set; }
 - 直線
 - 円弧
 - 多角形
+
+---
 
 ### IsDrawCenter
 円の中心点の描画可否を取得／設定する。
@@ -224,6 +246,8 @@ public bool IsDrawCenter { get; set; }
 - 扇形
 中心点は三角点で描画する。
 
+---
+
 ### CurrentLayerNo
 カレントレイヤーの番号を取得／設定する。
 
@@ -240,6 +264,8 @@ public long CurrentLayerNo { get; set; }
 #### コメント
 レイヤー番号の有効範囲は、0 ～ (レイヤー枚数 - 1)。
 
+---
+
 ### LayerCount
 現在のレイヤー枚数を取得する。
 
@@ -251,6 +277,8 @@ long GetLayerCount();
 ```cs
 public long LayerCount { get; private set; }
 ```
+
+---
 
 ### CurrentPenColor
 カレントのペンの色(RGB)を取得／設定する。
@@ -269,6 +297,8 @@ public Color CurrentPenColor { get; set; }
 Win32PIの `LOGPEN` 構造体の仕様に従う。  
 デフォルトは白色。  
 
+---
+
 ### CurrentPenWidth
 カレントのペンの太さを取得／設定する。
 
@@ -286,6 +316,8 @@ public long CurrentPenWidth { get; set; }
 Win32PIの `LOGPEN` 構造体の仕様に従う。  
 デフォルトは 1px。  
 太さを 2px 以上に設定できるのは、ペンのスタイルが `PS_SOLID` `PS_INSIDERFRAME` のいずれかの場合のみである。
+
+---
 
 ### CurrentPenStyle
 カレントのペンのスタイルを取得／設定する。
@@ -316,6 +348,8 @@ Win32PIの `LOGPEN` 構造体の仕様に従う。
 
 デフォルトは `PS_SOLID` 。
 
+---
+
 ### CurrentBrushColor
 カレントのブラシの色(RGB)を取得／設定する。
 
@@ -333,6 +367,8 @@ public Color CurrentBrushColor { get; set; }
 Win32PIの `LOGBRUSH` 構造体の仕様に従う。  
 デフォルトは白色。  
 
+---
+
 ### CanMouseDragPan
 マウスドラッグによるパン（描画内容の上下左右移動）の実行可否を取得／設定する。
 
@@ -346,6 +382,8 @@ void SetCanMouseDragPan(BOOL propVal);
 public bool CanMouseDragPan { get; set; }
 ```
 
+---
+
 ### CanMouseWheelZoom
 マウスホイールによるズーム（描画内容の拡大縮小）の実行可否を取得／設定する。
 
@@ -358,6 +396,8 @@ void SetCanMouseWheelZoom(BOOL propVal);
 ```cs
 public bool CanMouseWheelZoom { get; set; }
 ```
+
+---
 
 
 メソッド
@@ -377,6 +417,8 @@ public void Redraw();
 #### コメント
 DrawShapeコントロールでは、プロパティやメソッドにより内部状態の変更しても自動的に再描画が行われない。これは、複数の形状を一度に登録する場合に毎回再描画されてしまうと非効率となるためである。そのような場合は、最後に本メソッドを一度だけ呼び出す必要がある。  
 
+---
+
 ### Clear
 DrawShapeコントロールを初期状態に戻す。
 
@@ -393,6 +435,8 @@ public void Clear();
 以下を実行する。
 - 全レイヤーを削除する。
 - カレントのペンとブラシをデフォルト状態に戻す。
+
+---
 
 ### SaveImage
 現在の描画内容を画像ファイルに保存する。
@@ -418,6 +462,8 @@ public bool SaveImage(string filePath);
 ファイルパスに指定した拡張子によって画像フォーマットが自動的に判断される。指定可能な拡張子は BMP/PNG/JPEG/GIF のいずれか。  
 既に同名のファイルが存在した場合は上書きする。
 
+---
+
 ### CopyImage
 現在の描画内容をクリップボードにコピーする。
 
@@ -435,6 +481,8 @@ public bool CopyImage();
 
 #### コメント
 画像サイズはDrawShapeコントロールの現在のサイズとなる。
+
+---
 
 ### SaveContents
 登録されているレイヤーおよび形状をファイルに保存する。
@@ -458,6 +506,8 @@ public bool SaveContents(string filePath);
 #### コメント
 JSONフォーマットを使用する。
 
+---
+
 ### LoadContents
 ファイルからレイヤーおよび形状を読み込んで登録する。
 
@@ -480,6 +530,8 @@ public bool LoadContents(string filePath);
 #### コメント
 JSONフォーマットを使用する。  
 読み込み前に登録されていたレイヤーおよび形状は全て削除される。
+
+---
 
 ### CanvasToControl
 座標値をキャンバス座標からコントロール座標へ変換する。
@@ -505,6 +557,8 @@ public void CanvasToControl(double canvasX, double canvasY, ref long pCtrlX, ref
 
 #### コメント
 現在のパン／ズーム状態に応じた変換が行われる。
+
+---
 
 ### ControlToCanvas
 座標値をコントロール座標からキャンバス座標へ変換する。
@@ -532,6 +586,8 @@ public void ControlToCanvas(long ctrlX, long ctrlY, ref double pCanvasX, ref dou
 現在のパン／ズーム状態に応じた変換が行われる。  
 例として、現在のカーソル位置（コントロール座標）をキャンバス座標に変換するといった用途に利用可能。
 
+---
+
 ### InsertLayer
 新しいレイヤーを挿入する。
 
@@ -556,6 +612,8 @@ public bool InsertLayer(long insertNo);
 挿入位置に -1 を指定した場合は、末尾への挿入となる。（挿入前のレイヤー枚数を指定した場合と同様）  
 挿入に成功した場合、挿入したレイヤーがカレントレイヤーとなる。  
 
+---
+
 ### ClearCurrentLayer
 カレントレイヤーに登録されている全形状を削除する。
 
@@ -567,6 +625,8 @@ void ClearCurrentLayer();
 ```cs
 public void ClearCurrentLayer();
 ```
+
+---
 
 ### DeleteCurrentLayer
 カレントレイヤーを削除する。
@@ -589,11 +649,11 @@ public long DeleteCurrentLayer();
 削除前にレイヤーが１枚しか存在しなかった場合は、削除後に自動的に新しいレイヤーが１枚挿入され、それがカレントレイヤーとなる。  
 
 
-----
+---
 
 ここまで記載。
 
-----
+---
 
 
 イベント
