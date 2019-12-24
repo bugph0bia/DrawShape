@@ -8,8 +8,11 @@ DrawShape
 ## 概要
 簡単にレイヤーや形状を追加し、描画内容を拡大縮小/移動することができる、簡易CADソフトのような ActiveX コントロール。  
 
-![use1](https://user-images.githubusercontent.com/18702413/71182037-ac674f80-22b8-11ea-8676-d9a71077a38e.gif)
+- 使用例1
 ![use2](https://user-images.githubusercontent.com/18702413/71414988-ecee1100-269c-11ea-895c-096abe43e30e.png)
+
+- 使用例2
+![use1](https://user-images.githubusercontent.com/18702413/71182037-ac674f80-22b8-11ea-8676-d9a71077a38e.gif)
 
 ## バージョン
 v1.0.0

@@ -1388,7 +1388,11 @@ BoundingBox<double> Manager::CalcBoundingBox(bool forFit/*=false*/) const
 bool Manager::InsertLayer(std::size_t insertNo)
 {
 	// レイヤーNoエラー
-	if (m_layers.size() <= insertNo) return false;
+	if (insertNo < -1) return false;
+	if (m_layers.size() < insertNo) return false;
+
+	// 末尾への挿入
+	if (insertNo == -1) insertNo = m_layers.size();
 
 	// 指定位置に新しいレイヤーを挿入
 	m_layers.insert(m_layers.begin() + insertNo, std::make_unique<Layer>());
