@@ -3,15 +3,14 @@
 
 機能概要
 ---
-複数の形状を好きな位置に配置して描画することができる。
 
 ### 基本機能
-- 内部では『コントロール(1)－(N)レイヤー(1)－(n)形状』の関係でデータが管理される。
 - コントロールには、背景、グリッド、基準軸、基準原点が存在し、それぞれに色や大きさを設定することができる。
 - 描画中のデータはファイルへの保存／読み込みが可能。ファイルはJSONフォーマットを用いる。
 - マウスを用いて、描画内容のズーム／パンを行うことが可能。
 - 描画内容は、画像ファイルへの保存やクリップボードへのコピーが可能。
-- コントロール座標とキャンバス座標の相互変換が可能。マウスカーソル位置から座標値を算出する際などに利用できる。
+- コントロール座標系とキャンバス座標系の相互変換が可能。マウスカーソル位置から座標値を算出する際などに利用できる。
+- 内部では『コントロール(1)－(N)レイヤー(1)－(n)形状』の関係でデータが管理される。
 
 ### レイヤー
 - 形状を登録するためのレイヤーの追加／削除が可能。
@@ -41,10 +40,10 @@
 
 用語
 ---
-| 用語             | 説明                                                                                                   |
-|------------------|--------------------------------------------------------------------------------------------------------|
-| コントロール座標 | ウィンドウ（フォーム）のDrawShapeコントロール上の座標のこと。単位はPixel。座標の＋方向はXが右、Yが下。 |
-| キャンバス座標   | DrawShpae内部のコンテンツの座標のこと。実数値。座標の＋方向はXが右、Yが上。                            |
+| 用語               | 説明                                                                                                     |
+|--------------------|----------------------------------------------------------------------------------------------------------|
+| コントロール座標系 | ウィンドウ（フォーム）のDrawShapeコントロール上の座標系のこと。単位はPixel。座標の＋方向はXが右、Yが下。 |
+| キャンバス座標系   | DrawShpae内部のコンテンツの座標系のこと。実数値。座標の＋方向はXが右、Yが上。                            |
 
 
 プロパティ
@@ -59,7 +58,7 @@ void SetBackColor(COLORREF propVal);
 ```
 - C#
 ```cs
-public Color BackColor { get; set; }
+public Color CtlBackColor { get; set; }
 ```
 
 ---
@@ -80,7 +79,7 @@ public Color GridColor { get; set; }
 ---
 
 ### GridSize
-グリッドのサイズ(キャンバス座標)を取得／設定する。
+グリッドのサイズ（キャンバス座標系）を取得／設定する。
 
 - C++
 ```cpp
@@ -110,7 +109,7 @@ public Color OriginColor { get; set; }
 ---
 
 ### OriginSize
-基準原点のサイズ(コントロール座標)を取得／設定する。
+基準原点のサイズ（コントロール座標系）を取得／設定する。
 
 - C++
 ```cpp
@@ -140,7 +139,7 @@ public Color AxisColor { get; set; }
 ---
 
 ### AxisScale
-基準軸のスケール(キャンバス座標)を取得／設定する。
+基準軸のスケール（キャンバス座標系）を取得／設定する。
 
 - C++
 ```cpp
@@ -534,7 +533,7 @@ JSONフォーマットを使用する。
 ---
 
 ### CanvasToControl
-座標値をキャンバス座標からコントロール座標へ変換する。
+座標値をキャンバス座標系からコントロール座標系へ変換する。
 
 - C++
 ```cpp
@@ -547,13 +546,13 @@ public void CanvasToControl(double canvasX, double canvasY, ref long pCtrlX, ref
 
 #### パラメータ
 - canvasX
-    - キャンバス座標のX。
+    - X座標（キャンバス座標系）。
 - canvasY
-    - キャンバス座標のY。
-- pCtrlX
-    - （出力）コントロール座標のX。
-- pCtrlY
-    - （出力）コントロール座標のY。
+    - Y座標（キャンバス座標系）。
+- pCtrlX（出力）
+    - X座標（コントロール座標系）。
+- pCtrlY（出力）
+    - Y座標（コントロール座標系）。
 
 #### コメント
 現在のパン／ズーム状態に応じた変換が行われる。
@@ -561,7 +560,7 @@ public void CanvasToControl(double canvasX, double canvasY, ref long pCtrlX, ref
 ---
 
 ### ControlToCanvas
-座標値をコントロール座標からキャンバス座標へ変換する。
+座標値をコントロール座標系からキャンバス座標系へ変換する。
 
 - C++
 ```cpp
@@ -574,17 +573,17 @@ public void ControlToCanvas(long ctrlX, long ctrlY, ref double pCanvasX, ref dou
 
 #### パラメータ
 - ctrlX
-    - コントロール座標のX。
+    - X座標（コントロール座標系）。
 - ctrlY
-    - コントロール座標のY。
-- pCanvasX
-    - （出力）キャンバス座標のX。
-- pCanvasY
-    - （出力）キャンバス座標のY。
+    - Y座標（コントロール座標系）。
+- pCanvasX（出力）
+    - X座標（キャンバス座標系）。
+- pCanvasY（出力）
+    - Y座標（コントロール座標系）。
 
 #### コメント
 現在のパン／ズーム状態に応じた変換が行われる。  
-例として、現在のカーソル位置（コントロール座標）をキャンバス座標に変換するといった用途に利用可能。
+例として、現在のカーソル位置（コントロール座標系）をキャンバス座標系に変換するといった用途に利用可能。
 
 ---
 
@@ -648,22 +647,421 @@ public long DeleteCurrentLayer();
 末尾以外のレイヤーを削除した場合、レイヤー番号は前詰めされ、１つ次のレイヤーが新たなカレントレイヤーとなる。  
 削除前にレイヤーが１枚しか存在しなかった場合は、削除後に自動的に新しいレイヤーが１枚挿入され、それがカレントレイヤーとなる。  
 
+---
+
+### SetEnableCurrentLayer
+カレントレイヤーの描画可否を設定する。
+
+- C++
+```cpp
+void SetEnableCurrentLayer(BOOL enable);
+```
+- C#
+```cs
+public void SetEnableCurrentLayer(bool enable);
+```
+
+#### パラメータ
+- enable
+    - カレントレイヤーの描画可否。描画を許可する場合は true 、描画を禁止する場合は false 。
 
 ---
 
-ここまで記載。
+### GetEnableCurrentLayer
+カレントレイヤーの描画可否を取得する。
+
+- C++
+```cpp
+BOOL GetEnableCurrentLayer();
+```
+- C#
+```cs
+public bool GetEnableCurrentLayer();
+```
+
+#### 戻り値
+カレントレイヤーの描画可否。描画が許可されている場合は true 、描画が禁止されている場合は false 。
+
+---
+
+### Zoom
+描画内容をズーム（拡大縮小）する。
+
+- C++
+```cpp
+BOOL Zoom(double coef, long ctrlBaseX, long ctrlBaseY);
+```
+- C#
+```cs
+public bool Zoom(double coef, long ctrlBaseX, long ctrlBaseY);
+```
+
+#### パラメータ
+- coef
+    - 拡大縮小の倍率。1.0 より大きい値で拡大、 1.0 より小さい値で縮小となる。
+- ctrlBaseX
+    - 拡大縮小を行う基準とするX座標（コントロール座標系）。
+- ctrlBaseY
+    - 拡大縮小を行う基準とするY座標（コントロール座標系）。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+---
+
+### Pan
+描画内容をパン（上下左右移動）する。
+
+- C++
+```cpp
+BOOL Pan(long ctrlMoveX, long ctrlMoveY);
+```
+- C#
+```cs
+public bool Pan(long ctrlMoveX, long ctrlMoveY);
+```
+
+#### パラメータ
+- ctrlMoveX
+    - X方向の移動量（コントロール座標系）。
+- ctrlMoveY
+    - Y方向の移動量（コントロール座標系）。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+---
+
+### Fit
+描画対象の形状全てが描画領域に収まるように自動的にズーム・パンを行う。
+
+- C++
+```cpp
+void Fit(double shapeOccupancy);
+```
+- C#
+```cs
+public void Fit(double shapeOccupancy);
+```
+
+#### パラメータ
+- shapeOccupancy
+    - フィットしたときに形状が描画領域全体を占める割合。
+
+#### コメント
+shapeOccupancy で指定する割合は、上下方向と左右方向のうちフィットしたときに余白がより小さくなる方に適用される。  
+もう一方の方向については、形状が描画領域を占める割合がより小さくなる可能性がある。 
+
+---
+
+### AddLine
+カレントレイヤーに直線を追加する。
+
+- C++
+```cpp
+BOOL AddLine(double sx, double sy, double ex, double ey);
+```
+- C#
+```cs
+public bool AddLine(double sx, double sy, double ex, double ey);
+```
+
+#### パラメータ
+- sx
+    - 始点X（キャンバス座標系）。
+- sy
+    - 始点Y（キャンバス座標系）。
+- ex
+    - 終点X（キャンバス座標系）。
+- ey
+    - 終点Y（キャンバス座標系）。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+---
+
+### AddInfiniteLine2Point
+任意の2点を指定する方法で、カレントレイヤーに無限直線を追加する。
+
+- C++
+```cpp
+BOOL AddInfiniteLine2Point(double sx, double sy, double ex, double ey);
+```
+- C#
+```cs
+public bool AddInfiniteLine2Point(double sx, double sy, double ex, double ey);
+```
+
+#### パラメータ
+- sx
+    - 始点X（キャンバス座標系）。
+- sy
+    - 始点Y（キャンバス座標系）。
+- ex
+    - 終点X（キャンバス座標系）。
+- ey
+    - 終点Y（キャンバス座標系）。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+---
+
+### AddInfiniteLine1PointAngle
+任意の1点と角度を指定する方法で、カレントレイヤーに無限直線を追加する。
+
+- C++
+```cpp
+BOOL AddInfiniteLine1PointAngle(double x, double y, double angle);
+```
+- C#
+```cs
+public bool AddInfiniteLine1PointAngle(double x, double y, double angle);
+```
+
+#### パラメータ
+- x
+    - 点X（キャンバス座標系）。
+- y
+    - 点Y（キャンバス座標系）。
+- angle
+    - 角度（ラジアン）
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+---
+
+### AddPoint
+カレントレイヤーに点を追加する。
+
+- C++
+```cpp
+BOOL AddPoint(double x, double y, long type);
+```
+- C#
+```cs
+public bool AddPoint(double x, double y, long type);
+```
+
+#### パラメータ
+- x
+    - 点X（キャンバス座標系）。
+- y
+    - 点Y（キャンバス座標系）。
+- type
+    - 点種。以下のいずれかの整数値とする。範囲外の値が与えられた場合であっても失敗しないが動作は未定義となる。
+        | 値 | 点種           |
+        |----|----------------|
+        | 0  | 通常の点（・） |
+        | 1  | 大きい点（●） |
+        | 2  | 三角点（△）   |
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+---
+
+### AddArc
+カレントレイヤーに円弧を追加する。
+
+- C++
+```cpp
+BOOL AddArc(double sx, double sy, double ex, double ey, double cx, double cy, BOOL left);
+```
+- C#
+```cs
+public bool AddArc(double sx, double sy, double ex, double ey, double cx, double cy, bool left);
+```
+
+#### パラメータ
+- sx
+    - 始点X（キャンバス座標系）。
+- sy
+    - 始点Y（キャンバス座標系）。
+- ex
+    - 終点X（キャンバス座標系）。
+- ey
+    - 終点Y（キャンバス座標系）。
+- cx
+    - 中心点X（キャンバス座標系）。
+- cy
+    - 中心点Y（キャンバス座標系）。
+- left
+    - 円弧方向。 true の場合は左方向（反時計回り）、 false の場合は右方向（時計回り）の円弧となる。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+#### コメント
+指定した座標が円弧の構成点として幾何学的に矛盾する場合は失敗する。
+
+---
+
+### AddCircle
+カレントレイヤーに円を追加する。
+
+- C++
+```cpp
+BOOL AddCircle(double cx, double cy, double radius, BOOL fill);
+```
+- C#
+```cs
+public bool AddCircle(double cx, double cy, double radius, bool fill);
+```
+
+#### パラメータ
+- cx
+    - 中心点X（キャンバス座標系）。
+- cy
+    - 中心点Y（キャンバス座標系）。
+- radius
+    - 半径（キャンバス座標系）。
+- fill
+    - 塗りつぶし有無。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+---
+
+### AddPolygon
+カレントレイヤーに円を追加する。
+
+- C++
+```cpp
+BOOL AddPolygon(double* pointCoords, long pointsCount, BOOL fill);
+※pointCoordsの型は未確認
+```
+- C#
+```cs
+public bool AddPolygon(Array pointCoords, long pointsCount, bool fill);
+```
+
+#### パラメータ
+- pointCoords
+    - 点群配列（キャンバス座標系）。点1-X→点1-Y→点2-X→・・・→点n-Y の順にdouble型の値を格納する。
+- pointsCount
+    - pointCoords で入力する点の数。XY座標のペアで1つと数えることに注意。
+- fill
+    - 塗りつぶし有無。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+#### コメント
+pointCoords にdouble型以外の値を格納した場合は失敗する。  
+pointsCount に0以下の値を渡した場合は失敗する。  
+
+---
+
+### AddSector
+カレントレイヤーに扇形を追加する。
+
+- C++
+```cpp
+BOOL AddSector(double sx, double sy, double ex, double ey, double cx, double cy, double innerRadius, BOOL left, BOOL fill);
+```
+- C#
+```cs
+public bool AddSector(double sx, double sy, double ex, double ey, double cx, double cy, double innerRadius, bool left, bool fill);
+```
+
+#### パラメータ
+- sx
+    - 扇形の外側円弧の始点X（キャンバス座標系）。
+- sy
+    - 扇形の外側円弧の始点Y（キャンバス座標系）。
+- ex
+    - 扇形の外側円弧の終点X（キャンバス座標系）。
+- ey
+    - 扇形の外側円弧の終点Y（キャンバス座標系）。
+- cx
+    - 扇形の中心点X（キャンバス座標系）。
+- cy
+    - 扇形の中心点Y（キャンバス座標系）。
+- innerRadius
+    - 扇形の内側円弧の半径（キャンバス座標系）。
+- left
+    - 円弧方向。 true の場合は左方向（反時計回り）、 false の場合は右方向（時計回り）の円弧となる。
+- fill
+    - 塗りつぶし有無。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+#### コメント
+指定した座標が扇形の構成点として幾何学的に矛盾する場合は失敗する。  
+innnerRadius に 0 を渡した場合は、内側が埋められた扇形となる。0未満の値の場合は失敗する。  
+
+---
+
+### AddOrigin
+カレントレイヤーに原点を追加する。
+
+- C++
+```cpp
+BOOL AddOrigin(double ox, double oy);
+```
+- C#
+```cs
+public bool AddOrigin(double ox, double oy);
+```
+
+#### パラメータ
+- ox
+    - 原点を追加する座標X（キャンバス座標系）。
+- oy
+    - 原点を追加する座標Y（キャンバス座標系）。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+#### コメント
+基準原点とは別に原点を追加したい場合に使用する。  
+本メソッドで追加した原点についても、 IsDrawOrigin プロパティによって描画可否が制御される。  
+描画にはペンのみが使用され、ブラシは使用されない。  
+
+---
+
+### AddAxis
+カレントレイヤーに軸を追加する。
+
+- C++
+```cpp
+BOOL AddAxis(double ox, double oy);
+```
+- C#
+```cs
+public bool AddAxis(double ox, double oy);
+```
+
+#### パラメータ
+- ox
+    - 軸を追加する座標X（キャンバス座標系）。
+- oy
+    - 軸を追加する座標Y（キャンバス座標系）。
+
+#### 戻り値
+成功した場合は 1 または true 。失敗した場合は 0 または false 。
+
+#### コメント
+基準軸とは別に軸を追加したい場合に使用する。  
+本メソッドで追加した軸についても、 IsDrawAxis プロパティによって描画可否が制御される。  
+描画にはペンのみが使用され、ブラシは使用されない。  
 
 ---
 
 
 イベント
 ---
-### Event
-概要概要概要概要概要概要概要概要。
+### CursorMove
+DrawShapeコントロール上でのマウスカーソル移動イベント。
 
 - C++
 ```cpp
-void OnEvent(int a, double b);
+void OnCursorMove(long ctrlX, long ctrlY, double canvasX, double canvasY);
 ```
 - C#
 ```cs
@@ -681,8 +1079,55 @@ public event _DDrawShapeEvents_CursorMoveEventHandler CursorMove;
 ```
 
 #### パラメータ
-- xxx
-    - 説明説明説明説明説明。
-- yyy
-    - 説明説明説明説明説明。
+- ctrlX
+    - マウスカーソル位置X（コントロール座標系）。
+- ctrlY
+    - マウスカーソル位置Y（コントロール座標系）。
+- canvasX
+    - マウスカーソル位置X（キャンバス座標系）。
+- canvasY
+    - マウスカーソル位置Y（キャンバス座標系）。
+
+#### コメント
+(ctrlX, ctrlY) は、Win32APIでマウスカーソル位置を取得してDrawShapeコントロールのクライアント座標系に変換した値と一致する。  
+(canvasX, canvasY) は、 (ctrlX, ctrlY) を ControlToCanvas メソッドで変換した値と一致する。  
+
+---
+
+### LeftClick
+DrawShapeコントロール上でのマウス左クリックイベント。
+
+- C++
+```cpp
+void OnLeftClick(long ctrlX, long ctrlY, double canvasX, double canvasY);
+```
+- C#
+```cs
+public class _DDrawShapeEvents_LeftClickEvent
+{
+    public int ctrlX;
+    public int ctrlY;
+    public double canvasX;
+    public double canvasY;
+
+    public _DDrawShapeEvents_LeftClickEvent(int ctrlX, int ctrlY, double canvasX, double canvasY);
+}
+public delegate void _DDrawShapeEvents_LeftClickEventHandler(object sender, _DDrawShapeEvents_LeftClickEvent e);
+public event _DDrawShapeEvents_LeftClickEventHandler LeftClick;
+```
+
+#### パラメータ
+- ctrlX
+    - マウスカーソル位置X（コントロール座標系）。
+- ctrlY
+    - マウスカーソル位置Y（コントロール座標系）。
+- canvasX
+    - マウスカーソル位置X（キャンバス座標系）。
+- canvasY
+    - マウスカーソル位置Y（キャンバス座標系）。
+
+#### コメント
+本イベントは、マウス左クリックのDown→Upが行われた際に発行する。ドラッグを行った場合でもイベント発行することに注意。  
+(ctrlX, ctrlY) は、Win32APIでマウスカーソル位置を取得してDrawShapeコントロールのクライアント座標系に変換した値と一致する。  
+(canvasX, canvasY) は、 (ctrlX, ctrlY) を ControlToCanvas メソッドで変換した値と一致する。  
 

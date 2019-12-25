@@ -1115,6 +1115,9 @@ VARIANT_BOOL CDrawShapeCtrl::AddSector(DOUBLE sx, DOUBLE sy, DOUBLE ex, DOUBLE e
 
 	// TODO: ここにディスパッチ ハンドラー コードを追加します
 
+	// 内側円弧の半径が0未満なら終了（0は許可）
+	if (innerRadius < 0) return VARIANT_FALSE;
+
 	return m_pDrawManager->AddSector(
 		Drawer::Coords<double, 3>{ Drawer::Coord<double>(sx, sy), Drawer::Coord<double>(ex, ey), Drawer::Coord<double>(cx, cy) },
 		innerRadius,
