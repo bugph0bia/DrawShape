@@ -43,7 +43,7 @@ static constexpr double ANGLE_TOLERANCE = 0.00001;
 // 円周率
 static constexpr double	PI = 3.141592653589793;
 // 線分、円弧の座標コレクションのインデックス値
-enum { START = 0, END = 1, CENTER = 2, BASE=0 };
+enum { START = 0, END = 1, CENTER = 2, BASE = 0 };
 
 // JSONキー：レイヤー配列
 static const std::tstring JSON_KEY_LAYERS = _T("Layers");
@@ -364,7 +364,7 @@ public:
 		// 始点と中心点が一致
 		if (Util::IsSamePoint(arc[START], arc[CENTER])) return false;
 		// 終点と中心点が一致
-		if (Util::IsSamePoint(arc[START], arc[CENTER])) return false;
+		if (Util::IsSamePoint(arc[END], arc[CENTER])) return false;
 		// 半径が不一致
 		if (!Util::IsZeroLength(
 			arc[START].Length(arc[CENTER]) - arc[END].Length(arc[CENTER])
