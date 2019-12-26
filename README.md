@@ -1,7 +1,7 @@
 DrawShape
 ===
 
-![Software Version](http://img.shields.io/badge/Version-v1.1.0-green.svg?style=flat)
+![Software Version](http://img.shields.io/badge/Version-v1.1.1-green.svg?style=flat)
 ![VS Version](http://img.shields.io/badge/VisualStudio-2019-blue.svg?style=flat)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
@@ -15,7 +15,7 @@ DrawShape
     - ![use1](https://user-images.githubusercontent.com/18702413/71182037-ac674f80-22b8-11ea-8676-d9a71077a38e.gif)
 
 ## バージョン
-v1.1.0
+v1.1.1
 
 ## 開発環境
 Visual Studio 2019
