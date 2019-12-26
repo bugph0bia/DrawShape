@@ -332,7 +332,7 @@ public long CurrentPenStyle { get; set; }
 ```
 
 #### コメント
-Win32PIの `LOGPEN` 構造体の仕様に従う。  
+Win32APIの `LOGPEN` 構造体の仕様に従う。  
 以下のいずれかの値を設定可能。  
 
 | 定数             | 値 | 説明       |
@@ -363,7 +363,7 @@ public Color CurrentBrushColor { get; set; }
 ```
 
 #### コメント
-Win32PIの `LOGBRUSH` 構造体の仕様に従う。  
+Win32APIの `LOGBRUSH` 構造体の仕様に従う。  
 デフォルトは白色。  
 
 ---
@@ -579,7 +579,7 @@ public void ControlToCanvas(long ctrlX, long ctrlY, ref double pCanvasX, ref dou
 - pCanvasX（出力）
     - X座標（キャンバス座標系）。
 - pCanvasY（出力）
-    - Y座標（コントロール座標系）。
+    - Y座標（キャンバス座標系）。
 
 #### コメント
 現在のパン／ズーム状態に応じた変換が行われる。  
@@ -931,8 +931,7 @@ public bool AddCircle(double cx, double cy, double radius, bool fill);
 
 - C++
 ```cpp
-BOOL AddPolygon(double* pointCoords, long pointsCount, BOOL fill);
-※pointCoordsの型は未確認
+BOOL AddPolygon(SAFEARRAY* pointCoords, long pointsCount, BOOL fill);
 ```
 - C#
 ```cs
