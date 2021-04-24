@@ -1,7 +1,7 @@
 Reference
 ===
 
-[English Page](./REFERENCE.md)
+[Japanese Page](./REFERENCE.ja.md)
 
 Overview
 ---
