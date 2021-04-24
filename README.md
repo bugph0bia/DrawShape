@@ -5,77 +5,78 @@ DrawShape
 ![VS Version](http://img.shields.io/badge/VisualStudio-2019-blue.svg?style=flat)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
-## 概要
-簡単にレイヤーや形状を追加し、描画内容を拡大縮小/移動することができる、簡易CADソフトのような ActiveX コントロール。  
+[Japanese Page](./README.ja.md)
 
-- 使用例1
-    - ![use2](https://user-images.githubusercontent.com/18702413/71414988-ecee1100-269c-11ea-895c-096abe43e30e.png)
+## Overview
+CAD-like ActiveX control to easily draw shapes and easily zoom and pan the displayed content.
 
-- 使用例2
-    - ![use1](https://user-images.githubusercontent.com/18702413/71182037-ac674f80-22b8-11ea-8676-d9a71077a38e.gif)
+- Usage examples 1
+    - ![use1](https://user-images.githubusercontent.com/18702413/71414988-ecee1100-269c-11ea-895c-096abe43e30e.png)
 
-## バージョン
+- Usage examples 2
+    - ![use2](https://user-images.githubusercontent.com/18702413/71182037-ac674f80-22b8-11ea-8676-d9a71077a38e.gif)
+
+## Version
 v1.1.1
 
-## 開発環境
+## Development Environment
 Visual Studio 2019
 
-## ライセンス
+## License
 MIT License
 
-## 使用したOSS
+## OSS used
 - [PicoJSON](https://github.com/kazuho/picojson)
 
-## インストール／アンインストール
-### インストール方法
-- Windows (x86) の場合
-    1. DrawShape.ocxを任意のフォルダを配置する。
-    2. 管理者権限でコマンドプロンプトを起動する。
-    3. `regsvr32 DrawShape.ocx` を実行。
-- Windows (x64) の場合
-    1. DrawShape.ocxを任意のフォルダを配置する。
-    2. 管理者権限でコマンドプロンプトを起動する。
-    3. `C:\Windows\SysWow64\regsvr32 DrawShape.ocx` を実行。
+## Install/Uninstall
+### How to install
+- Case Windows (x86)
+    1. Place `DrawShape.ocx` in a folder of your choice.
+    2. Launch the command prompt with administrative privileges.
+    3. Run `regsvr32 DrawShape.ocx`.
+- Case Windows (x64)
+    1. Place `DrawShape.ocx` in a folder of your choice.
+    2. Launch the command prompt with administrative privileges.
+    3. Run `C:\Windows\SysWow64\regsvr32 DrawShape.ocx`.
 
-### アンインストール方法
-- Windows (x86) の場合
-    1. DrawShape.ocxを任意のフォルダを配置する。
-    2. 管理者権限でコマンドプロンプトを起動する。
-    3. `regsvr32 /u DrawShape.ocx` を実行。
-- Windows (x64) の場合
-    1. DrawShape.ocxを任意のフォルダを配置する。
-    2. 管理者権限でコマンドプロンプトを起動する。
-    3. `C:\Windows\SysWow64\regsvr32 /u DrawShape.ocx` を実行。
+### How to uninstall
+- Case Windows (x86)
+    1. Place `DrawShape.ocx` in a folder of your choice.
+    2. Launch the command prompt with administrative privileges.
+    3. Run `regsvr32 /u DrawShape.ocx`.
+- Case Windows (x64)
+    1. Place `DrawShape.ocx` in a folder of your choice.
+    2. Launch the command prompt with administrative privileges.
+    3. Run `C:\Windows\SysWow64\regsvr32 /u DrawShape.ocx`.
 
-## 使用方法
-### C++ / MFCアプリケーション (on Visual Studio 2019)
-1. ダイアログへのコントールの挿入方法
-    1. リソースビューからダイアログエディタを開く。
-    2. ダイアログ上で右クリックして「ActiveXコントロールの挿入...」を選択。
-    3. 「ActiveXコントロールの挿入」画面から「DrawShape Control」を選択して「OK」ボタンを押下。
-2. プロパティ／メソッドの追加方法
-    1. 挿入した DrawShape コントロールを右クリックして「変数の追加...」を選択してコントロール変数を追加する。
-    2. プロジェクトに自動的に IDispatch ラッパークラスが挿入され、そのクラスの型のコントロール変数が追加される。
-       ラッパークラスのメンバ関数にプロパティの Getter/Setter とメソッドが用意された状態となる。
-        - ・・・はずだが、VisualStudio 2017 / 2019 ではうまくいかない。2013では問題なし。
-3. イベントハンドラの追加方法
-    1. 挿入した DrawShape コントロールを右クリックして「イベントハンドラーの追加...」を選択する。
-    2. 表示されたウィザードで追加したいイベントとハンドラのメンバ関数を指定して挿入する。
+## How to use
+### C++ / MFC Applications (on Visual Studio 2019)
+1. How to Insert a control into a Dialog.
+    1. Open the dialog editor from the resource view.
+    2. Right-click on the dialog and select "Insert ActiveX Control...".
+    3. Select "DrawShape Control" from the "Insert ActiveX Control" window and click the "OK" button.
+2. How to add properties and methods.
+    1. Right click on the inserted DrawShape control and select "Add Variable...". to add a control variable.
+    2. The IDispatch wrapper class will be automatically inserted into the project and the control variables of the type of the class will be added.
+       The member functions of the wrapper class will have Getter/Setter properties and methods.
+        - This is supposed to be the case, but it does not work in Visual Studio 2017 / 2019; it works fine in 2013.
+3. How to add an event handlers.
+    1. Right click on the inserted DrawShape control and select "Add Event Handler...".
+    2. In the wizard that appears, specify the event you want to add and the member function of the handler, and insert it.
 
-### C# / Windowsフォームアプリケーション (on Visual Studio 2019)
-1. フォームへのコントロールの挿入方法
-    1. ソリューションエクスプローラーからフォームのデザイナを開く。
-    2. ツールボックスの何もない領域で右クリックして「アイテムの選択...」を選択する。
-    3. 「ツールボックスアイテムの選択」画面の「COMコンポーネント」タブを開き、「DrawShape Control」にチェックを付けて「OK」ボタンを押下。
-    4. ツールボックス内に「DrawShape Control」が追加されるのでフォームへ挿入する。
-    5. 挿入に失敗する場合は、「プロジェクト」メニューの「参照の追加...」の「COM」ページから「DrawShapeLib」にチェックを付けて「OK」ボタンを押下してから試す。
-2. プロパティ／メソッドの追加方法
-    1. コントロールの挿入を行うことでプロジェクトの参照に AxDrawShapeクラス（AxDrawShapeLib名前空間 - AxDrawShapeクラス）が追加されており、
-       コントロール変数はそのクラスの型となっている。プロパティとメソッドも追加されているため使用可能な状態となる。
-3. イベントハンドラの追加方法
-    1. AxDrawShapeクラス（AxDrawShapeLib名前空間 - AxDrawShapeクラス）に追加されているイベント変数とデリゲート型を利用することでイベントハンドラ関数を追加可能。
+### C# / Windows Form Applications (on Visual Studio 2019)
+1. How to insert a control into a form.
+    1. Open the Form Designer from the Solution Explorer.
+    2. Right-click on an empty area of the toolbox and select "Select Item...".
+    3. Open the "COM Components" tab in the "Select Toolbox Items" window, check the "DrawShape Control" checkbox, and click the "OK" button.
+    4. The "DrawShape Control" is added to the toolbox and inserted into the form.
+    5. If the insertion fails, click "Add Reference..." in the "Project" menu. If the insertion fails, check "DrawShapeLib" in the "COM" page of the "Project" menu and click the "OK" button.
+2. How to add properties and methods.
+    1. By inserting the control, the AxDrawShape class (AxDrawShapeLib namespace - AxDrawShape class) is added to the project reference and the control variables are of the type of that class. The control variables are of the class type. The properties and methods are also added and ready to use.
+3. How to add the event handlers.
+    1. Event handler functions can be added by using the event variables and delegate types that have been added to the AxDrawShape class (AxDrawShapeLib namespace - AxDrawShape class).
 
-[C#サンプルアプリケーション](/DrawShapeTest)
+[C# Sample Application](/DrawShapeTest)
 
-## リファレンス
-[リファレンス](REFERENCE.md)
+## Reference
+[Reference](REFERENCE.md)

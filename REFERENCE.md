@@ -1,55 +1,57 @@
-リファレンス
+Reference
 ===
 
-機能概要
+[English Page](./REFERENCE.md)
+
+Overview
 ---
 
-### 基本機能
-- コントロールには、背景、グリッド、基準軸、基準原点が存在し、それぞれに色や大きさを設定することができる。
-- 描画中のデータはファイルへの保存／読み込みが可能。ファイルはJSONフォーマットを用いる。
-- マウスを用いて、描画内容のズーム／パンを行うことが可能。
-- 描画内容は、画像ファイルへの保存やクリップボードへのコピーが可能。
-- コントロール座標系とキャンバス座標系の相互変換が可能。マウスカーソル位置から座標値を算出する際などに利用できる。
-- 内部では『コントロール(1)－(N)レイヤー(1)－(n)形状』の関係でデータが管理される。
+### basic functionality
+- The controller has a background, a grid, a reference axis, and a reference origin, and the color and size of each can be set.
+- The data being drawn can be saved/loaded to a file. The file uses the JSON format.
+- Zooming and panning of the drawing contents is possible using the mouse.
+- The drawing contents can be saved to an image file or copied to the clipboard.
+- Mutual conversion between the control coordinate system and the canvas coordinate system is possible. This can be used when calculating coordinate values from the mouse cursor position.
+- Internally, data is managed in the relationship of "Control (1) : (N) Layer (1) : (n) Shape".
 
-### レイヤー
-- 形状を登録するためのレイヤーの追加／削除が可能。
-- レイヤーは 0 から始まる番号で管理され、描画は昇順に行われる。（番号が大きいレイヤーが上に重なって描画される）
-- レイヤーは描画可否の設定が可能。
-- レイヤーは最低でも１枚存在する。
-
-
-### ペンとブラシ
-- 形状の描画にはペンとブラシが用いられる。
-- ペンは輪郭線を描画する際に用いられる。色、太さ、スタイルの情報が存在する。
-- ブラシは塗りつぶしを描画する際に用いられる。色の情報が存在する。
-- レイヤーに形状を登録する際に設定されているペンとブラシが、その形状の描画に使用される。
-
-### 形状
-- 以下の形状を登録可能。
-    - 点
-    - 直線
-    - 無限直線
-    - 円弧
-    - 円（塗りつぶし可）
-    - 多角形（塗りつぶし可）
-    - 扇形（塗りつぶし可）
-    - 追加軸
-    - 追加原点
+### Layer
+- Layers can be added and deleted to register shapes.
+- Layers are managed by numbers starting from 0, and drawing is done in ascending order. (Layers with higher numbers are drawn on top of each other.)
+- Layers can be set to be drawable or not.
+- At least one layer must exist.
 
 
-用語
+### Pen and brush
+- Pen and brush are used to draw shapes.
+- Pen is used to draw outlines. It has information about color, thickness, and style.
+- Brush is used to draw fills. It has color information.
+- Pen and brush that are set when registering a shape to a layer will be used to draw the shape.
+
+### Shape
+- The following shapes can be registered.
+    - Point
+    - Line
+    - Infinite line
+    - Arc
+    - Circle (fillable)
+    - Polygon (fillable)
+    - Sector (fillable)
+    - Additional axis
+    - Additional origin
+
+
+Terminology
 ---
-| 用語               | 説明                                                                                                     |
-|--------------------|----------------------------------------------------------------------------------------------------------|
-| コントロール座標系 | ウィンドウ（フォーム）のDrawShapeコントロール上の座標系のこと。単位はPixel。座標の＋方向はXが右、Yが下。 |
-| キャンバス座標系   | DrawShpae内部のコンテンツの座標系のこと。実数値。座標の＋方向はXが右、Yが上。                            |
+| Terminology               | Description                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Control coordinate system | The coordinate system on the DrawShape control of a window (form). The unit is Pixel. X coordinate is + for right direction, Y coordinate is + for down direction. |
+| Canvas coordinate system  | The coordinate system of the content inside DrawShpae. Real values. X coordinate is + for right direction, Y coordinate is + for up direction.                     |
 
 
-プロパティ
+Properties
 ---
 ### BackColor
-キャンバスの背景色(RGB)を取得／設定する。
+Get/Set the background color (RGB) of the canvas.
 
 - C++
 ```cpp
@@ -64,7 +66,7 @@ public Color CtlBackColor { get; set; }
 ---
 
 ### GridColor
-グリッドの背景色(RGB)を取得／設定する。
+Get/Set the background color (RGB) of the grid.
 
 - C++
 ```cpp
@@ -79,7 +81,7 @@ public Color GridColor { get; set; }
 ---
 
 ### GridSize
-グリッドのサイズ（キャンバス座標系）を取得／設定する。
+Get/Set the size of the grid (canvas coordinate system).
 
 - C++
 ```cpp
@@ -94,7 +96,7 @@ public double GridSize { get; set; }
 ---
 
 ### OriginColor
-基準原点の背景色(RGB)を取得／設定する。
+Get/Set the background color (RGB) of the reference origin.
 
 - C++
 ```cpp
@@ -109,7 +111,7 @@ public Color OriginColor { get; set; }
 ---
 
 ### OriginSize
-基準原点のサイズ（コントロール座標系）を取得／設定する。
+Get/Set the size of the reference origin (control coordinate system).
 
 - C++
 ```cpp
@@ -124,7 +126,7 @@ public double OriginSize { get; set; }
 ---
 
 ### AxisColor
-基準軸の背景色(RGB)を取得／設定する。
+Get/Set the background color (RGB) of the reference axis.
 
 - C++
 ```cpp
@@ -139,7 +141,7 @@ public Color AxisColor { get; set; }
 ---
 
 ### AxisScale
-基準軸のスケール（キャンバス座標系）を取得／設定する。
+Get/Set the scale of the reference axis (canvas coordinate system).
 
 - C++
 ```cpp
@@ -154,7 +156,7 @@ public double AxisScale { get; set; }
 ---
 
 ### IsDrawGrid
-グリッドの描画可否を取得／設定する。
+Get/Set the grid drawing availability.
 
 - C++
 ```cpp
@@ -169,7 +171,7 @@ public bool IsDrawGrid { get; set; }
 ---
 
 ### IsDrawOrigin
-原点の描画可否を取得／設定する。
+Get/Set the drawability of the origin point.
 
 - C++
 ```cpp
@@ -181,13 +183,13 @@ void SetIsDrawOrigin(BOOL propVal);
 public bool IsDrawOrigin { get; set; }
 ```
 
-#### コメント
-基準原点と追加原点の両方に適用される。
+#### Comment
+Applies to both the standard origin and the additional origin.
 
 ---
 
 ### IsDrawAxis
-軸の描画可否を取得／設定する。
+Get/Set the drawability of the axis.
 
 - C++
 ```cpp
@@ -199,13 +201,13 @@ void SetIsDrawAxis(BOOL propVal);
 public bool IsDrawAxis { get; set; }
 ```
 
-#### コメント
-基準軸と追加軸の両方に適用される。
+#### Comment
+Applies to both the standard axis and the additional axis.
 
 ---
 
 ### IsDrawArrow
-形状への矢印の描画可否を取得／設定する。
+Get/Set whether arrows can be drawn on the shape.
 
 - C++
 ```cpp
@@ -217,16 +219,16 @@ void SetIsDrawArrow(BOOL propVal);
 public bool IsDrawArrow { get; set; }
 ```
 
-#### コメント
-矢印の描画は以下の形状にのみ適用される。
-- 直線
-- 円弧
-- 多角形
+#### Comment
+Arrow drawing is only applicable to the following shapes
+- Line
+- Arc
+- Polygon
 
 ---
 
 ### IsDrawCenter
-円の中心点の描画可否を取得／設定する。
+Get/Set the possibility of drawing the center point of the circle.
 
 - C++
 ```cpp
@@ -238,17 +240,18 @@ void SetIsDrawCenter(BOOL propVal);
 public bool IsDrawCenter { get; set; }
 ```
 
-#### コメント
-中心点の描画は以下の形状にのみ適用される。
-- 円弧
-- 円
-- 扇形
-中心点は三角点で描画する。
+#### Comment
+Center point drawing is only applicable to the following shapes
+- Arc
+- Circle
+- Sector
+
+The center point should be drawn as a triangle.
 
 ---
 
 ### CurrentLayerNo
-カレントレイヤーの番号を取得／設定する。
+Get/Set the number of the current layer.
 
 - C++
 ```cpp
@@ -260,13 +263,13 @@ void SetCurrentLayerNo(long propVal);
 public long CurrentLayerNo { get; set; }
 ```
 
-#### コメント
-レイヤー番号の有効範囲は、0 ～ (レイヤー枚数 - 1)。
+#### Comment
+The valid range of the layer number is from 0 to (number of layers - 1).
 
 ---
 
 ### LayerCount
-現在のレイヤー枚数を取得する。
+Get the current number of layers.
 
 - C++
 ```cpp
@@ -280,7 +283,7 @@ public long LayerCount { get; private set; }
 ---
 
 ### CurrentPenColor
-カレントのペンの色(RGB)を取得／設定する。
+Get/Set the color (RGB) of the current pen.
 
 - C++
 ```cpp
@@ -292,14 +295,14 @@ void SetCurrentPenColor(COLORREF propVal);
 public Color CurrentPenColor { get; set; }
 ```
 
-#### コメント
-Win32PIの `LOGPEN` 構造体の仕様に従う。  
-デフォルトは白色。  
+#### Comment
+Follows the specification of the `LOGPEN` structure of Win32PI.  
+Default is white.  
 
 ---
 
 ### CurrentPenWidth
-カレントのペンの太さを取得／設定する。
+Get/Set the thickness of the current pen.
 
 - C++
 ```cpp
@@ -311,15 +314,15 @@ void SetCurrentPenWidth(long propVal);
 public long CurrentPenWidth { get; set; }
 ```
 
-#### コメント
-Win32PIの `LOGPEN` 構造体の仕様に従う。  
-デフォルトは 1px。  
-太さを 2px 以上に設定できるのは、ペンのスタイルが `PS_SOLID` `PS_INSIDERFRAME` のいずれかの場合のみである。
+#### Comment
+Follows the specification of the `LOGPEN` structure of Win32PI.  
+Default is 1px.  
+The thickness can be set to more than 2px only if the pen style is one of `PS_SOLID` or `PS_INSIDERFRAME`.
 
 ---
 
 ### CurrentPenStyle
-カレントのペンのスタイルを取得／設定する。
+Get/Set the style of the current pen.
 
 - C++
 ```cpp
@@ -331,26 +334,26 @@ void SetCurrentPenStyle(long propVal);
 public long CurrentPenStyle { get; set; }
 ```
 
-#### コメント
-Win32APIの `LOGPEN` 構造体の仕様に従う。  
-以下のいずれかの値を設定可能。  
+#### Comment
+Follows the specification of the `LOGPEN` structure of Win32PI.  
+One of the following values can be set.  
 
-| 定数             | 値 | 説明       |
-|------------------|----|------------|
-| `PS_SOLID`       | 0  | 実線       |
-| `PS_DASH`        | 1  | 破線       |
-| `PS_DOT`         | 2  | 点線       |
-| `PS_DASHDOT`     | 3  | 一点鎖線   |
-| `PS_DASHDOTDOT`  | 4  | 二点鎖線   |
-| `PS_NULL`        | 5  | 描画しない |
-| `PS_INSIDEFRAME` | 6  | 実線       |
+| Constant         | Value | Description        |
+| ---------------- | ----- | ------------------ |
+| `PS_SOLID`       | 0     | Solid line         |
+| `PS_DASH`        | 1     | Dashed line        |
+| `PS_DOT`         | 2     | Dotted line        |
+| `PS_DASHDOT`     | 3     | Single-dotted line |
+| `PS_DASHDOTDOT`  | 4     | Double-dotted line |
+| `PS_NULL`        | 5     | Not drawn          |
+| `PS_INSIDEFRAME` | 6     | Solid line         |
 
-デフォルトは `PS_SOLID` 。
+Default is `PS_SOLID`.
 
 ---
 
 ### CurrentBrushColor
-カレントのブラシの色(RGB)を取得／設定する。
+Get/Set the color (RGB) of the current brush.
 
 - C++
 ```cpp
@@ -362,14 +365,14 @@ void SetCurrentBrushColor(COLORREF propVal);
 public Color CurrentBrushColor { get; set; }
 ```
 
-#### コメント
-Win32APIの `LOGBRUSH` 構造体の仕様に従う。  
-デフォルトは白色。  
+#### Comment
+Follows the specification of the `LOGBRUSH` structure of Win32PI.  
+Default is white.  
 
 ---
 
 ### CanMouseDragPan
-マウスドラッグによるパン（描画内容の上下左右移動）の実行可否を取得／設定する。
+Get/Set whether or not to execute panning (up/down/left/right movement of drawing contents) by mouse dragging.
 
 - C++
 ```cpp
@@ -384,7 +387,7 @@ public bool CanMouseDragPan { get; set; }
 ---
 
 ### CanMouseWheelZoom
-マウスホイールによるズーム（描画内容の拡大縮小）の実行可否を取得／設定する。
+Gets/set whether or not zooming (zooming in/out of the drawing contents) can be performed using the mouse wheel.
 
 - C++
 ```cpp
@@ -399,10 +402,10 @@ public bool CanMouseWheelZoom { get; set; }
 ---
 
 
-メソッド
+Methods
 ---
 ### Redraw
-全レイヤーの全形状を再描画する。
+Redraw all shapes on all layers.
 
 - C++
 ```cpp
@@ -413,13 +416,13 @@ void Redraw();
 public void Redraw();
 ```
 
-#### コメント
-DrawShapeコントロールでは、プロパティやメソッドにより内部状態の変更しても自動的に再描画が行われない。これは、複数の形状を一度に登録する場合に毎回再描画されてしまうと非効率となるためである。そのような場合は、最後に本メソッドを一度だけ呼び出す必要がある。  
+#### Comment
+In the DrawShape control, even if the internal state is changed by a property or method, it is not automatically redrawn. This is because it is inefficient to redraw every time when registering multiple shapes at once. In such a case, it is necessary to call this method only once at the end.  
 
 ---
 
 ### Clear
-DrawShapeコントロールを初期状態に戻す。
+Return the DrawShape control to its initial state.
 
 - C++
 ```cpp
@@ -430,15 +433,15 @@ void Clear();
 public void Clear();
 ```
 
-#### コメント
-以下を実行する。
-- 全レイヤーを削除する。
-- カレントのペンとブラシをデフォルト状態に戻す。
+#### Comment
+Do the following
+- Delete all layers.
+- Restore the current pen and brush to their default state.
 
 ---
 
 ### SaveImage
-現在の描画内容を画像ファイルに保存する。
+Save the current drawing to an image file.
 
 - C++
 ```cpp
@@ -449,22 +452,22 @@ BOOL SaveImage(const char* filePath);
 public bool SaveImage(string filePath);
 ```
 
-#### パラメータ
+#### Parameters
 - filePath
-    - ファイルパス。
+    - File path.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-画像サイズはDrawShapeコントロールの現在のサイズとなる。
-ファイルパスに指定した拡張子によって画像フォーマットが自動的に判断される。指定可能な拡張子は BMP/PNG/JPEG/GIF のいずれか。  
-既に同名のファイルが存在した場合は上書きする。
+#### Comment
+The image size will be the current size of the DrawShape control.
+The image format is automatically determined by the extension specified in the file path. The extension can be one of BMP/PNG/JPEG/GIF.  
+If a file with the same name already exists, it will be overwritten.
 
 ---
 
 ### CopyImage
-現在の描画内容をクリップボードにコピーする。
+Copies the current drawing to the clipboard.
 
 - C++
 ```cpp
@@ -475,16 +478,16 @@ BOOL CopyImage();
 public bool CopyImage();
 ```
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-画像サイズはDrawShapeコントロールの現在のサイズとなる。
+#### Comment
+The image size will be the current size of the DrawShape control.
 
 ---
 
 ### SaveContents
-登録されているレイヤーおよび形状をファイルに保存する。
+Save the registered layers and shapes to a file.
 
 - C++
 ```cpp
@@ -495,20 +498,20 @@ BOOL SaveContents(const char* filePath);
 public bool SaveContents(string filePath);
 ```
 
-#### パラメータ
+#### Parameters
 - filePath
     - ファイルパス。
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-JSONフォーマットを使用する。
+#### Comment
+Use the JSON format.
 
 ---
 
 ### LoadContents
-ファイルからレイヤーおよび形状を読み込んで登録する。
+Import and register layers and shapes from files.
 
 - C++
 ```cpp
@@ -519,21 +522,21 @@ BOOL LoadContents(const char* filePath);
 public bool LoadContents(string filePath);
 ```
 
-#### パラメータ
+#### Parameters
 - filePath
-    - ファイルパス。
+    - File path.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-JSONフォーマットを使用する。  
-読み込み前に登録されていたレイヤーおよび形状は全て削除される。
+#### Comment
+JSON format is used.  
+All layers and shapes that were registered before loading will be deleted.
 
 ---
 
 ### CanvasToControl
-座標値をキャンバス座標系からコントロール座標系へ変換する。
+Convert coordinate values from the canvas coordinate system to the control coordinate system.
 
 - C++
 ```cpp
@@ -544,23 +547,23 @@ void CanvasToControl(double canvasX, double canvasY, long* pCtrlX, long* pCtrlY)
 public void CanvasToControl(double canvasX, double canvasY, ref long pCtrlX, ref long pCtrlY);
 ```
 
-#### パラメータ
+#### Parameters
 - canvasX
-    - X座標（キャンバス座標系）。
+    - X coordinate (canvas coordinate system).
 - canvasY
-    - Y座標（キャンバス座標系）。
-- pCtrlX（出力）
-    - X座標（コントロール座標系）。
-- pCtrlY（出力）
-    - Y座標（コントロール座標系）。
+    - Y coordinate (canvas coordinate system).
+- pCtrlX (Output)
+    - X coordinate (control coordinate system).
+- pCtrlY (Output)
+    - Y coordinate (control coordinate system).
 
-#### コメント
-現在のパン／ズーム状態に応じた変換が行われる。
+#### Comment
+The conversion is performed according to the current pan/zoom state.
 
 ---
 
 ### ControlToCanvas
-座標値をコントロール座標系からキャンバス座標系へ変換する。
+Convert coordinate values from the control coordinate system to the canvas coordinate system.
 
 - C++
 ```cpp
@@ -571,24 +574,24 @@ void ControlToCanvas(long ctrlX, long ctrlY, double* pCanvasX, double* pCanvasY)
 public void ControlToCanvas(long ctrlX, long ctrlY, ref double pCanvasX, ref double pCanvasY);
 ```
 
-#### パラメータ
-- ctrlX
-    - X座標（コントロール座標系）。
-- ctrlY
-    - Y座標（コントロール座標系）。
-- pCanvasX（出力）
-    - X座標（キャンバス座標系）。
-- pCanvasY（出力）
-    - Y座標（キャンバス座標系）。
+#### Parameters
+- pCtrlX
+    - X coordinate (control coordinate system).
+- pCtrlY
+    - Y coordinate (control coordinate system).
+- canvasX (Output)
+    - X coordinate (canvas coordinate system).
+- canvasY (Output)
+    - Y coordinate (canvas coordinate system).
 
-#### コメント
-現在のパン／ズーム状態に応じた変換が行われる。  
-例として、現在のカーソル位置（コントロール座標系）をキャンバス座標系に変換するといった用途に利用可能。
+#### Comment
+The transformation is performed according to the current pan/zoom state.  
+For example, it can be used to convert the current cursor position (control coordinate system) to the canvas coordinate system.
 
 ---
 
 ### InsertLayer
-新しいレイヤーを挿入する。
+Insert a new layer.
 
 - C++
 ```cpp
@@ -599,22 +602,22 @@ BOOL InsertLayer(long insertNo);
 public bool InsertLayer(long insertNo);
 ```
 
-#### パラメータ
+#### Parameters
 - insertNo
-    - 挿入位置。0 ～ 挿入前のレイヤー枚数、または -1 を指定可能。
+    - Insertion position. 0 to the number of layers before insertion, or -1 can be specified.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-挿入位置の番号に新しいレイヤーを挿入する。その位置以降にレイヤーが存在していた場合、それらの番号は 1 加算される。  
-挿入位置に -1 を指定した場合は、末尾への挿入となる。（挿入前のレイヤー枚数を指定した場合と同様）  
-挿入に成功した場合、挿入したレイヤーがカレントレイヤーとなる。  
+#### Comment
+Inserts a new layer at the insertion position number. If layers exist after the insertion position, their numbers will be added by 1.  
+If -1 is specified for the insertion position, the layer will be inserted at the end. (It is the same as when the number of layers before insertion is specified.  
+If the insertion is successful, the inserted layer becomes the current layer.  
 
 ---
 
 ### ClearCurrentLayer
-カレントレイヤーに登録されている全形状を削除する。
+Delete all shapes registered in the current layer.
 
 - C++
 ```cpp
@@ -628,7 +631,7 @@ public void ClearCurrentLayer();
 ---
 
 ### DeleteCurrentLayer
-カレントレイヤーを削除する。
+Delete the current layer.
 
 - C++
 ```cpp
@@ -639,18 +642,18 @@ long DeleteCurrentLayer();
 public long DeleteCurrentLayer();
 ```
 
-#### 戻り値
-削除後のレイヤー枚数。
+#### Return
+Number of layers after deletion.
 
-#### コメント
-末尾のレイヤーを削除した場合、１つ前のレイヤーがカレントレイヤーとなる。  
-末尾以外のレイヤーを削除した場合、レイヤー番号は前詰めされ、１つ次のレイヤーが新たなカレントレイヤーとなる。  
-削除前にレイヤーが１枚しか存在しなかった場合は、削除後に自動的に新しいレイヤーが１枚挿入され、それがカレントレイヤーとなる。  
+#### Comment
+If the last layer is deleted, the previous layer becomes the current layer.  
+If a layer other than the last layer is deleted, the layer number will be prepended and the next layer will become the new current layer.  
+If there was only one layer before deleting, a new layer will be automatically inserted after deleting, and it will become the current layer.  
 
 ---
 
 ### SetEnableCurrentLayer
-カレントレイヤーの描画可否を設定する。
+Set whether the current layer can be drawn or not.
 
 - C++
 ```cpp
@@ -661,14 +664,14 @@ void SetEnableCurrentLayer(BOOL enable);
 public void SetEnableCurrentLayer(bool enable);
 ```
 
-#### パラメータ
+#### Parameters
 - enable
-    - カレントレイヤーの描画可否。描画を許可する場合は true 、描画を禁止する場合は false 。
+    - Allows or disallows drawing of the current layer. True if drawing is allowed, false if drawing is prohibited.
 
 ---
 
 ### GetEnableCurrentLayer
-カレントレイヤーの描画可否を取得する。
+Get whether the current layer is drawable or not.
 
 - C++
 ```cpp
@@ -679,13 +682,13 @@ BOOL GetEnableCurrentLayer();
 public bool GetEnableCurrentLayer();
 ```
 
-#### 戻り値
-カレントレイヤーの描画可否。描画が許可されている場合は true 、描画が禁止されている場合は false 。
+#### Return
+Whether or not the current layer can be drawn. True if drawing is allowed, false if drawing is not allowed.
 
 ---
 
 ### Zoom
-描画内容をズーム（拡大縮小）する。
+Zoom in/out on the drawing.
 
 - C++
 ```cpp
@@ -696,21 +699,21 @@ BOOL Zoom(double coef, long ctrlBaseX, long ctrlBaseY);
 public bool Zoom(double coef, long ctrlBaseX, long ctrlBaseY);
 ```
 
-#### パラメータ
+#### Parameters
 - coef
-    - 拡大縮小の倍率。1.0 より大きい値で拡大、 1.0 より小さい値で縮小となる。
+    - Scaling factor, greater than 1.0 means zoom in, less than 1.0 means zoom out.
 - ctrlBaseX
-    - 拡大縮小を行う基準とするX座標（コントロール座標系）。
+    - X coordinate (control coordinate system) to use for scaling.
 - ctrlBaseY
-    - 拡大縮小を行う基準とするY座標（コントロール座標系）。
+    - Y coordinate (control coordinate system) to use for scaling.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
 ---
 
 ### Pan
-描画内容をパン（上下左右移動）する。
+Pan (move up, down, left, right) the drawing contents.
 
 - C++
 ```cpp
@@ -721,19 +724,19 @@ BOOL Pan(long ctrlMoveX, long ctrlMoveY);
 public bool Pan(long ctrlMoveX, long ctrlMoveY);
 ```
 
-#### パラメータ
+#### Parameters
 - ctrlMoveX
-    - X方向の移動量（コントロール座標系）。
+    - Amount of movement in the X direction (control coordinate system).
 - ctrlMoveY
-    - Y方向の移動量（コントロール座標系）。
+    - Amount of movement in the Y direction (control coordinate system).
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
 ---
 
 ### Fit
-描画対象の形状全てが描画領域に収まるように自動的にズーム・パンを行う。
+Automatically zooms and pans so that all the shapes to be drawn fit into the drawing area.
 
 - C++
 ```cpp
@@ -744,18 +747,18 @@ void Fit(double shapeOccupancy);
 public void Fit(double shapeOccupancy);
 ```
 
-#### パラメータ
+#### Parameters
 - shapeOccupancy
-    - フィットしたときに形状が描画領域全体を占める割合。
+    - The percentage of the entire drawing area that the shape occupies when fitted.
 
-#### コメント
-shapeOccupancy で指定する割合は、上下方向と左右方向のうちフィットしたときに余白がより小さくなる方に適用される。  
-もう一方の方向については、形状が描画領域を占める割合がより小さくなる可能性がある。 
+#### Comment
+The percentage specified by `shapeOccupancy` is applied to the one of the up/down and left/right directions where the margins are smaller when fitted.  
+For the other direction, the shape may occupy a smaller percentage of the drawing area.  
 
 ---
 
 ### AddLine
-カレントレイヤーに直線を追加する。
+Add a line to the current layer.
 
 - C++
 ```cpp
@@ -766,23 +769,23 @@ BOOL AddLine(double sx, double sy, double ex, double ey);
 public bool AddLine(double sx, double sy, double ex, double ey);
 ```
 
-#### パラメータ
+#### Parameters
 - sx
-    - 始点X（キャンバス座標系）。
+    - Start point X (canvas coordinate system).
 - sy
-    - 始点Y（キャンバス座標系）。
+    - Start point Y (canvas coordinate system).
 - ex
-    - 終点X（キャンバス座標系）。
+    - End point X (canvas coordinate system).
 - ey
-    - 終点Y（キャンバス座標系）。
+    - End point Y (canvas coordinate system).
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
 ---
 
 ### AddInfiniteLine2Point
-任意の2点を指定する方法で、カレントレイヤーに無限直線を追加する。
+Add an infinite line to the current layer in a way that allows you to specify any two points.
 
 - C++
 ```cpp
@@ -793,23 +796,23 @@ BOOL AddInfiniteLine2Point(double sx, double sy, double ex, double ey);
 public bool AddInfiniteLine2Point(double sx, double sy, double ex, double ey);
 ```
 
-#### パラメータ
+#### Parameters
 - sx
-    - 始点X（キャンバス座標系）。
+    - Start point X (canvas coordinate system).
 - sy
-    - 始点Y（キャンバス座標系）。
+    - Start point Y (canvas coordinate system).
 - ex
-    - 終点X（キャンバス座標系）。
+    - End point X (canvas coordinate system).
 - ey
-    - 終点Y（キャンバス座標系）。
+    - End point Y (canvas coordinate system).
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
 ---
 
 ### AddInfiniteLine1PointAngle
-任意の1点と角度を指定する方法で、カレントレイヤーに無限直線を追加する。
+Add an infinite line to the current layer in a way that specifies any one point and angle.
 
 - C++
 ```cpp
@@ -820,21 +823,21 @@ BOOL AddInfiniteLine1PointAngle(double x, double y, double angle);
 public bool AddInfiniteLine1PointAngle(double x, double y, double angle);
 ```
 
-#### パラメータ
+#### Parameters
 - x
-    - 点X（キャンバス座標系）。
+    - Point X (canvas coordinate system).
 - y
-    - 点Y（キャンバス座標系）。
+    - Point Y (canvas coordinate system).
 - angle
-    - 角度（ラジアン）
+    - Angle (in radians)
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
 ---
 
 ### AddPoint
-カレントレイヤーに点を追加する。
+Add a point to the current layer.
 
 - C++
 ```cpp
@@ -845,26 +848,26 @@ BOOL AddPoint(double x, double y, long type);
 public bool AddPoint(double x, double y, long type);
 ```
 
-#### パラメータ
+#### Parameters
 - x
-    - 点X（キャンバス座標系）。
+    - Point X (canvas coordinate system).
 - y
-    - 点Y（キャンバス座標系）。
+    - Point Y (canvas coordinate system).
 - type
-    - 点種。以下のいずれかの整数値とする。範囲外の値が与えられた場合であっても失敗しないが動作は未定義となる。
-        | 値 | 点種           |
-        |----|----------------|
-        | 0  | 通常の点（・） |
-        | 1  | 大きい点（●） |
-        | 2  | 三角点（△）   |
+    - Point species. It shall be one of the following integer values. If a value out of the range is given, it will not fail, but the behavior will be undefined.
+        | Value | Point species      |
+        | ----- | ------------------ |
+        | 0     | Normal dots (.)    |
+        | 1     | Large dots (●)     |
+        | 2     | Triangle point (△) |
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
 ---
 
 ### AddArc
-カレントレイヤーに円弧を追加する。
+Add an arc to the current layer.
 
 - C++
 ```cpp
@@ -875,32 +878,32 @@ BOOL AddArc(double sx, double sy, double ex, double ey, double cx, double cy, BO
 public bool AddArc(double sx, double sy, double ex, double ey, double cx, double cy, bool left);
 ```
 
-#### パラメータ
+#### Parameters
 - sx
-    - 始点X（キャンバス座標系）。
+    - Start point X (canvas coordinate system).
 - sy
-    - 始点Y（キャンバス座標系）。
+    - Start point Y (canvas coordinate system).
 - ex
-    - 終点X（キャンバス座標系）。
+    - End point X (canvas coordinate system).
 - ey
-    - 終点Y（キャンバス座標系）。
+    - End point Y (canvas coordinate system).
 - cx
-    - 中心点X（キャンバス座標系）。
+    - Center point X (canvas coordinate system).
 - cy
-    - 中心点Y（キャンバス座標系）。
+    - Center point Y (canvas coordinate system).
 - left
-    - 円弧方向。 true の場合は左方向（反時計回り）、 false の場合は右方向（時計回り）の円弧となる。
+    - Arc direction. If true, the arc will be leftward (counterclockwise), otherwise it will be rightward (clockwise).
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-指定した座標が円弧の構成点として幾何学的に矛盾する場合は失敗する。
+#### Comment
+If the specified coordinates are geometrically inconsistent as the constituent points of the arc, it will fail.
 
 ---
 
 ### AddCircle
-カレントレイヤーに円を追加する。
+Add a circle to the current layer.
 
 - C++
 ```cpp
@@ -911,23 +914,23 @@ BOOL AddCircle(double cx, double cy, double radius, BOOL fill);
 public bool AddCircle(double cx, double cy, double radius, bool fill);
 ```
 
-#### パラメータ
+#### Parameters
 - cx
-    - 中心点X（キャンバス座標系）。
+    - Center point X (canvas coordinate system).
 - cy
-    - 中心点Y（キャンバス座標系）。
+    - Center point Y (canvas coordinate system).
 - radius
-    - 半径（キャンバス座標系）。
+    - Radius (canvas coordinate system).
 - fill
-    - 塗りつぶし有無。
+    - Fill/no fill.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
 ---
 
 ### AddPolygon
-カレントレイヤーに円を追加する。
+Add a circle to the current layer.
 
 - C++
 ```cpp
@@ -938,25 +941,25 @@ BOOL AddPolygon(SAFEARRAY* pointCoords, long pointsCount, BOOL fill);
 public bool AddPolygon(Array pointCoords, long pointsCount, bool fill);
 ```
 
-#### パラメータ
+#### Parameters
 - pointCoords
-    - 点群配列（キャンバス座標系）。点1-X→点1-Y→点2-X→・・・→点n-Y の順にdouble型の値を格納する。
+    - Point cloud array (canvas coordinate system). Stores values of type double in the order of point 1-X -> point 1-Y -> point 2-X -> ... -> point n-Y.
 - pointsCount
-    - pointCoords で入力する点の数。XY座標のペアで1つと数えることに注意。
+    - The number of points to be entered in `pointCoords`; note that each pair of XY coordinates counts as one.
 - fill
-    - 塗りつぶし有無。
+    - Fill/no fill.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-pointCoords にdouble型以外の値を格納した場合は失敗する。  
-pointsCount に0以下の値を渡した場合は失敗する。  
+#### Comment
+If a value other than a double type is stored in `pointCoords`, it will fail.  
+Fails if a value less than or equal to 0 is passed to `pointsCount`.  
 
 ---
 
 ### AddSector
-カレントレイヤーに扇形を追加する。
+Add a Sector shape to the current layer.
 
 - C++
 ```cpp
@@ -967,37 +970,37 @@ BOOL AddSector(double sx, double sy, double ex, double ey, double cx, double cy,
 public bool AddSector(double sx, double sy, double ex, double ey, double cx, double cy, double innerRadius, bool left, bool fill);
 ```
 
-#### パラメータ
+#### Parameters
 - sx
-    - 扇形の外側円弧の始点X（キャンバス座標系）。
+    - Start point X of the outer arc of the sector (canvas coordinate system).
 - sy
-    - 扇形の外側円弧の始点Y（キャンバス座標系）。
+    - Start point Y of the outer arc of the sector (canvas coordinate system).
 - ex
-    - 扇形の外側円弧の終点X（キャンバス座標系）。
+    - End point X of the outer arc of the sector (canvas coordinate system).
 - ey
-    - 扇形の外側円弧の終点Y（キャンバス座標系）。
+    - End point Y of the outer arc of the sector (canvas coordinate system).
 - cx
-    - 扇形の中心点X（キャンバス座標系）。
+    - Center point X of the sector (canvas coordinate system).
 - cy
-    - 扇形の中心点Y（キャンバス座標系）。
+    - Center point Y of the sector (canvas coordinate system).
 - innerRadius
-    - 扇形の内側円弧の半径（キャンバス座標系）。
+    - Radius of the inner arc of the sector (canvas coordinate system).
 - left
-    - 円弧方向。 true の場合は左方向（反時計回り）、 false の場合は右方向（時計回り）の円弧となる。
+    - Arc direction. If true, the arc will be leftward (counterclockwise), otherwise it will be rightward (clockwise).
 - fill
-    - 塗りつぶし有無。
+    - Fill/no fill.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-指定した座標が扇形の構成点として幾何学的に矛盾する場合は失敗する。  
-innnerRadius に 0 を渡した場合は、内側が埋められた扇形となる。0未満の値の場合は失敗する。  
+#### Comment
+Fails if the specified coordinates are geometrically inconsistent as the constituent points of a fan.  
+Passing 0 for `innnerRadius` will result in a fan with the inside filled.  
 
 ---
 
 ### AddOrigin
-カレントレイヤーに原点を追加する。
+Add an origin to the current layer.
 
 - C++
 ```cpp
@@ -1008,24 +1011,24 @@ BOOL AddOrigin(double ox, double oy);
 public bool AddOrigin(double ox, double oy);
 ```
 
-#### パラメータ
+#### Parameters
 - ox
-    - 原点を追加する座標X（キャンバス座標系）。
+    - The coordinate X (canvas coordinate system) to add the origin.
 - oy
-    - 原点を追加する座標Y（キャンバス座標系）。
+    - The coordinate Y (canvas coordinate system) to add the origin.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-基準原点とは別に原点を追加したい場合に使用する。  
-本メソッドで追加した原点についても、 IsDrawOrigin プロパティによって描画可否が制御される。  
-描画にはペンのみが使用され、ブラシは使用されない。  
+#### Comment
+This method is used when you want to add an origin other than the reference origin.  
+`IsDrawOrigin` property controls whether or not the origin added by this method can be drawn.  
+Only the pen can be used for drawing, not the brush.  
 
 ---
 
 ### AddAxis
-カレントレイヤーに軸を追加する。
+Add an axis to the current layer.
 
 - C++
 ```cpp
@@ -1036,27 +1039,27 @@ BOOL AddAxis(double ox, double oy);
 public bool AddAxis(double ox, double oy);
 ```
 
-#### パラメータ
+#### Parameters
 - ox
-    - 軸を追加する座標X（キャンバス座標系）。
+    - The coordinate X (canvas coordinate system) to add the axis to.
 - oy
-    - 軸を追加する座標Y（キャンバス座標系）。
+    - The coordinate Y (canvas coordinate system) to add the axis to.
 
-#### 戻り値
-成功した場合は 1 または true 。失敗した場合は 0 または false 。
+#### Return
+If successful, 1 or true, otherwise 0 or false.
 
-#### コメント
-基準軸とは別に軸を追加したい場合に使用する。  
-本メソッドで追加した軸についても、 IsDrawAxis プロパティによって描画可否が制御される。  
-描画にはペンのみが使用され、ブラシは使用されない。  
+#### Comment
+Use this method when you want to add an axis other than the reference axis.  
+`IsDrawAxis` property controls whether or not the axis added by this method can be drawn.  
+Only the pen can be used for drawing, not the brush.  
 
 ---
 
 
-イベント
+Events
 ---
 ### CursorMove
-DrawShapeコントロール上でのマウスカーソル移動イベント。
+Mouse cursor movement event on the DrawShape control.
 
 - C++
 ```cpp
@@ -1077,24 +1080,24 @@ public delegate void _DDrawShapeEvents_CursorMoveEventHandler(object sender, _DD
 public event _DDrawShapeEvents_CursorMoveEventHandler CursorMove;
 ```
 
-#### パラメータ
+#### Parameters
 - ctrlX
-    - マウスカーソル位置X（コントロール座標系）。
+    - Mouse cursor position X (control coordinate system).
 - ctrlY
-    - マウスカーソル位置Y（コントロール座標系）。
+    - Mouse cursor position Y (control coordinate system).
 - canvasX
-    - マウスカーソル位置X（キャンバス座標系）。
+    - Mouse cursor position X (canvas coordinate system).
 - canvasY
-    - マウスカーソル位置Y（キャンバス座標系）。
+    - Mouse cursor position Y (canvas coordinate system).
 
-#### コメント
-(ctrlX, ctrlY) は、Win32APIでマウスカーソル位置を取得してDrawShapeコントロールのクライアント座標系に変換した値と一致する。  
-(canvasX, canvasY) は、 (ctrlX, ctrlY) を ControlToCanvas メソッドで変換した値と一致する。  
+#### Comment
+(`ctrlX`, `ctrlY`) matches the value obtained from the mouse cursor position using Win32API and converted to the client coordinate system of the DrawShape control.  
+(`canvasX`, `canvasY`) will match the value obtained by transforming (`ctrlX`, `ctrlY`) with the ControlToCanvas method.  
 
 ---
 
 ### LeftClick
-DrawShapeコントロール上でのマウス左クリックイベント。
+A left mouse click event on a DrawShape control.
 
 - C++
 ```cpp
@@ -1115,18 +1118,17 @@ public delegate void _DDrawShapeEvents_LeftClickEventHandler(object sender, _DDr
 public event _DDrawShapeEvents_LeftClickEventHandler LeftClick;
 ```
 
-#### パラメータ
+#### Parameters
 - ctrlX
-    - マウスカーソル位置X（コントロール座標系）。
+    - Mouse cursor position X (control coordinate system).
 - ctrlY
-    - マウスカーソル位置Y（コントロール座標系）。
+    - Mouse cursor position Y (control coordinate system).
 - canvasX
-    - マウスカーソル位置X（キャンバス座標系）。
+    - Mouse cursor position X (canvas coordinate system).
 - canvasY
-    - マウスカーソル位置Y（キャンバス座標系）。
+    - Mouse cursor position Y (canvas coordinate system).
 
-#### コメント
-本イベントは、マウス左クリックのDown→Upが行われた際に発行する。ドラッグを行った場合でもイベント発行することに注意。  
-(ctrlX, ctrlY) は、Win32APIでマウスカーソル位置を取得してDrawShapeコントロールのクライアント座標系に変換した値と一致する。  
-(canvasX, canvasY) は、 (ctrlX, ctrlY) を ControlToCanvas メソッドで変換した値と一致する。  
-
+#### Comment
+This event will be fired when a left mouse click is made from Down to Up. Note that the event is fired even when dragging is performed.  
+(`ctrlX`, `ctrlY`) matches the value obtained from the mouse cursor position using Win32API and converted to the client coordinate system of the DrawShape control.  
+(`canvasX`, `canvasY`) will match the value obtained by transforming (`ctrlX`, `ctrlY`) with the ControlToCanvas method.  
